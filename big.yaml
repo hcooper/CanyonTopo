@@ -1,0 +1,187 @@
+width: 10240
+height: 10240
+features:
+  - type: line
+    length: 10
+
+
+    
+  # R1
+  - type: anchor
+    style: natural
+  - type: rap
+    length: 130
+    label: "R1 DCL 130'"
+    slope: 95
+
+  - type: pool
+
+  - type: exit
+
+  - type: line
+    length: 300
+    slope: 3
+    broken: true
+
+
+
+  # R2
+  - type: anchor
+    style: bolt
+    count: 2
+  - type: rap
+    length: 125
+    label: "R2 DCL 125'"
+    slope: 95
+
+  - type: pool
+
+
+  - type: line
+    length: 15
+    slope: 25
+
+
+    
+  # R3
+  - type: anchor
+    style: bolt
+    count: 1
+
+  - type: rap
+    length: 40
+    label: "R3 DCR"
+    slope: 45
+
+  - type: pool
+    width: 20
+    depth: 10
+
+  - type: line
+    length: 30
+
+
+    
+  # R4
+  - type: anchor
+    style: bolt
+    count: 2
+
+  - type: rap
+    length: 35
+    label: "R4 DCR 35'"
+    slope: 45
+
+  - type: pool
+    width: 30
+    depth: 10
+
+  # - type: line
+  #   length: 10
+
+
+
+  # R5
+  - type: anchor
+    style: bolt
+    count: 2
+
+  - type: rap
+    length: 40
+    label: "R5 DCR 40'"
+
+  - type: pool
+    width: 20
+    depth: 10
+
+  - type: line
+    length: 50
+    slope: 15
+
+  # R6
+  - type: anchor
+    style: bolt
+    count: 2
+
+  - type: rap
+    length: 30
+    label: "R6"
+
+  - type: pool
+    width: 30
+    depth: 10
+
+  # - type: line
+  #   length: 10
+    
+  # R7
+  - type: anchor
+    style: natural
+
+  - type: rap
+    length: 50
+    label: "R7"
+    slope: 85
+
+  - type: pool
+    width: 50
+    depth: 30
+
+  - type: line
+    length: 10
+    
+  # R8a
+  - type: anchor
+    style: bolt
+    count: 2
+
+  - type: rap
+    length: 60
+    label: "R8a"
+    slope: 60
+
+  # R8b
+  - type: anchor
+    style: bolt
+    count: 2
+
+  - type: rap
+    length: 60
+    label: "R8b"
+    slope: 95
+
+  - type: line
+    length: 100
+    slope: 5
+    broken: True
+
+  # R9
+  - type: anchor
+    style: natural
+
+  - type: rap
+    length: 30
+    label: "R9"
+    slope: 60
+
+  - type: pool
+    width: 60
+    depth: 20
+
+  - type: line
+    length: 100
+    broken: True
+    slope: 5
+
+  - type: pool
+    width: 60
+    depth: 20
+    label: "River"
+
+  - type: line
+    length: 25
+    slope: -45
+
+  - type: line
+    length: 25
+    label: "Speed Trail"

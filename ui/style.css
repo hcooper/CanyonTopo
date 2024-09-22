@@ -1,0 +1,157 @@
+/* Body styles */
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #f4f7f6;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+/* Container styling */
+#container {
+  display: flex;
+  gap: 40px;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+/* Styling for the editor and feature list areas */
+#container>div {
+  flex: 1;
+}
+
+/* Headers */
+h1,
+h2 {
+  font-family: 'Poppins', sans-serif;
+  color: #2b6777;
+  text-align: center;
+}
+
+/* Textarea styling */
+#editor {
+  width: 100%;
+  height: 200px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 16px;
+  background-color: #fff;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+/* Button styles */
+button {
+  background-color: #52ab98;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #417f78;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Feature list styling */
+#feature-list {
+  list-style: none;
+  padding: 0;
+}
+
+#feature-list-container {
+  height: 300px;  /* Adjust this value as needed */
+  overflow-y: auto;  /* Enables vertical scrolling */
+  border: 1px solid #ddd;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+}
+
+/* Feature list items styling */
+#feature-list li {
+  margin-bottom: 10px;
+  padding: 5px;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+}
+
+#feature-list li.dragging {
+  opacity: 0.5;
+  background-color: #d0e6e9;
+}
+
+
+/* Buttons inside list items */
+#feature-list button {
+  background-color: #ff6961;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+#feature-list button:hover {
+  background-color: #ff5c52;
+}
+
+#feature-list button.up,
+#feature-list button.down {
+  background-color: #52ab98;
+}
+
+#feature-list button.up:hover,
+#feature-list button.down:hover {
+  background-color: #417f78;
+}
+
+/* SVG Preview styling */
+#svg-preview {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  height: 400px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Input field styling for feature parameters */
+#feature-list input[type="number"],
+#feature-list input[type="text"] {
+  width: 50px;
+  padding: 5px;
+  margin: 0 5px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#feature-list input[type="text"] {
+  width: 120px;
+}
+
+#feature-list input[type="number"]:focus,
+#feature-list input[type="text"]:focus {
+  outline: none;
+  border-color: #52ab98;
+  box-shadow: 0 0 5px rgba(82, 171, 152, 0.5);
+}

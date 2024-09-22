@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG Editor</title>
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+  <script src="../draw.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <h1>Canyon Topo Tool</h1>
+
+  <div id="container">
+    <div>
+      <h2>Feature List</h2>
+      <div id="feature-list-container">
+        <ul id="feature-list"></ul>
+      </div>
+      <br>
+      <button id="add-line">Add Line</button>
+      <button id="add-rap">Add Rap</button>
+      <button id="add-pool">Add Pool</button>
+      <button id="add-anchor">Add Anchor</button>
+      <button id="add-exit">Add Exit</button>
+      <br><br>
+      <button id="update-button">Update SVG</button>
+      <br><br>
+      <textarea id="yaml-textbox" cols="100" rows="30"></textarea><br>
+      <button id="load-yaml-button">Load YAML</button>
+    </div>
+
+
+
+    <div>
+      <h2>SVG Preview</h2>
+      <div id="svg-preview"></div>
+    </div>
+  </div>
+
+  <script>
+    let draggedItemIndex = null;
+
+    function renderFeatureList() {
+      const featureList = document.getElementById('feature-list');
+      featureList.innerHTML = '';  // Clear the list
+
+      config.features.forEach((feature, index) => {
+        const li = document.createElement('li');
+        li.setAttribute('draggable', true);
+        li.addEventListener('dragstart', () => handleDragStart(index));
+        li.addEventListener('dragover', (e) => handleDragOver(e));
+        li.addEventListener('drop', () => handleDrop(index));
+
+        // Label input for all features
+        const labelInput = createInput('text', feature.label || '', (e) => {
+          feature.label = e.target.value;
+          updateSVG();
+        });
+        li.appendChild(document.createTextNode(index));
+        li.appendChild(document.createTextNode('Label: '));
+        li.appendChild(labelInput);
+
+        // Display parameters and create input fields for editable parameters
+        if (feature.type === 'line') {
+          const lengthInput = createInput('number', feature.length, (e) => {
+            feature.length = parseFloat(e.target.value);
+            updateSVG();
+          });
+
+          const slopeInput = createInput('number', feature.slope, (e) => {
+            feature.slope = parseFloat(e.target.value);
+            updateSVG();
+          });
+
+          li.appendChild(document.createTextNode('Length: '));
+          li.appendChild(lengthInput);
+          li.appendChild(document.createTextNode('Slope: '));
+          li.appendChild(slopeInput);
+        }
+
+        if (feature.type === 'pool') {
+          const widthInput = createInput('number', feature.width, (e) => {
+            feature.width = parseFloat(e.target.value);
+            updateSVG();
+          });
+
+          const depthInput = createInput('number', feature.depth, (e) => {
+            feature.depth = parseFloat(e.target.value);
+            updateSVG();
+          });
+
+          li.appendChild(document.createTextNode('Width: '));
+          li.appendChild(widthInput);
+          li.appendChild(document.createTextNode('Depth: '));
+          li.appendChild(depthInput);
+        }
+
+        if (feature.type === 'rap') {
+          const lengthInput = createInput('number', feature.length, (e) => {
+            feature.length = parseFloat(e.target.value);
+            updateSVG();
+          });
+
+          const slopeInput = createInput('number', feature.slope, (e) => {
+            feature.slope = parseFloat(e.target.value);
+            updateSVG();
+          });
+
+          li.appendChild(document.createTextNode('Length: '));
+          li.appendChild(lengthInput);
+          li.appendChild(document.createTextNode('Slope: '));
+          li.appendChild(slopeInput);
+        }
+
+        // Add buttons for deleting
+        const deleteButton = createButton('Delete', () => {
+          config.features.splice(index, 1);
+          updateSVG();
+          renderFeatureList();
+        });
+
+        // Append buttons and input fields to the list item
+        li.appendChild(deleteButton);
+        featureList.appendChild(li);
+      });
+    }
+
+    // Handle drag and drop functionality
+    function handleDragStart(index) {
+      draggedItemIndex = index;
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();  // Allow the drop by preventing the default behavior
+    }
+
+    function handleDrop(droppedOnIndex) {
+      if (draggedItemIndex !== null && draggedItemIndex !== droppedOnIndex) {
+        // Reorder the features array
+        const draggedItem = config.features.splice(draggedItemIndex, 1)[0];  // Remove the dragged item
+        config.features.splice(droppedOnIndex, 0, draggedItem);  // Insert it at the new position
+
+        // Re-render the list and SVG
+        updateSVG();
+        renderFeatureList();
+      }
+      draggedItemIndex = null;  // Reset the dragged item index
+    }
+
+    // Helper function to create input fields
+    function createInput(type, value, onChange) {
+      const input = document.createElement('input');
+      input.type = type;
+      input.value = value;
+      input.addEventListener('change', onChange);
+      return input;
+    }
+
+    // Helper function to create buttons
+    function createButton(text, onClick) {
+      const button = document.createElement('button');
+      button.textContent = text;
+      button.addEventListener('click', onClick);
+      return button;
+    }
+
+
+    let config = {
+      width: 1024,
+      height: 1024,
+      features: []
+    };
+
+    function addLine() {
+      config.features.push({
+        type: 'line',
+        slope: 0,      // default slope
+        length: 30,    // default length
+      });
+      updateSVG();  // Automatically update SVG after adding
+      renderFeatureList();
+    }
+
+    function addRap() {
+      config.features.push({
+        type: 'rap',
+        slope: 90,      // default slope
+        length: 100,    // default length
+      });
+      updateSVG();  // Automatically update SVG after adding
+      renderFeatureList();
+    }
+
+    function addPool() {
+      config.features.push({
+        type: 'pool',
+        width: 50,      // default width
+        depth: 20,      // default depth
+      });
+      updateSVG();
+      renderFeatureList();
+    }
+
+    function addAnchor() {
+      config.features.push({
+        type: 'anchor',
+        style: 'bolt',  // default style
+      });
+      updateSVG();
+      renderFeatureList();
+    }
+
+    function addExit() {
+      config.features.push({
+        type: 'exit'
+      });
+      updateSVG();
+      renderFeatureList();
+    }
+
+    document.getElementById('add-rap').addEventListener('click', addRap);
+    document.getElementById('add-line').addEventListener('click', addLine);
+    document.getElementById('add-pool').addEventListener('click', addPool);
+    document.getElementById('add-anchor').addEventListener('click', addAnchor);
+    document.getElementById('add-exit').addEventListener('click', addExit);
+    document.getElementById('load-yaml-button').addEventListener('click', loadYAMLIntoConfig);
+
+    // Set default YAML into the editor
+    const editor = document.getElementById('editor');
+    // editor.value = defaultYAML;
+
+    function displayConfigAsYAML() {
+      const yamlString = jsyaml.dump(config);  // Convert config object to YAML
+      document.getElementById('yaml-textbox').value = yamlString;  // Display it in the text area
+    }
+
+    function loadYAMLIntoConfig() {
+      try {
+        const yamlString = document.getElementById('yaml-textbox').value;  // Get YAML from the text box
+        const newConfig = jsyaml.load(yamlString);  // Parse the YAML into a JavaScript object
+        if (newConfig) {
+          config = newConfig;  // Update the global config object
+          updateSVG();  // Re-render the SVG
+          renderFeatureList();  // Re-render the feature list
+        }
+      } catch (error) {
+        alert('Invalid YAML format. Please fix the errors.');  // Handle invalid YAML
+        console.error(error);
+      }
+    }
+
+    // Function to update the SVG based on YAML configuration
+    function updateSVG() {
+      try {
+        displayConfigAsYAML();
+        console.log(config);
+        //   const config = jsyaml.load(editor.value);
+        const drawInstance = new Draw(config);
+        drawInstance.draw();
+        const svg = drawInstance.generateSVG();
+        document.getElementById('svg-preview').innerHTML = svg;
+      } catch (error) {
+        document.getElementById('svg-preview').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+      }
+    }
+
+    // Event listener for the "Update SVG" button
+    document.getElementById('update-button').addEventListener('click', updateSVG);
+
+    // Initial SVG rendering
+    updateSVG();
+    renderFeatureList();
+  </script>
+
+</body>
+
+</html>
