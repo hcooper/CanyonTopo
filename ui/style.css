@@ -50,8 +50,8 @@ button {
   color: white;
   border: none;
   padding: 10px 15px;
-  margin-right: 10px;
-  margin-bottom: 10px;
+  /* margin-right: 10px;
+  margin-bottom: 10px; */
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -79,6 +79,7 @@ button:disabled {
   padding: 10px;
   background-color: #f9f9f9;
   border-radius: 5px;
+  overflow-y:scroll;
 }
 
 /* Feature list items styling */
@@ -89,7 +90,8 @@ button:disabled {
   border: 1px solid #ddd;
   border-radius: 5px;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  /* justify-content: space-between; */
 }
 
 #feature-list li.dragging {
@@ -154,4 +156,30 @@ button:disabled {
   outline: none;
   border-color: #52ab98;
   box-shadow: 0 0 5px rgba(82, 171, 152, 0.5);
+}
+
+.id_span {
+  background-color: #52ab98;
+  color: white;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 14px;
+  /* font-weight: bold; */
+}
+
+/* button {
+  border: none;
+  padding: 10px 15px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+} */
+
+.type_span {
+  margin-left: auto;
+  font-style: italic;
+  color:#939393;
+  margin-right: 10px;
 }

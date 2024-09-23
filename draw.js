@@ -8,6 +8,7 @@ const DEFAULT_RAP_SLOPE = 90;
 const DEFAULT_POOL_WIDTH = 50;
 const DEFAULT_POOL_DEPTH = 50;
 const DEFAULT_FONT_SIZE = 16;
+const DEFAULT_LINE_BROKEN = false;
 
 const VERT_SCALE = 1.0;
 
@@ -41,11 +42,14 @@ class Draw {
 
     draw() {
       this.config.features.forEach((feature) => {
+        if (feature.hidden) {
+          return; // skip feature flagged as hidden
+        };
         switch (feature.type) {
           case 'line':
             const slope = feature.slope || DEFAULT_LINE_SLOPE;
             const length = feature.length || DEFAULT_LINE_LENGTH;
-            const broken = feature.broken || false;
+            const broken = feature.broken || DEFAULT_LINE_BROKEN;
             const label = feature.label || null;
             this.plot_line(length, slope, broken, label);
             break;
