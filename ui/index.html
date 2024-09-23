@@ -47,10 +47,6 @@
 
       config.features.forEach((feature, index) => {
         const li = document.createElement('li');
-        li.setAttribute('draggable', true);
-        li.addEventListener('dragstart', () => handleDragStart(index));
-        li.addEventListener('dragover', (e) => handleDragOver(e));
-        li.addEventListener('drop', () => handleDrop(index));
 
         // Label input for all features
         const labelInput = createInput('text', feature.label || '', (e) => {
@@ -63,8 +59,15 @@
         id_span.classList.add('id_span');
         id_span.textContent = index;
 
+        id_span.setAttribute('draggable', true);
+        id_span.addEventListener('dragstart', () => handleDragStart(index));
+        id_span.addEventListener('dragover', (e) => handleDragOver(e));
+        id_span.addEventListener('drop', () => handleDrop(index));
+
         li.appendChild(id_span);
         li.appendChild(labelInput);
+
+
 
         // Display parameters and create input fields for editable parameters
         if (feature.type === 'line') {
@@ -84,12 +87,20 @@
             updateSVG();
           });
 
+          const traverseInput = createInput('checkbox', feature.traverse, (e) => {
+            console.log(e);
+            feature.traverse = e.target.checked;
+            updateSVG();
+          });
+
           li.appendChild(document.createTextNode('Length: '));
           li.appendChild(lengthInput);
           li.appendChild(document.createTextNode('Slope: '));
           li.appendChild(slopeInput);
           li.appendChild(document.createTextNode('Broken: '));
           li.appendChild(brokenInput);
+          li.appendChild(document.createTextNode('Traverse: '));
+          li.appendChild(traverseInput);
         }
 
         if (feature.type === 'pool') {
@@ -220,7 +231,8 @@
         type: 'line',
         slope: 0,
         length: 30,
-        broken: true,
+        broken: false,
+        traverse: false,
       });
       updateSVG();
       renderFeatureList();
@@ -282,6 +294,8 @@
       // Create an array to store the processed features
       let processedFeatures = [];
 
+      let yamlString = ``;
+
       // Process each feature
       tempConfig.features.forEach((feature) => {
         if (feature.hidden) {
@@ -296,9 +310,12 @@
         }
       });
 
-      // Recreate the final YAML structure
-      let yamlString = `width: ${tempConfig.width}\n`;
+      // Recreate the final YAML structure TODO: automate this
+      yamlString += `width: ${tempConfig.width}\n`;
       yamlString += `height: ${tempConfig.height}\n`;
+      yamlString += `canyon_name: ${tempConfig.canyon_name}\n`;
+      yamlString += `canyon_location: ${tempConfig.canyon_location}\n`;
+      yamlString += `canyon_grade: ${tempConfig.canyon_grade}\n`;
       yamlString += `features:\n`;
 
       // Add the processed features to the features block
@@ -307,9 +324,6 @@
       // Display the modified YAML string in the text area
       document.getElementById('yaml-textbox').value = yamlString;
     }
-
-
-
 
     function loadYAMLIntoConfig() {
       try {

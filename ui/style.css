@@ -94,22 +94,22 @@ button:disabled {
   /* justify-content: space-between; */
 }
 
-#feature-list li.dragging {
-  opacity: 0.5;
-  background-color: #d0e6e9;
+.id_span:hover {
+  cursor: grab;
 }
+
 
 
 /* Buttons inside list items */
 #feature-list button {
-  background-color: #ff6961;
+  background-color: #ff8077;
   padding: 5px 8px;
   border-radius: 5px;
   font-size: 14px;
 }
 
 #feature-list button:hover {
-  background-color: #ff5c52;
+  background-color: #e11308;
 }
 
 #feature-list button.up,
@@ -166,16 +166,6 @@ button:disabled {
   font-size: 14px;
   /* font-weight: bold; */
 }
-
-/* button {
-  border: none;
-  padding: 10px 15px;
-  margin-right: 10px;
-  margin-bottom: 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-} */
 
 .type_span {
   margin-left: auto;
