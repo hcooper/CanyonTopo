@@ -30,7 +30,7 @@ features:
   
 - type: rap
   length: 125
-  label: R2 DCL 125'
+  label: R2 DCL 125' Corkscrew
   slope: 95
   
 - type: pool
@@ -118,8 +118,13 @@ features:
   width: 50
   depth: 30
   
+- type: anchor
+  style: bolt
+  count: 1
+  
 - type: line
-  length: 10
+  length: 30
+  traverse: true
   
 - type: anchor
   style: bolt
@@ -136,7 +141,7 @@ features:
   
 - type: rap
   length: 60
-  label: R8b
+  label: R8b - Cave Falls
   slope: 95
   
 - type: line
