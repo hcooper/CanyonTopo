@@ -4,18 +4,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SVG Editor</title>
-  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-  <script src="../draw.js"></script>
+  <title>Canyon Topo</title>
+  <script src="deps/js-yaml.min.js"></script>
+  <script src="deps/Sortable.min.js"></script>
+  <script src="lib/draw.js"></script>
+  <script src="lib/dragging.js"></script>
+  <script src="lib/io.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <h1>Canyon Topo Tool</h1>
+  <h1>Canyon Topo</h1>
 
   <div id="container">
-    <div>
+    <div id="leftcol">
       <h2>Feature List</h2>
       <div id="feature-list-container">
         <ul id="feature-list"></ul>
@@ -32,18 +35,16 @@
       <button id="load-yaml-button">Load YAML</button>
     </div>
 
-    <div>
+    <div id="rightcol">
       <h2>Preview</h2>
       <div id="svg-preview"></div>
     </div>
   </div>
 
   <script>
-    let draggedItemIndex = null;
-
     function renderFeatureList() {
       const featureList = document.getElementById('feature-list');
-      featureList.innerHTML = '';  // Clear the list
+      featureList.innerHTML = ''; // Clear the list
 
       config.features.forEach((feature, index) => {
         const li = document.createElement('li');
@@ -59,10 +60,6 @@
         id_span.classList.add('id_span');
         id_span.textContent = index;
 
-        id_span.setAttribute('draggable', true);
-        id_span.addEventListener('dragstart', () => handleDragStart(index));
-        id_span.addEventListener('dragover', (e) => handleDragOver(e));
-        id_span.addEventListener('drop', () => handleDrop(index));
 
         li.appendChild(id_span);
         li.appendChild(labelInput);
@@ -82,13 +79,11 @@
           });
 
           const brokenInput = createInput('checkbox', feature.broken, (e) => {
-            console.log(e);
             feature.broken = e.target.checked;
             updateSVG();
           });
 
           const traverseInput = createInput('checkbox', feature.traverse, (e) => {
-            console.log(e);
             feature.traverse = e.target.checked;
             updateSVG();
           });
@@ -173,28 +168,8 @@
         li.appendChild(deleteButton);
         featureList.appendChild(li);
       });
-    }
 
-    // Handle drag and drop functionality
-    function handleDragStart(index) {
-      draggedItemIndex = index;
-    }
-
-    function handleDragOver(e) {
-      e.preventDefault();  // Allow the drop by preventing the default behavior
-    }
-
-    function handleDrop(droppedOnIndex) {
-      if (draggedItemIndex !== null && draggedItemIndex !== droppedOnIndex) {
-        // Reorder the features array
-        const draggedItem = config.features.splice(draggedItemIndex, 1)[0];  // Remove the dragged item
-        config.features.splice(droppedOnIndex, 0, draggedItem);  // Insert it at the new position
-
-        // Re-render the list and SVG
-        updateSVG();
-        renderFeatureList();
-      }
-      draggedItemIndex = null;  // Reset the dragged item index
+      initializeSortable();
     }
 
     // Helper function to create input fields
@@ -203,9 +178,9 @@
       input.type = type;
       // Set the appropriate value or checked attribute based on the input type
       if (type === 'checkbox') {
-        input.checked = value;  // Use "checked" for checkboxes
+        input.checked = value; // Use "checked" for checkboxes
       } else {
-        input.value = value;  // Use "value" for other input types
+        input.value = value; // Use "value" for other input types
       }
       input.addEventListener('change', onChange);
       return input;
@@ -236,6 +211,7 @@
       });
       updateSVG();
       renderFeatureList();
+      scrollToNewItem();
     }
 
     function addRap() {
@@ -246,6 +222,7 @@
       });
       updateSVG();
       renderFeatureList();
+      scrollToNewItem();
     }
 
     function addPool() {
@@ -256,6 +233,7 @@
       });
       updateSVG();
       renderFeatureList();
+      scrollToNewItem();
     }
 
     function addAnchor() {
@@ -266,6 +244,7 @@
       });
       updateSVG();
       renderFeatureList();
+      scrollToNewItem();
     }
 
     function addExit() {
@@ -274,6 +253,7 @@
       });
       updateSVG();
       renderFeatureList();
+      scrollToNewItem();
     }
 
     document.getElementById('add-rap').addEventListener('click', addRap);
@@ -287,64 +267,13 @@
     const editor = document.getElementById('editor');
     // editor.value = defaultYAML;
 
-    function displayConfigAsYAML() {
-      // Clone the config to avoid modifying the original object
-      const tempConfig = JSON.parse(JSON.stringify(config));
 
-      // Create an array to store the processed features
-      let processedFeatures = [];
-
-      let yamlString = ``;
-
-      // Process each feature
-      tempConfig.features.forEach((feature) => {
-        if (feature.hidden) {
-          // Generate YAML for the hidden feature and comment it out
-          let featureYAML = jsyaml.dump(feature);
-          featureYAML = featureYAML.split('\n').map(line => '# ' + line).join('\n');
-          processedFeatures.push(`# - ${featureYAML.split('\n').join('\n# ')}`);
-        } else {
-          // Generate YAML for visible features, properly formatted as a list item
-          let featureYAML = jsyaml.dump(feature);
-          processedFeatures.push(`- ${featureYAML.split('\n').join('\n  ')}`);
-        }
-      });
-
-      // Recreate the final YAML structure TODO: automate this
-      yamlString += `width: ${tempConfig.width}\n`;
-      yamlString += `height: ${tempConfig.height}\n`;
-      yamlString += `canyon_name: ${tempConfig.canyon_name}\n`;
-      yamlString += `canyon_location: ${tempConfig.canyon_location}\n`;
-      yamlString += `canyon_grade: ${tempConfig.canyon_grade}\n`;
-      yamlString += `features:\n`;
-
-      // Add the processed features to the features block
-      yamlString += processedFeatures.join('\n') + '\n';
-
-      // Display the modified YAML string in the text area
-      document.getElementById('yaml-textbox').value = yamlString;
-    }
-
-    function loadYAMLIntoConfig() {
-      try {
-        const yamlString = document.getElementById('yaml-textbox').value;  // Get YAML from the text box
-        const newConfig = jsyaml.load(yamlString);  // Parse the YAML into a JavaScript object
-        if (newConfig) {
-          config = newConfig;  // Update the global config object
-          updateSVG();  // Re-render the SVG
-          renderFeatureList();  // Re-render the feature list
-        }
-      } catch (error) {
-        alert('Invalid YAML format. Please fix the errors.');  // Handle invalid YAML
-        console.error(error);
-      }
-    }
 
     // Function to update the SVG based on YAML configuration
     function updateSVG() {
       try {
         displayConfigAsYAML();
-        console.log(config);
+        //console.log(config);
         const drawInstance = new Draw(config);
         drawInstance.draw();
         const svg = drawInstance.generateSVG();
