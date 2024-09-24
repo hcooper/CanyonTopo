@@ -73,21 +73,20 @@ class Draw {
   }
 
   plot_anchor(style, count) {
-    for (let i = 0; i < count; i++) {
-      // Handle offset between multiple anchors
-      const size = DEFAULT_ANCHOR_SIZE;
-      const anchor_x = this.current_x + i * 10;
-      const anchor_y = this.current_y - size;
+    const symbols = {
+      bolt: 'X',
+      vthread: 'V',
+      natural: 'N',
+    };
+    const size = DEFAULT_ANCHOR_SIZE;
 
-      const symbols = {
-        bolt: 'X',
-        vthread: 'V',
-        natural: 'N',
-      };
+    let text = "";
+    const anchor_x = this.current_x;
+    const anchor_y = this.current_y - size;
 
-      const text = symbols[style];
-      this.svg_body += `<text x="${anchor_x}" y="${anchor_y}" font-family="Arial" font-size="${size}" fill="red">${text}</text>\n`;
-    }
+    text += symbols[style].repeat(count);
+    this.svg_body += `<text x="${anchor_x}" y="${anchor_y}" text-anchor="middle" font-family="Arial" font-size="${size}" fill="red">${text}</text>\n`;
+
   }
 
   add_label(label) {
@@ -144,7 +143,7 @@ class Draw {
     this.svg_body += `<path d="M ${this.current_x},${this.current_y} A ${width},${depth} 0 0 0 ${end_x},${this.current_y}" fill="lightblue" stroke="black" stroke-width="2"/>\n`;
 
     if (label) this.add_label(label);
-
+    
     this.update_viewbox(end_x, this.current_y + depth);
     this.current_x = end_x;
   }
@@ -160,15 +159,15 @@ class Draw {
       `;
   }
 
-  plot_info_box() {
-    this.svg_body += `
-  <text x="${this.max_x}" y="${this.min_y}" font-family="Arial" fill="black" text-anchor="end" dominant-baseline="hanging">
-    <tspan font-size="60" x="${this.max_x}" dy="0">${this.config.canyon_name}</tspan>
-    <tspan font-size="30" x="${this.max_x}" dy="70">${this.config.canyon_location}</tspan>
-    <tspan font-size="25" x="${this.max_x}" dy="35">${this.config.canyon_grade}</tspan>
-  </text>
-  `;
-  }
+  // plot_info_box() {
+  //   this.svg_body += `
+  // <text x="${this.max_x}" y="${this.min_y}" font-family="Arial" fill="black" text-anchor="end" dominant-baseline="hanging">
+  //   <tspan font-size="60" x="${this.max_x}" dy="0">${this.config.canyon_name}</tspan>
+  //   <tspan font-size="30" x="${this.max_x}" dy="70">${this.config.canyon_location}</tspan>
+  //   <tspan font-size="25" x="${this.max_x}" dy="35">${this.config.canyon_grade}</tspan>
+  // </text>
+  // `;
+  // }
 
   generateSVG() {
     // this.plot_info_box(); // Disabled until scaling fixed
@@ -183,14 +182,13 @@ class Draw {
     const svg_width = this.max_x - this.min_x;
     const svg_height = this.max_y - this.min_y;
 
-    // Plot the info box once we know the size of the viewbox
     const svg_header = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${this.min_x} ${this.min_y} ${svg_width} ${svg_height}" width="100%" height="100%">\n`;
     const svg_footer = '</svg>';
 
     const body = `
         <path d="${this.path}" fill="none" stroke="black" stroke-width="2" stroke-linejoin="round"/>
         ${this.svg_body}
-        <rect x="${this.min_x}" y="${this.min_y}" width="${svg_width}" height="${svg_height}" fill="none" stroke="black" stroke-width="1"/>
+        <rect id="border" x="${this.min_x}" y="${this.min_y}" width="${svg_width}" height="${svg_height}" fill="none" stroke="black" stroke-width="1"/>
       `;
 
     return svg_header + body + svg_footer;
