@@ -34,6 +34,11 @@ class Draw {
   }
 
   update_viewbox(x2, y2) {
+    /*
+    Viewbox size tracking sucks. In theory getBBox() should return the size of an element,
+    but it only works in a DOM and only once the item is rendered. It's also computationally
+    expensive. Instead we have track the boundary as things are added.
+    */
     this.min_x = Math.min(this.min_x, x2, this.current_x);
     this.min_y = Math.min(this.min_y, y2, this.current_y);
     this.max_x = Math.max(this.max_x, x2, this.current_x);
@@ -94,8 +99,22 @@ class Draw {
     const y_offset = -40;
     const font_size = DEFAULT_FONT_SIZE;
 
-    this.svg_body += `<text x="${(this.current_x + x_offset).toFixed(2)}" y="${(this.current_y + y_offset).toFixed(2)}" font-family="Arial" font-size="${font_size}" fill="black">${label}</text>\n`;
-    this.update_viewbox(this.current_x + x_offset, this.current_y + y_offset - font_size);
+    // We have to take a guess where the text will end
+    let est_width = label.length * DEFAULT_FONT_SIZE * 0.6;
+
+    this.svg_body += `
+      <text 
+        x="${(this.current_x + x_offset).toFixed(2)}" 
+        y="${(this.current_y + y_offset).toFixed(2)}" 
+        font-family="Arial" 
+        font-size="${font_size}" 
+        fill="black">
+          ${label}
+      </text>
+      \n
+    `;
+
+    this.update_viewbox(this.current_x + x_offset + est_width, this.current_y + y_offset - font_size);
   }
 
   plot_line(length = 100, slope = 90, broken = false, label = null, traverse = false) {
@@ -143,7 +162,7 @@ class Draw {
     this.svg_body += `<path d="M ${this.current_x},${this.current_y} A ${width},${depth} 0 0 0 ${end_x},${this.current_y}" fill="lightblue" stroke="black" stroke-width="2"/>\n`;
 
     if (label) this.add_label(label);
-    
+
     this.update_viewbox(end_x, this.current_y + depth);
     this.current_x = end_x;
   }
