@@ -191,3 +191,9 @@ button:disabled {
 .highlight {
   background-color: #f3ef83 !important;
 }
+
+.highlight-svg {
+  stroke: red;  /* Change stroke color */
+  stroke-width: 4;  /* Increase stroke width */
+  transition: stroke 0.3s ease, stroke-width 0.3s ease;  /* Smooth transition */
+}

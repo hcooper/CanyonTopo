@@ -2,19 +2,19 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Canyon Topo</title>
   <script src="deps/js-yaml.min.js"></script>
   <script src="deps/Sortable.min.js"></script>
   <script src="lib/draw.js"></script>
   <script src="lib/dragging.js"></script>
   <script src="lib/io.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <script src="lib/highlight.js"></script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-
   <h1>Canyon Topo</h1>
 
   <div id="container">
@@ -23,16 +23,17 @@
       <div id="feature-list-container">
         <ul id="feature-list"></ul>
       </div>
-      <br>
+      <br />
       <button id="add-line">Add Line</button>
       <button id="add-rap">Add Rap</button>
       <button id="add-pool">Add Pool</button>
       <button id="add-anchor">Add Anchor</button>
       <button id="add-exit">Add Exit</button>
       <button id="update-button">Update SVG</button>
-      <br><br>
-      <textarea id="yaml-textbox" cols="100" rows="30"></textarea><br>
+      <br /><br />
+      <textarea id="yaml-textbox" cols="100" rows="30"></textarea><br />
       <button id="load-yaml-button">Load YAML</button>
+      <input type="checkbox" id="highlight-checkbox" />Highlight Mode
     </div>
 
     <div id="rightcol">
@@ -42,159 +43,133 @@
   </div>
 
   <script>
-    function addHoverEvents() {
-      const svgElements = document.querySelectorAll(['text','line', 'path']);
-      svgElements.forEach((element) => {
-        element.addEventListener('mouseover', function () {
-          const index = element.getAttribute('data-index');
-          highlightListItem(index);
-        });
-        element.addEventListener('mouseout', function () {
-          const index = element.getAttribute('data-index');
-          removeHighlightFromListItem(index);
-        });
-      });
+    highlight_mode = false;
+
+    function refresh() {
+      updateSVG();
+      renderFeatureList();
+      addHightlightEvents();
     }
-
-    function highlightListItem(index) {
-      const listItem = document.querySelector(`#list-item-${index}`);
-      if (listItem) {
-        scrollToItem(index);
-        listItem.classList.add('highlight');
-        
-      }
-    }
-
-    function removeHighlightFromListItem(index) {
-      const listItem = document.querySelector(`#list-item-${index}`);
-      if (listItem) {
-        listItem.classList.remove('highlight');
-      }
-    }
-
-
 
     function renderFeatureList() {
-      const featureList = document.getElementById('feature-list');
-      featureList.innerHTML = ''; // Clear the list
+      const featureList = document.getElementById("feature-list");
+      featureList.innerHTML = ""; // Clear the list
 
       config.features.forEach((feature, index) => {
-        const li = document.createElement('li');
+        const li = document.createElement("li");
         li.id = `list-item-${index}`; // Assign a unique ID to each list item
+        li.classList.add("feature-list-item");
 
         // Label input for all features
-        const labelInput = createInput('text', feature.label || '', (e) => {
+        const labelInput = createInput("text", feature.label || "", (e) => {
           feature.label = e.target.value;
           updateSVG();
         });
 
         // Row numbers
-        const id_span = document.createElement('span');
-        id_span.classList.add('id_span');
+        const id_span = document.createElement("span");
+        id_span.classList.add("id_span");
         id_span.textContent = index;
-
 
         li.appendChild(id_span);
         li.appendChild(labelInput);
 
-
-
         // Display parameters and create input fields for editable parameters
-        if (feature.type === 'line') {
-          const lengthInput = createInput('number', feature.length, (e) => {
+        if (feature.type === "line") {
+          const lengthInput = createInput("number", feature.length, (e) => {
             feature.length = parseFloat(e.target.value);
             updateSVG();
           });
 
-          const slopeInput = createInput('number', feature.slope, (e) => {
+          const slopeInput = createInput("number", feature.slope, (e) => {
             feature.slope = parseFloat(e.target.value);
             updateSVG();
           });
 
-          const brokenInput = createInput('checkbox', feature.broken, (e) => {
+          const brokenInput = createInput("checkbox", feature.broken, (e) => {
             feature.broken = e.target.checked;
             updateSVG();
           });
 
-          const traverseInput = createInput('checkbox', feature.traverse, (e) => {
-            feature.traverse = e.target.checked;
-            updateSVG();
-          });
+          const traverseInput = createInput(
+            "checkbox",
+            feature.traverse,
+            (e) => {
+              feature.traverse = e.target.checked;
+              updateSVG();
+            }
+          );
 
-          li.appendChild(document.createTextNode('Length: '));
+          li.appendChild(document.createTextNode("Length: "));
           li.appendChild(lengthInput);
-          li.appendChild(document.createTextNode('Slope: '));
+          li.appendChild(document.createTextNode("Slope: "));
           li.appendChild(slopeInput);
-          li.appendChild(document.createTextNode('Broken: '));
+          li.appendChild(document.createTextNode("Broken: "));
           li.appendChild(brokenInput);
-          li.appendChild(document.createTextNode('Traverse: '));
+          li.appendChild(document.createTextNode("Traverse: "));
           li.appendChild(traverseInput);
         }
 
-        if (feature.type === 'pool') {
-          const widthInput = createInput('number', feature.width, (e) => {
+        if (feature.type === "pool") {
+          const widthInput = createInput("number", feature.width, (e) => {
             feature.width = parseFloat(e.target.value);
             updateSVG();
           });
 
-          const depthInput = createInput('number', feature.depth, (e) => {
+          const depthInput = createInput("number", feature.depth, (e) => {
             feature.depth = parseFloat(e.target.value);
             updateSVG();
           });
 
-          li.appendChild(document.createTextNode('Width: '));
+          li.appendChild(document.createTextNode("Width: "));
           li.appendChild(widthInput);
-          li.appendChild(document.createTextNode('Depth: '));
+          li.appendChild(document.createTextNode("Depth: "));
           li.appendChild(depthInput);
         }
 
-        if (feature.type === 'rap') {
-          const lengthInput = createInput('number', feature.length, (e) => {
+        if (feature.type === "rap") {
+          const lengthInput = createInput("number", feature.length, (e) => {
             feature.length = parseFloat(e.target.value);
             updateSVG();
           });
 
-          const slopeInput = createInput('number', feature.slope, (e) => {
+          const slopeInput = createInput("number", feature.slope, (e) => {
             feature.slope = parseFloat(e.target.value);
             updateSVG();
           });
 
-          li.appendChild(document.createTextNode('Length: '));
+          li.appendChild(document.createTextNode("Length: "));
           li.appendChild(lengthInput);
-          li.appendChild(document.createTextNode('Slope: '));
+          li.appendChild(document.createTextNode("Slope: "));
           li.appendChild(slopeInput);
         }
 
-        if (feature.type === 'anchor') {
-          const countInput = createInput('number', feature.count, (e) => {
+        if (feature.type === "anchor") {
+          const countInput = createInput("number", feature.count, (e) => {
             feature.count = parseFloat(e.target.value);
             updateSVG();
           });
 
-          const styleInput = createInput('text', feature.style, (e) => {
+          const styleInput = createInput("text", feature.style, (e) => {
             feature.style = e.target.value;
             updateSVG();
           });
 
-          li.appendChild(document.createTextNode('Count: '));
+          li.appendChild(document.createTextNode("Count: "));
           li.appendChild(countInput);
-          li.appendChild(document.createTextNode('Style: '));
+          li.appendChild(document.createTextNode("Style: "));
           li.appendChild(styleInput);
-
         }
 
-        const type_span = document.createElement('span');
-        type_span.classList.add('type_span');
+        const type_span = document.createElement("span");
+        type_span.classList.add("type_span");
         type_span.textContent = feature.type;
         li.appendChild(type_span);
 
-
-
         // Add buttons for deleting
-        const deleteButton = createButton('X', () => {
+        const deleteButton = createButton("X", () => {
           config.features.splice(index, 1);
-          updateSVG();
-          renderFeatureList();
+          refresh();
         });
 
         // Append buttons and input fields to the list item
@@ -203,128 +178,130 @@
       });
 
       initializeSortable();
+      addHightlightEvents(); // we force a refresh because of a load-time delay
     }
 
     // Helper function to create input fields
     function createInput(type, value, onChange) {
-      const input = document.createElement('input');
+      const input = document.createElement("input");
       input.type = type;
       // Set the appropriate value or checked attribute based on the input type
-      if (type === 'checkbox') {
+      if (type === "checkbox") {
         input.checked = value; // Use "checked" for checkboxes
       } else {
         input.value = value; // Use "value" for other input types
       }
-      input.addEventListener('change', onChange);
+      input.addEventListener("change", onChange);
       return input;
     }
 
     // Helper function to create buttons
     function createButton(text, onClick) {
-      const button = document.createElement('button');
+      const button = document.createElement("button");
       button.textContent = text;
-      button.addEventListener('click', onClick);
+      button.addEventListener("click", onClick);
       return button;
     }
-
 
     let config = {
       width: 1024,
       height: 1024,
-      features: []
+      features: [],
     };
 
     function addLine() {
       config.features.push({
-        type: 'line',
+        type: "line",
         slope: 0,
         length: 30,
         broken: false,
         traverse: false,
       });
-      updateSVG();
-      renderFeatureList();
+      refresh();
       scrollToNewItem();
     }
 
     function addRap() {
       config.features.push({
-        type: 'rap',
+        type: "rap",
         slope: 90,
         length: 100,
       });
-      updateSVG();
-      renderFeatureList();
+      refresh();
       scrollToNewItem();
     }
 
     function addPool() {
       config.features.push({
-        type: 'pool',
+        type: "pool",
         width: 50,
         depth: 20,
       });
-      updateSVG();
-      renderFeatureList();
+      refresh();
       scrollToNewItem();
     }
 
     function addAnchor() {
       config.features.push({
-        type: 'anchor',
-        style: 'bolt',
+        type: "anchor",
+        style: "bolt",
         count: 1,
       });
-      updateSVG();
-      renderFeatureList();
+      refresh();
       scrollToNewItem();
     }
 
     function addExit() {
       config.features.push({
-        type: 'exit',
+        type: "exit",
       });
-      updateSVG();
-      renderFeatureList();
+      refresh();
       scrollToNewItem();
     }
 
-    document.getElementById('add-rap').addEventListener('click', addRap);
-    document.getElementById('add-line').addEventListener('click', addLine);
-    document.getElementById('add-pool').addEventListener('click', addPool);
-    document.getElementById('add-anchor').addEventListener('click', addAnchor);
-    document.getElementById('add-exit').addEventListener('click', addExit);
-    document.getElementById('load-yaml-button').addEventListener('click', loadYAMLIntoConfig);
+    document.getElementById("add-rap").addEventListener("click", addRap);
+    document.getElementById("add-line").addEventListener("click", addLine);
+    document.getElementById("add-pool").addEventListener("click", addPool);
+    document
+      .getElementById("add-anchor")
+      .addEventListener("click", addAnchor);
+    document.getElementById("add-exit").addEventListener("click", addExit);
+    document
+      .getElementById("load-yaml-button")
+      .addEventListener("click", loadYAMLIntoConfig);
+    document
+      .getElementById("update-button")
+      .addEventListener("click", updateSVG);
+    document
+      .getElementById("highlight-checkbox")
+      .addEventListener("change", function () {
+        if (this.checked) {
+          highlight_mode = true;
+        } else {
+          highlight_mode = false;
+        }
+      });
 
-    // Set default YAML into the editor
-    const editor = document.getElementById('editor');
-    // editor.value = defaultYAML;
+    const traverseInput = createInput("checkbox", feature.traverse, (e) => {
+      feature.traverse = e.target.checked;
+    });
 
-
-
-    // Function to update the SVG based on YAML configuration
     function updateSVG() {
       try {
         displayConfigAsYAML();
-        //console.log(config);
         const drawInstance = new Draw(config);
         drawInstance.draw();
         const svg = drawInstance.generateSVG();
-        document.getElementById('svg-preview').innerHTML = svg;
-        addHoverEvents();
+        document.getElementById("svg-preview").innerHTML = svg;
+        addHightlightEvents();
       } catch (error) {
-        document.getElementById('svg-preview').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        document.getElementById(
+          "svg-preview"
+        ).innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
       }
     }
-
-    // Event listener for the "Update SVG" button
-    document.getElementById('update-button').addEventListener('click', updateSVG);
-
-    // Initial SVG rendering
-    updateSVG();
-    renderFeatureList();
+    window.addEventListener("load", refresh);
   </script>
-
 </body>
 
 </html>
