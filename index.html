@@ -42,12 +42,45 @@
   </div>
 
   <script>
+    function addHoverEvents() {
+      const svgElements = document.querySelectorAll(['text','line', 'path']);
+      svgElements.forEach((element) => {
+        element.addEventListener('mouseover', function () {
+          const index = element.getAttribute('data-index');
+          highlightListItem(index);
+        });
+        element.addEventListener('mouseout', function () {
+          const index = element.getAttribute('data-index');
+          removeHighlightFromListItem(index);
+        });
+      });
+    }
+
+    function highlightListItem(index) {
+      const listItem = document.querySelector(`#list-item-${index}`);
+      if (listItem) {
+        scrollToItem(index);
+        listItem.classList.add('highlight');
+        
+      }
+    }
+
+    function removeHighlightFromListItem(index) {
+      const listItem = document.querySelector(`#list-item-${index}`);
+      if (listItem) {
+        listItem.classList.remove('highlight');
+      }
+    }
+
+
+
     function renderFeatureList() {
       const featureList = document.getElementById('feature-list');
       featureList.innerHTML = ''; // Clear the list
 
       config.features.forEach((feature, index) => {
         const li = document.createElement('li');
+        li.id = `list-item-${index}`; // Assign a unique ID to each list item
 
         // Label input for all features
         const labelInput = createInput('text', feature.label || '', (e) => {
@@ -278,6 +311,7 @@
         drawInstance.draw();
         const svg = drawInstance.generateSVG();
         document.getElementById('svg-preview').innerHTML = svg;
+        addHoverEvents();
       } catch (error) {
         document.getElementById('svg-preview').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
       }
