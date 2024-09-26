@@ -11,6 +11,7 @@
   <script src="lib/dragging.js"></script>
   <script src="lib/io.js"></script>
   <script src="lib/highlight.js"></script>
+  <script src="lib/wiki.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -33,6 +34,7 @@
       <br /><br />
       <textarea id="yaml-textbox" cols="100" rows="30"></textarea><br />
       <button id="load-yaml-button">Load YAML</button>
+      <button id="save-btn">Save to RW</button>
       <input type="checkbox" id="highlight-checkbox" />Highlight Mode
     </div>
 
@@ -43,6 +45,13 @@
   </div>
 
   <script>
+
+    document.getElementById('save-btn').addEventListener('click', function() {
+      const newYamlContent = document.getElementById('yaml-textbox').value;
+      const pageName = 'Big.yaml'; // Adjust the page name if needed
+      saveChangesToMediaWiki(pageName, newYamlContent);
+    });
+
     highlight_mode = false;
 
     function refresh() {
@@ -281,10 +290,6 @@
           highlight_mode = false;
         }
       });
-
-    const traverseInput = createInput("checkbox", feature.traverse, (e) => {
-      feature.traverse = e.target.checked;
-    });
 
     function updateSVG() {
       try {
