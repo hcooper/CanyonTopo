@@ -1,0 +1,22 @@
+
+  <defs>
+    <marker id="warn_arrowhead" markerWidth="10" markerHeight="7" 
+            refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="black" />
+    </marker>
+  </defs>
+
+  <g transform="scale(0.3, 0.3), translate(100, 450)">
+  <path d="m 0 0 q -20 0 -20 20 l 0 60 q 0 20 20 20 l 150 0" 
+            stroke="black" stroke-width="3" fill="none" 
+            marker-end="url(#warn_arrowhead)"
+            />
+
+  <text dx="80" dy="65" font-family="Arial" font-size="60" fill="red" text-anchor="middle">!</text>
+
+
+  <path d="m 160 100 q 20 0 20 -20 l 0 -60 q 0 -20 -20 -20 l -150 0"
+            stroke="black" stroke-width="3" fill="none" 
+            marker-end="url(#warn_arrowhead)"
+            />
+  </g>
