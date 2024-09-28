@@ -9,11 +9,11 @@ body {
 }
 
 /* Container styling */
-#container {
+#topocontainer {
   display: flex;
-  gap: 40px;
+  gap: 20px;
   justify-content: space-between;
-  padding: 20px;
+  padding: 5px;
   padding-top: 0px;
   background-color: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -68,15 +68,19 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Feature list styling */
+/* Used to override mediawiki */
+ul#feature-list {
+  margin:0px;
+}
+
 #feature-list {
   list-style: none;
   padding: 0;
 }
 
 #feature-list-container {
-  height: 500px;  /* Adjust this value as needed */
-  overflow-y: auto;  /* Enables vertical scrolling */
+  height: 500px;
+  overflow-y: auto;
   border: 1px solid #ddd;
   padding: 10px;
   background-color: #f9f9f9;
@@ -100,11 +104,12 @@ button:disabled {
   cursor: grab;
 }
 
-
+#feature-list .delete_button {
+  background-color: #ff8077;
+}
 
 /* Buttons inside list items */
 #feature-list button {
-  background-color: #ff8077;
   padding: 5px 8px;
   border-radius: 5px;
   font-size: 14px;
@@ -190,12 +195,22 @@ button:disabled {
   animation: fadeIn 0.25s ease-in-out; /* 1 second fade-in */
 }
 
-.highlight {
+.topo-highlight {
   background-color: #f3ef83 !important;
 }
 
-.highlight-svg {
+.topo-highlight-svg {
   stroke: red;  /* Change stroke color */
   stroke-width: 4;  /* Increase stroke width */
   transition: stroke 0.3s ease, stroke-width 0.3s ease;  /* Smooth transition */
+}
+
+.inlineButtons{
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+#inlineButtons.inlineButtons button{
+  padding: 10px;
+  margin: 5px;
 }
