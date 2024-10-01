@@ -26,12 +26,12 @@ body {
 }
 
 /* Headers */
-h1,
+/* h1,
 h2 {
   font-family: 'Poppins', sans-serif;
   color: #2b6777;
   text-align: center;
-}
+} */
 
 /* Textarea styling */
 #yaml-textbox {
@@ -112,7 +112,7 @@ ul#feature-list {
 #feature-list button {
   padding: 5px 8px;
   border-radius: 5px;
-  font-size: 14px;
+  /* font-size: 14px; */
 }
 
 #feature-list button:hover {
@@ -205,12 +205,14 @@ ul#feature-list {
   transition: stroke 0.3s ease, stroke-width 0.3s ease;  /* Smooth transition */
 }
 
-.inlineButtons{
+.inlineButtons,
+.inlineButtons-static{
   text-align: center;
   margin-bottom: 5px;
 }
 
-#inlineButtons.inlineButtons button{
+#inlineButtons.inlineButtons button,
+#inlineButtons-static.inlineButtons-static button {
   padding: 10px;
   margin: 5px;
 }
