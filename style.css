@@ -96,8 +96,14 @@ ul#feature-list {
   border: 1px solid #ddd;
   border-radius: 5px;
   display: flex;
-  align-items: center;
-  /* justify-content: space-between; */
+  flex-direction: column;
+}
+
+/* Break feature styling with horizontal line */
+#feature-list li.break-feature {
+  border-bottom: 3px solid #52ab98;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
 }
 
 .id_span:hover {
