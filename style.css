@@ -108,6 +108,11 @@ ul#feature-list {
   background-color: #ff8077;
 }
 
+#feature-list .plus_button {
+  background-color: #52ab98;
+  margin-right: 5px;
+}
+
 /* Buttons inside list items */
 #feature-list button {
   padding: 5px 8px;
@@ -115,8 +120,12 @@ ul#feature-list {
   /* font-size: 14px; */
 }
 
-#feature-list button:hover {
+#feature-list .delete_button:hover {
   background-color: #e11308;
+}
+
+#feature-list .plus_button:hover {
+  background-color: #417f78;
 }
 
 #feature-list button.up,
