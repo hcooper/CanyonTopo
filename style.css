@@ -76,6 +76,7 @@ ul#feature-list {
 #feature-list {
   list-style: none;
   padding: 0;
+  width: 100%;
 }
 
 #feature-list-container {
@@ -86,9 +87,10 @@ ul#feature-list {
   background-color: #f9f9f9;
   border-radius: 5px;
   overflow-y:scroll;
+  width: 800px;
 }
 
-/* Feature list items styling */
+/* Feature list items styling with horizontal scrolling */
 #feature-list li {
   margin-bottom: 10px;
   padding: 5px;
@@ -97,6 +99,8 @@ ul#feature-list {
   border-radius: 5px;
   display: flex;
   flex-direction: column;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 /* Break feature styling with horizontal line */
