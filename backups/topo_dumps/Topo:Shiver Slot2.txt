@@ -1,0 +1,308 @@
+canyon_name: Wallace
+features:
+- type: line
+  slope: 0
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 85
+  length: 100
+  label: R1
+  labelOffsetX: 10
+  labelOffsetY: -40
+  
+- type: line
+  slope: 8
+  length: 30
+  shorten: false
+  traverse: false
+  label: Rooster Tail
+  labelOffsetX: 6.121727666152154
+  labelOffsetY: -73.00237470114234
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: line
+  slope: 0
+  length: 40
+  shorten: false
+  traverse: true
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 85
+  length: 45
+  label: R2
+  
+- type: pool
+  width: 30
+  depth: 20
+  
+- type: line
+  slope: -15
+  length: 10
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 2
+  anchorOffsetX: -0.9575653076171875
+  anchorOffsetY: -15.957572937011719
+  
+- type: rap
+  slope: 85
+  length: 100
+  label: R3
+  
+- type: pool
+  width: 50
+  depth: 30
+  
+- type: line
+  slope: -45
+  length: 15
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 85
+  length: 50
+  label: R4 or J
+  
+- type: pool
+  width: 40
+  depth: 20
+  
+- type: line
+  slope: 0
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: natural
+  count: 1
+  
+- type: rap
+  slope: 80
+  length: 55
+  label: R5 (tree)
+  
+- type: line
+  slope: 15
+  length: 60
+  shorten: true
+  traverse: false
+  label: Creekwalk
+  labelOffsetX: 37.80214323497995
+  labelOffsetY: -10.606417265449238
+  
+- type: break
+  restart_x: 20
+  restart_y: 400
+  
+- type: line
+  slope: 15
+  length: 60
+  shorten: true
+  traverse: false
+  
+- type: rap
+  slope: 75
+  length: 30
+  label: J & mini rap
+  labelOffsetX: 4.333420919744981
+  labelOffsetY: -20.178312763835947
+  
+- type: pool
+  width: 30
+  depth: 10
+  
+- type: line
+  slope: 15
+  length: 50
+  shorten: false
+  traverse: false
+  
+- type: exit
+  label: To viewpoint
+  labelOffsetX: 32.31083873168933
+  labelOffsetY: -64.1353209218243
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 55
+  length: 60
+  label: R6 (Wet)
+  labelOffsetX: -36.551653173565455
+  labelOffsetY: -35.62720582325903
+  
+- type: anchor
+  style: bolt
+  count: 2
+  anchorOffsetX: 12.7437744140625
+  anchorOffsetY: -10.7520751953125
+  
+- type: rap
+  slope: 83
+  length: 170
+  label: R7 (Wet)
+  labelOffsetX: 12.831875676392542
+  labelOffsetY: -35.753834030910355
+  
+- type: anchor
+  style: bolt
+  count: 1
+  anchorOffsetX: 14.15972900390625
+  anchorOffsetY: -12.1680908203125
+  
+- type: rap
+  slope: 69
+  length: 80
+  label: R8 (Wet)
+  labelOffsetX: 28.406451223522822
+  labelOffsetY: -44.24441319608775
+  
+- type: pool
+  width: 60
+  depth: 40
+  
+- type: line
+  slope: 15
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 85
+  length: 70
+  label: R9
+  
+- type: pool
+  width: 25
+  depth: 10
+  
+- type: exit
+  label: Up use trail
+  labelOffsetX: 17.41545396618187
+  labelOffsetY: -57.521989615431266
+  
+- type: break
+  restart_x: 20
+  restart_y: 800
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 75
+  length: 40
+  label: R10
+  labelOffsetX: -3.8824334468853294
+  labelOffsetY: -35.370246587178485
+  
+- type: pool
+  width: 30
+  depth: 16
+  
+- type: line
+  slope: 15
+  length: 90
+  shorten: true
+  traverse: false
+  
+- type: exit
+  label: to picnic shelter
+  labelOffsetX: 27.380714366992407
+  labelOffsetY: -59.17201175922719
+  
+- type: anchor
+  style: natural
+  count: 1
+  
+- type: rap
+  slope: 80
+  length: 40
+  label: R11 or J
+  labelOffsetX: -36.40224156562476
+  labelOffsetY: -35.851823770945884
+  
+- type: pool
+  width: 40
+  depth: 30
+  
+- type: exit
+  label: scramble to shelter
+  labelOffsetX: 5.826752592346452
+  labelOffsetY: -60.83179258284042
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 85
+  length: 60
+  label: R12 (Wet)
+  labelOffsetX: -48.01599032757542
+  labelOffsetY: -35.03040098127792
+  
+- type: line
+  slope: 5
+  length: 100
+  shorten: true
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 1
+  
+- type: rap
+  slope: 85
+  length: 60
+  label: R13 (Wet)
+  
+- type: pool
+  width: 50
+  depth: 20
+  
+- type: anchor
+  style: natural
+  count: 1
+  
+- type: rap
+  slope: 60
+  length: 60
+  label: R14
+  
+- type: line
+  slope: 5
+  length: 50
+  shorten: true
+  traverse: false
+  
+- type: exit
