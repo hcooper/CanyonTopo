@@ -1,0 +1,367 @@
+canyon_name: Wallace River Canyon
+canyon_location: WA
+canyon_grade: v4a3 III
+start_x: 38
+start_y: 172
+features:
+- type: line
+  slope: 0
+  length: 30
+  shorten: false
+  traverse: false
+  label: Upper Section
+  labelOffsetX: -10
+  labelOffsetY: -68
+  textStyle: 'font-weight: bold;'
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 85
+  length: 100
+  label: R1
+  labelOffsetX: 10
+  labelOffsetY: -40
+  textStyle: ''
+  
+- type: line
+  slope: 8
+  length: 30
+  shorten: false
+  traverse: false
+  label: Rooster Tail
+  labelOffsetX: 7
+  labelOffsetY: -66
+  textStyle: 'font-style: italic;'
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: line
+  slope: 0
+  length: 40
+  shorten: false
+  traverse: true
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 85
+  length: 45
+  label: R2
+  labelOffsetX: 20
+  labelOffsetY: -7
+  
+- type: pool
+  width: 30
+  depth: 20
+  
+- type: line
+  slope: -15
+  length: 10
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 2
+  anchorOffsetX: 3
+  anchorOffsetY: -13
+  
+- type: rap
+  slope: 85
+  length: 100
+  label: R3
+  labelOffsetX: 24
+  labelOffsetY: 5
+  
+- type: pool
+  width: 50
+  depth: 30
+  
+- type: line
+  slope: -45
+  length: 15
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 85
+  length: 50
+  label: R4 or J
+  labelOffsetX: 24
+  labelOffsetY: -5
+  
+- type: pool
+  width: 40
+  depth: 20
+  
+- type: line
+  slope: 0
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: natural
+  count: 1
+  
+- type: rap
+  slope: 80
+  length: 55
+  label: R5 (tree)
+  labelOffsetX: 29
+  labelOffsetY: -2
+  
+- type: line
+  slope: 15
+  length: 60
+  shorten: true
+  traverse: false
+  label: Creekwalk
+  labelOffsetX: 41
+  labelOffsetY: -11
+  textStyle: 'font-style: italic;'
+  
+- type: break
+  restart_x: 47
+  restart_y: 543
+  
+- type: line
+  slope: 15
+  length: 60
+  shorten: true
+  traverse: false
+  label: Middle Section
+  labelOffsetX: -13
+  labelOffsetY: -42
+  textStyle: 'font-weight: bold;'
+  
+- type: rap
+  slope: 75
+  length: 30
+  label: J & mini rap
+  labelOffsetX: 6
+  labelOffsetY: -17
+  
+- type: pool
+  width: 30
+  depth: 10
+  
+- type: line
+  slope: 15
+  length: 50
+  shorten: false
+  traverse: false
+  
+- type: exit
+  label: To viewpoint
+  labelOffsetX: 38
+  labelOffsetY: -63
+  textStyle: 'font-style: italic;'
+  
+- type: anchor
+  style: bolt
+  count: 2
+  anchorOffsetX: 0
+  anchorOffsetY: -18
+  
+- type: rap
+  slope: 55
+  length: 60
+  label: R6 (Wet)
+  labelOffsetX: -37
+  labelOffsetY: -36
+  
+- type: anchor
+  style: bolt
+  count: 2
+  anchorOffsetX: 27
+  anchorOffsetY: -16
+  
+- type: rap
+  label: R7 (Wet)
+  sections:
+    - length: 70
+      slope: 45
+    - length: 100
+      slope: 90
+  
+- type: anchor
+  style: bolt
+  count: 1
+  anchorOffsetX: 33
+  anchorOffsetY: -7
+  
+- type: rap
+  slope: 69
+  length: 80
+  label: R8 (Wet)
+  labelOffsetX: 49
+  labelOffsetY: -13
+  
+- type: pool
+  width: 60
+  depth: 40
+  
+- type: line
+  slope: 15
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 2
+  anchorOffsetX: 1
+  anchorOffsetY: -12
+  
+- type: rap
+  slope: 85
+  length: 70
+  label: R9
+  labelOffsetX: 28
+  labelOffsetY: 2
+  
+- type: pool
+  width: 25
+  depth: 10
+  
+- type: exit
+  label: Climb Use Trail
+  labelOffsetX: 21
+  labelOffsetY: -60
+  textStyle: 'font-style: italic;'
+  
+- type: break
+  restart_x: 43
+  restart_y: 1015
+  
+- type: line
+  slope: 0
+  length: 30
+  shorten: false
+  traverse: false
+  label: Lower Section
+  labelOffsetX: -13
+  labelOffsetY: -55
+  textStyle: 'font-weight: bold;'
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 75
+  length: 40
+  label: R10
+  labelOffsetX: 25
+  labelOffsetY: -4
+  
+- type: pool
+  width: 30
+  depth: 16
+  
+- type: line
+  slope: 15
+  length: 90
+  shorten: true
+  traverse: false
+  
+- type: exit
+  label: to picnic shelter
+  labelOffsetX: 57
+  labelOffsetY: -55
+  textStyle: 'font-style: italic;'
+  
+- type: anchor
+  style: natural
+  count: 1
+  anchorOffsetX: -3
+  anchorOffsetY: -16
+  
+- type: rap
+  slope: 80
+  length: 40
+  label: R11 or J
+  labelOffsetX: -36
+  labelOffsetY: -39
+  
+- type: pool
+  width: 40
+  depth: 30
+  
+- type: exit
+  label: scramble to shelter
+  labelOffsetX: 59
+  labelOffsetY: -57
+  textStyle: 'font-style: italic;'
+  
+- type: anchor
+  style: bolt
+  count: 2
+  anchorOffsetX: 0
+  anchorOffsetY: -14
+  
+- type: rap
+  slope: 85
+  length: 60
+  label: R12 (Wet)
+  labelOffsetX: -63
+  labelOffsetY: -37
+  
+- type: line
+  slope: 5
+  length: 100
+  shorten: true
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 1
+  anchorOffsetX: 4
+  anchorOffsetY: -15
+  
+- type: rap
+  slope: 85
+  length: 60
+  label: R13 (Wet)
+  labelOffsetX: 24
+  labelOffsetY: 10
+  
+- type: pool
+  width: 50
+  depth: 20
+  
+- type: anchor
+  style: natural
+  count: 1
+  anchorOffsetX: 1
+  anchorOffsetY: -14
+  
+- type: rap
+  slope: 60
+  length: 60
+  label: R14
+  labelOffsetX: 22
+  labelOffsetY: -7
+  
+- type: line
+  slope: 5
+  length: 60
+  shorten: true
+  traverse: false
+  
+- type: exit
+  label: stream confluence
+  labelOffsetX: -7
+  labelOffsetY: -68

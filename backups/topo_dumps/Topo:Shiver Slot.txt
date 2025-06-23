@@ -1,0 +1,177 @@
+canyon_name: Shiver Slot
+features:
+- type: line
+  slope: 15
+  length: 100
+  shorten: true
+  traverse: false
+  
+- type: anchor
+  style: natural
+  count: 1
+  
+- type: rap
+  slope: 45
+  length: 60
+  label: R1 (Tree)
+  
+- type: anchor
+  style: bolt
+  count: 1
+  
+- type: rap
+  slope: 50
+  length: 80
+  label: R2
+  
+- type: anchor
+  style: bolt
+  count: 1
+  
+- type: rap
+  label: R3
+  sections:
+    - length: 40
+      slope: 45
+    - length: 145
+      slope: 90
+  
+- type: line
+  slope: 10
+  length: 45
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 1
+  
+- type: rap
+  slope: 85
+  length: 70
+  label: R4
+  
+- type: line
+  slope: 10
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 1
+  
+- type: rap
+  slope: 85
+  length: 50
+  label: R5
+  
+- type: pool
+  width: 50
+  depth: 20
+  
+- type: anchor
+  style: bolt
+  count: 2
+  
+- type: rap
+  slope: 85
+  length: 50
+  label: R6
+  
+- type: line
+  slope: 0
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: line
+  slope: 45
+  length: 30
+  shorten: false
+  traverse: false
+  label: downclimb
+  
+- type: line
+  slope: 0
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 1
+  
+- type: rap
+  slope: 80
+  length: 31
+  label: R7
+  
+- type: line
+  slope: 15
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 1
+  anchorOffsetX: 0
+  anchorOffsetY: -15
+  
+- type: line
+  slope: 0
+  length: 25
+  shorten: false
+  traverse: true
+  
+- type: anchor
+  style: bolt
+  count: 1
+  anchorOffsetX: 0
+  anchorOffsetY: -15
+  
+- type: rap
+  slope: 85
+  length: 60
+  label: R8
+  labelOffsetX: 7
+  labelOffsetY: -35
+  
+- type: line
+  slope: 0
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: anchor
+  style: bolt
+  count: 1
+  anchorOffsetX: 2
+  anchorOffsetY: -13
+  
+- type: rap
+  slope: 45
+  length: 20
+  label: R9
+  labelOffsetX: 5
+  labelOffsetY: -29
+  
+- type: anchor
+  style: bolt
+  count: 2
+  anchorOffsetX: 22
+  anchorOffsetY: -5
+  
+- type: rap
+  slope: 95
+  length: 100
+  label: R10
+  labelOffsetX: 22
+  labelOffsetY: -22
+  
+- type: pool
+  width: 50
+  depth: 20
+  
+- type: exit

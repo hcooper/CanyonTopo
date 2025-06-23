@@ -1,0 +1,68 @@
+canyon_name: Twin Falls
+features:
+- type: anchor
+  style: natural
+  count: 1
+
+- type: rap
+  slope: 85
+  length: 105
+  label: R1
+
+- type: pool
+  width: 50
+  depth: 20
+
+- type: anchor
+  style: bolt
+  count: 2
+
+- type: rap
+  slope: 85
+  length: 60
+  label: R2
+
+- type: pool
+  width: 40
+  depth: 15
+
+- type: anchor
+  style: bolt
+  count: 2
+
+- type: rap
+  slope: 85
+  length: 50
+  label: R3
+
+- type: pool
+  width: 40
+  depth: 20
+
+- type: anchor
+  style: natural
+  count: 1
+
+- type: rap
+  slope: 85
+  length: 15
+  label: J1
+
+- type: pool
+  width: 40
+  depth: 15
+
+- type: anchor
+  style: bolt
+  count: 2
+
+- type: rap
+  slope: 75
+  length: 140
+  label: R4
+
+- type: pool
+  width: 60
+  depth: 20
+
+- type: exit
