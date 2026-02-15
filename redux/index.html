@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Canyon Topo Editor - Redux</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <script src="lib/topo.js"></script>
+</head>
+
+<body>
+  <div class="header">
+    <h1>Canyon Topo Editor</h1>
+    <p class="instructions">Right-click on the canvas to add features</p>
+  </div>
+
+  <div class="main-container">
+    <div class="canvas-section">
+      <div id="canvas-container"></div>
+    </div>
+
+    <div class="sidebar">
+      <h2>Features</h2>
+      <div id="feature-list"></div>
+
+      <h2>Properties</h2>
+      <div id="properties-panel">
+        <p class="empty-state">Select a feature to edit properties</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
