@@ -1,13 +1,11 @@
 // Canyon Topo Interactive Editor
 // Clean-sheet rewrite with canvas-first approach
 
-class TopoEditor {
+class TopoEditor extends TopoRenderer {
   constructor(containerId) {
-    this.container = document.getElementById(containerId);
-    this.width = 1240;
-    this.height = 1240;
-    this.gridSize = 10;
-    this.features = [];
+    super(containerId); // sets container, width, height, gridSize, features, zoom/pan state
+
+    // Editor-specific state
     this.selectedFeature = null;
     this.nextId = 0;
     this.snapToGrid = true; // Snap-to-grid enabled by default
@@ -25,42 +23,25 @@ class TopoEditor {
   }
 
   init() {
-    this.createCanvas();
+    super.init(); // createCanvas(), drawGrid(), attachEventListeners()
     this.createControls();
-    this.drawGrid();
-    this.attachEventListeners();
     this.updatePropertiesPanel(null); // Initialize empty properties panel
+    this.renderFeatureList(); // Initialize empty feature list
     this.saveState(); // Save initial empty state
   }
 
   createCanvas() {
-    // Create SVG element
-    this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    this.svg.setAttribute('width', this.width);
-    this.svg.setAttribute('height', this.height);
-    this.svg.style.border = '2px solid #333';
-    this.svg.style.backgroundColor = '#ffffff';
-    this.svg.style.cursor = 'none';
+    super.createCanvas(); // creates svg, gridLayer, featureLayer, appends to container
+    this.svg.style.cursor = 'none'; // hide OS cursor; editor uses its own crosshair
 
-    // Create layers
-    this.gridLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    this.gridLayer.id = 'grid-layer';
-
-    this.featureLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    this.featureLayer.id = 'feature-layer';
-
+    // Add cursor layer on top of featureLayer (editor-only)
     this.cursorLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     this.cursorLayer.id = 'cursor-layer';
     this.cursorLayer.style.pointerEvents = 'none'; // Don't interfere with clicks
-
-    this.svg.appendChild(this.gridLayer);
-    this.svg.appendChild(this.featureLayer);
     this.svg.appendChild(this.cursorLayer);
 
-    // Create cursor indicator
+    // Create cursor indicator elements
     this.createCursor();
-
-    this.container.appendChild(this.svg);
   }
 
   createCursor() {
@@ -101,6 +82,7 @@ class TopoEditor {
     controlsDiv.id = 'canvas-controls';
     controlsDiv.style.marginTop = '10px';
     controlsDiv.style.display = 'flex';
+    controlsDiv.style.flexWrap = 'wrap';
     controlsDiv.style.gap = '15px';
     controlsDiv.style.alignItems = 'center';
 
@@ -168,6 +150,33 @@ class TopoEditor {
     redoBtn.style.fontSize = '20px';
     redoBtn.addEventListener('click', () => this.redo());
 
+    // Zoom In button
+    const zoomInBtn = document.createElement('button');
+    zoomInBtn.textContent = '+';
+    zoomInBtn.title = 'Zoom In';
+    zoomInBtn.style.fontSize = '20px';
+    zoomInBtn.addEventListener('click', () => this.zoomIn());
+
+    // Zoom Out button
+    const zoomOutBtn = document.createElement('button');
+    zoomOutBtn.textContent = '−';
+    zoomOutBtn.title = 'Zoom Out';
+    zoomOutBtn.style.fontSize = '20px';
+    zoomOutBtn.addEventListener('click', () => this.zoomOut());
+
+    // Zoom Reset button
+    const zoomResetBtn = document.createElement('button');
+    zoomResetBtn.textContent = '1:1';
+    zoomResetBtn.title = 'Reset Zoom & Pan';
+    zoomResetBtn.addEventListener('click', () => this.resetView());
+
+    // Zoom level display
+    const zoomDisplay = document.createElement('span');
+    zoomDisplay.id = 'zoom-display';
+    zoomDisplay.style.padding = '0 10px';
+    zoomDisplay.style.fontSize = '14px';
+    zoomDisplay.textContent = '100%';
+
     // Export SVG button
     const exportSvgBtn = document.createElement('button');
     exportSvgBtn.textContent = 'Export SVG';
@@ -188,14 +197,29 @@ class TopoEditor {
     importDataBtn.textContent = 'Import Data';
     importDataBtn.addEventListener('click', () => this.importData());
 
+    // Save to Wiki button
+    const saveWikiBtn = document.createElement('button');
+    saveWikiBtn.id = 'save-wiki-btn';
+    saveWikiBtn.textContent = 'Save to Wiki';
+    saveWikiBtn.addEventListener('click', () => this.saveToWiki());
+
     controlsDiv.appendChild(snapLabel);
     controlsDiv.appendChild(gridSizeLabel);
     controlsDiv.appendChild(undoBtn);
     controlsDiv.appendChild(redoBtn);
+    controlsDiv.appendChild(zoomOutBtn);
+    controlsDiv.appendChild(zoomResetBtn);
+    controlsDiv.appendChild(zoomInBtn);
+    controlsDiv.appendChild(zoomDisplay);
+    const rowBreak = document.createElement('div');
+    rowBreak.style.width = '100%';
+    rowBreak.style.height = '0';
+    controlsDiv.appendChild(rowBreak);
     controlsDiv.appendChild(exportSvgBtn);
     controlsDiv.appendChild(exportPngBtn);
     controlsDiv.appendChild(exportDataBtn);
     controlsDiv.appendChild(importDataBtn);
+    controlsDiv.appendChild(saveWikiBtn);
 
     this.container.appendChild(controlsDiv);
 
@@ -203,36 +227,9 @@ class TopoEditor {
     this.updateUndoRedoButtons();
   }
 
-  drawGrid() {
-    // Clear existing grid
-    this.gridLayer.innerHTML = '';
-
-    // Vertical lines
-    for (let x = 0; x <= this.width; x += this.gridSize) {
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', x);
-      line.setAttribute('y1', 0);
-      line.setAttribute('x2', x);
-      line.setAttribute('y2', this.height);
-      line.setAttribute('stroke', '#e0e0e0');
-      line.setAttribute('stroke-width', x % 50 === 0 ? '1' : '0.5');
-      this.gridLayer.appendChild(line);
-    }
-
-    // Horizontal lines
-    for (let y = 0; y <= this.height; y += this.gridSize) {
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', 0);
-      line.setAttribute('y1', y);
-      line.setAttribute('x2', this.width);
-      line.setAttribute('y2', y);
-      line.setAttribute('stroke', '#e0e0e0');
-      line.setAttribute('stroke-width', y % 50 === 0 ? '1' : '0.5');
-      this.gridLayer.appendChild(line);
-    }
-  }
-
   attachEventListeners() {
+    super.attachEventListeners(); // mouse wheel zoom + middle mouse pan
+
     // Prevent default context menu
     this.svg.addEventListener('contextmenu', (e) => {
       e.preventDefault();
@@ -257,12 +254,12 @@ class TopoEditor {
       this.cursorLayer.style.display = 'none';
     });
 
-    // Left click for line drawing and deselecting
+    // Left click for line/rappel drawing and deselecting
     this.svg.addEventListener('click', (e) => {
       if (this.drawingLine) {
-        const rect = this.svg.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
+        const coords = this.screenToSVGCoords(e);
+        let x = coords.x;
+        let y = coords.y;
 
         if (this.snapToGrid) {
           x = Math.round(x / this.gridSize) * this.gridSize;
@@ -270,6 +267,17 @@ class TopoEditor {
         }
 
         this.finishLine(x, y);
+      } else if (this.drawingRappel) {
+        const coords = this.screenToSVGCoords(e);
+        let x = coords.x;
+        let y = coords.y;
+
+        if (this.snapToGrid) {
+          x = Math.round(x / this.gridSize) * this.gridSize;
+          y = Math.round(y / this.gridSize) * this.gridSize;
+        }
+
+        this.finishRappel(x, y);
       } else {
         // Deselect if clicking on canvas background
         if (e.target === this.svg || e.target.closest('#grid-layer')) {
@@ -295,9 +303,9 @@ class TopoEditor {
   }
 
   updateCursor(e) {
-    const rect = this.svg.getBoundingClientRect();
-    let x = e.clientX - rect.left;
-    let y = e.clientY - rect.top;
+    const coords = this.screenToSVGCoords(e);
+    let x = coords.x;
+    let y = coords.y;
 
     // Check for nearby connection points
     const nearbyPoint = this.findNearbyConnectionPoint(x, y);
@@ -336,10 +344,13 @@ class TopoEditor {
     this.cursorCircle.setAttribute('cx', x);
     this.cursorCircle.setAttribute('cy', y);
 
-    // Update preview line if drawing
+    // Update preview line if drawing line or rappel
     if (this.drawingLine && this.previewLine) {
       this.previewLine.setAttribute('x2', x);
       this.previewLine.setAttribute('y2', y);
+    } else if (this.drawingRappel && this.previewRappel) {
+      this.previewRappel.setAttribute('x2', x);
+      this.previewRappel.setAttribute('y2', y);
     }
   }
 
@@ -384,9 +395,9 @@ class TopoEditor {
   }
 
   showContextMenu(e) {
-    const rect = this.svg.getBoundingClientRect();
-    let x = e.clientX - rect.left;
-    let y = e.clientY - rect.top;
+    const coords = this.screenToSVGCoords(e);
+    let x = coords.x;
+    let y = coords.y;
 
     // Check for nearby connection points first
     const nearbyPoint = this.findNearbyConnectionPoint(x, y);
@@ -407,8 +418,8 @@ class TopoEditor {
     const menu = document.createElement('div');
     menu.id = 'context-menu';
     menu.style.position = 'absolute';
-    menu.style.left = `${e.clientX}px`;
-    menu.style.top = `${e.clientY}px`;
+    menu.style.left = `${e.pageX}px`;
+    menu.style.top = `${e.pageY}px`;
     menu.style.backgroundColor = 'white';
     menu.style.border = '2px solid #333';
     menu.style.borderRadius = '5px';
@@ -417,37 +428,110 @@ class TopoEditor {
     menu.style.zIndex = '1000';
     menu.style.minWidth = '150px';
 
-    // Menu items
-    const items = [
-      { label: 'Add Pool', action: () => this.addPool(x, y) },
-      { label: 'Start Line', action: () => this.startLine(x, y) },
-      { label: 'Add Anchor', action: () => this.addAnchor(x, y) },
-      { label: 'Add Rappel', action: () => this.addRappel(x, y) },
-      { label: 'Add Hazard', action: () => this.addHazard(x, y) },
-      { label: 'Add Exit', action: () => this.addExit(x, y) }
+    // Menu structure with sub-menus
+    const menuStructure = [
+      {
+        label: 'Add',
+        submenu: [
+          { label: 'Pool', action: () => this.addPool(x, y) },
+          { label: 'Anchor', action: () => this.addAnchor(x, y) },
+          { label: 'Hazard', action: () => this.addHazard(x, y) },
+          { label: 'Exit', action: () => this.addExit(x, y) }
+        ]
+      },
+      {
+        label: 'Draw',
+        submenu: [
+          { label: 'Line', action: () => this.startLine(x, y) },
+          { label: 'Rappel', action: () => this.startRappel(x, y) }
+        ]
+      }
     ];
 
-    items.forEach(item => {
+    let activeSubmenu = null;
+
+    menuStructure.forEach(item => {
       const menuItem = document.createElement('div');
-      menuItem.textContent = item.label;
       menuItem.style.padding = '8px 16px';
       menuItem.style.cursor = 'pointer';
       menuItem.style.transition = 'background-color 0.2s';
+      menuItem.style.position = 'relative';
+      menuItem.style.display = 'flex';
+      menuItem.style.justifyContent = 'space-between';
+      menuItem.style.alignItems = 'center';
+
+      const label = document.createElement('span');
+      label.textContent = item.label;
+      menuItem.appendChild(label);
+
+      if (item.submenu) {
+        // Add arrow indicator for submenu
+        const arrow = document.createElement('span');
+        arrow.textContent = '▶';
+        arrow.style.marginLeft = '10px';
+        arrow.style.fontSize = '10px';
+        menuItem.appendChild(arrow);
+      }
 
       menuItem.addEventListener('mouseenter', () => {
         menuItem.style.backgroundColor = '#52ab98';
         menuItem.style.color = 'white';
+
+        // Remove any existing submenu
+        if (activeSubmenu) {
+          activeSubmenu.remove();
+          activeSubmenu = null;
+        }
+
+        // Show submenu if present
+        if (item.submenu) {
+          const submenu = document.createElement('div');
+          submenu.style.position = 'absolute';
+          submenu.style.left = '100%';
+          submenu.style.top = '0';
+          submenu.style.backgroundColor = 'white';
+          submenu.style.border = '2px solid #333';
+          submenu.style.borderRadius = '5px';
+          submenu.style.padding = '5px 0';
+          submenu.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+          submenu.style.minWidth = '130px';
+          submenu.style.zIndex = '1001';
+
+          item.submenu.forEach(subitem => {
+            const subMenuItem = document.createElement('div');
+            subMenuItem.textContent = subitem.label;
+            subMenuItem.style.padding = '8px 16px';
+            subMenuItem.style.cursor = 'pointer';
+            subMenuItem.style.transition = 'background-color 0.2s';
+            subMenuItem.style.color = 'black';
+
+            subMenuItem.addEventListener('mouseenter', () => {
+              subMenuItem.style.backgroundColor = '#52ab98';
+              subMenuItem.style.color = 'white';
+            });
+
+            subMenuItem.addEventListener('mouseleave', () => {
+              subMenuItem.style.backgroundColor = 'transparent';
+              subMenuItem.style.color = 'black';
+            });
+
+            subMenuItem.addEventListener('click', (e) => {
+              e.stopPropagation();
+              subitem.action();
+              this.hideContextMenu();
+            });
+
+            submenu.appendChild(subMenuItem);
+          });
+
+          menuItem.appendChild(submenu);
+          activeSubmenu = submenu;
+        }
       });
 
       menuItem.addEventListener('mouseleave', () => {
         menuItem.style.backgroundColor = 'transparent';
         menuItem.style.color = 'black';
-      });
-
-      menuItem.addEventListener('click', (e) => {
-        e.stopPropagation();
-        item.action();
-        this.hideContextMenu();
       });
 
       menu.appendChild(menuItem);
@@ -481,7 +565,7 @@ class TopoEditor {
   }
 
   addAnchor(x, y) {
-    const size = 15;        // Size of the X
+    const size = 10;        // Size of the X
     const count = 2;        // Default count
     const spacing = size + 3; // Spacing between X marks
 
@@ -527,7 +611,8 @@ class TopoEditor {
       length: length,
       slope: slope,
       curveOffset: -15,  // Default curve offset to the right
-      curvePosition: 0.5  // Position along the line (0=start, 1=end, 0.5=middle)
+      curvePosition: 0.5,  // Position along the line (0=start, 1=end, 0.5=middle)
+      description: ''  // Description text to display next to the rappel
     };
 
     this.features.push(rappel);
@@ -572,61 +657,12 @@ class TopoEditor {
   }
 
   renderExit(exit) {
-    // Create exit group
-    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('data-id', exit.id);
-    group.setAttribute('data-type', 'exit');
+    const group = super.renderExit(exit); // creates visual elements, appends to featureLayer
     group.style.cursor = 'move';
 
+    // Add connection point at the start (for line snapping)
     const x1 = exit.x;
     const y1 = exit.y;
-
-    // Exit arrow goes diagonally up-right at 45 degrees
-    // Calculate end point
-    const angle45 = -Math.PI / 4; // -45 degrees (up and right)
-    const x2 = x1 + exit.length * Math.cos(angle45);
-    const y2 = y1 + exit.length * Math.sin(angle45);
-
-    // Create the line
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('stroke', '#000');
-    line.setAttribute('stroke-width', '3');
-    line.setAttribute('stroke-linecap', 'round');
-    line.setAttribute('class', 'exit-line');
-    group.appendChild(line);
-
-    // Create arrowhead at the end
-    const arrowSize = 10;
-    const arrowWidth = 6;
-
-    // Direction vector (normalized) - 45 degrees up-right
-    const dx = Math.cos(angle45);
-    const dy = Math.sin(angle45);
-
-    // Perpendicular vector
-    const perpX = -dy;
-    const perpY = dx;
-
-    const tipX = x2;
-    const tipY = y2;
-    const base1X = tipX - dx * arrowSize + perpX * arrowWidth;
-    const base1Y = tipY - dy * arrowSize + perpY * arrowWidth;
-    const base2X = tipX - dx * arrowSize - perpX * arrowWidth;
-    const base2Y = tipY - dy * arrowSize - perpY * arrowWidth;
-
-    const arrowhead = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    arrowhead.setAttribute('points', `${tipX},${tipY} ${base1X},${base1Y} ${base2X},${base2Y}`);
-    arrowhead.setAttribute('fill', '#000');
-    arrowhead.setAttribute('stroke', '#000');
-    arrowhead.setAttribute('stroke-width', '1');
-    arrowhead.setAttribute('class', 'exit-arrowhead');
-    group.appendChild(arrowhead);
-
-    // Add connection point at the start (for line snapping)
     const startPoint = this.createConnectionPoint(x1, y1, exit.id, 'start');
     group.appendChild(startPoint);
 
@@ -638,8 +674,6 @@ class TopoEditor {
 
     // Make draggable
     this.makeExitDraggable(group, exit);
-
-    this.featureLayer.appendChild(group);
   }
 
   makeExitDraggable(element, exit) {
@@ -652,9 +686,9 @@ class TopoEditor {
       if (e.target.classList.contains('connection-point')) return;
 
       isDragging = true;
-      const rect = this.svg.getBoundingClientRect();
-      startX = e.clientX - rect.left - exit.x;
-      startY = e.clientY - rect.top - exit.y;
+      const coords = this.screenToSVGCoords(e);
+      startX = coords.x - exit.x;
+      startY = coords.y - exit.y;
       element.style.cursor = 'grabbing';
       e.stopPropagation();
     });
@@ -662,9 +696,9 @@ class TopoEditor {
     this.svg.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
 
-      const rect = this.svg.getBoundingClientRect();
-      let newX = e.clientX - rect.left - startX;
-      let newY = e.clientY - rect.top - startY;
+      const coords = this.screenToSVGCoords(e);
+      let newX = coords.x - startX;
+      let newY = coords.y - startY;
 
       // Snap to grid if enabled
       if (this.snapToGrid) {
@@ -737,60 +771,16 @@ class TopoEditor {
   }
 
   renderAnchor(anchor) {
-    // Create anchor group
-    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('data-id', anchor.id);
-    group.setAttribute('data-type', 'anchor');
+    const group = super.renderAnchor(anchor); // creates X mark visuals, appends to featureLayer
     group.style.cursor = 'move';
 
-    const size = anchor.size;
-    const cx = anchor.x;
-    const cy = anchor.y;
-    const count = anchor.count || 1;
-    const spacing = size + 3; // Horizontal spacing between X marks (size + small gap)
-    const visualOffsetX = 10;  // Visual shift right to avoid overlap with connection point
-    const visualOffsetY = -10; // Visual shift up to avoid overlap with connection point
-
-    // Create multiple X marks based on count (left-to-right, not centered)
-    for (let i = 0; i < count; i++) {
-      // Calculate offset for this X mark (left-to-right from anchor.x)
-      const offsetX = i * spacing;
-
-      // Create X shape with two diagonal lines (with visual offset applied)
-      // Line from top-left to bottom-right
-      const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line1.setAttribute('x1', cx + offsetX - size / 2 + visualOffsetX);
-      line1.setAttribute('y1', cy - size / 2 + visualOffsetY);
-      line1.setAttribute('x2', cx + offsetX + size / 2 + visualOffsetX);
-      line1.setAttribute('y2', cy + size / 2 + visualOffsetY);
-      line1.setAttribute('stroke', '#000');
-      line1.setAttribute('stroke-width', '3');
-      line1.setAttribute('stroke-linecap', 'round');
-      line1.setAttribute('class', 'anchor-line');
-
-      // Line from top-right to bottom-left
-      const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line2.setAttribute('x1', cx + offsetX + size / 2 + visualOffsetX);
-      line2.setAttribute('y1', cy - size / 2 + visualOffsetY);
-      line2.setAttribute('x2', cx + offsetX - size / 2 + visualOffsetX);
-      line2.setAttribute('y2', cy + size / 2 + visualOffsetY);
-      line2.setAttribute('stroke', '#000');
-      line2.setAttribute('stroke-width', '3');
-      line2.setAttribute('stroke-linecap', 'round');
-      line2.setAttribute('class', 'anchor-line');
-
-      group.appendChild(line1);
-      group.appendChild(line2);
-    }
-
-    // Add connection point at the bottom
+    // Add connection point at the anchor's connection location
     const connectionPoint = this.createConnectionPoint(
       anchor.connectionX,
       anchor.connectionY,
       anchor.id,
       'connection'
     );
-
     group.appendChild(connectionPoint);
 
     // Add interactivity
@@ -801,8 +791,6 @@ class TopoEditor {
 
     // Make draggable
     this.makeAnchorDraggable(group, anchor);
-
-    this.featureLayer.appendChild(group);
   }
 
   makeAnchorDraggable(element, anchor) {
@@ -815,9 +803,9 @@ class TopoEditor {
       if (e.target.classList.contains('connection-point')) return;
 
       isDragging = true;
-      const rect = this.svg.getBoundingClientRect();
-      startX = e.clientX - rect.left - anchor.x;
-      startY = e.clientY - rect.top - anchor.y;
+      const coords = this.screenToSVGCoords(e);
+      startX = coords.x - anchor.x;
+      startY = coords.y - anchor.y;
       element.style.cursor = 'grabbing';
       e.stopPropagation();
     });
@@ -825,9 +813,9 @@ class TopoEditor {
     this.svg.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
 
-      const rect = this.svg.getBoundingClientRect();
-      let newX = e.clientX - rect.left - startX;
-      let newY = e.clientY - rect.top - startY;
+      const coords = this.screenToSVGCoords(e);
+      let newX = coords.x - startX;
+      let newY = coords.y - startY;
 
       // Snap to grid if enabled
       if (this.snapToGrid) {
@@ -856,7 +844,7 @@ class TopoEditor {
     const element = this.featureLayer.querySelector(`[data-id="${anchor.id}"]`);
     if (!element) return;
 
-    const size = anchor.size;
+    const size = 7;  // Matches the hardcoded size used in renderAnchor (base class)
     const cx = anchor.x;
     const cy = anchor.y;
     const count = anchor.count || 1;
@@ -871,8 +859,8 @@ class TopoEditor {
 
     // Check if anchor is selected
     const isSelected = this.selectedFeature === anchor.id;
-    const strokeColor = isSelected ? '#ff4444' : '#333';
-    const strokeWidth = isSelected ? '4' : '3';
+    const strokeColor = isSelected ? '#ff4444' : '#000';
+    const strokeWidth = isSelected ? '3' : '2';
 
     // Remove old lines
     lines.forEach(line => line.remove());
@@ -917,70 +905,42 @@ class TopoEditor {
       connectionPoint.setAttribute('cx', anchor.connectionX);
       connectionPoint.setAttribute('cy', anchor.connectionY);
     }
+
+    // Update name text (rendered by base class renderAnchor)
+    let nameText = element.querySelector('.anchor-name');
+    if (anchor.name) {
+      if (nameText) {
+        nameText.setAttribute('x', cx + visualOffsetX + (count - 1) * spacing + size);
+        nameText.setAttribute('y', cy + visualOffsetY);
+        nameText.textContent = anchor.name;
+      } else {
+        // Create new text element if it didn't exist before
+        nameText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        nameText.setAttribute('x', cx + visualOffsetX + (count - 1) * spacing + size);
+        nameText.setAttribute('y', cy + visualOffsetY);
+        nameText.setAttribute('font-size', '12');
+        nameText.setAttribute('font-family', 'Arial, sans-serif');
+        nameText.setAttribute('fill', '#333');
+        nameText.setAttribute('class', 'anchor-name');
+        nameText.textContent = anchor.name;
+        element.appendChild(nameText);
+      }
+    } else if (nameText) {
+      nameText.remove();
+    }
   }
 
   renderPool(pool) {
-    // Create pool group
-    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('data-id', pool.id);
-    group.setAttribute('data-type', 'pool');
+    const group = super.renderPool(pool); // creates pool shape, appends to featureLayer
     group.style.cursor = 'move';
 
-    // Create bezier curve semicircle (bottom half)
-    // Using cubic bezier to approximate a semicircle
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-
-    const width = pool.width;
-    const depth = pool.depth;
     const cx = pool.x;
     const cy = pool.y;
-
-    // Start point at left (270° = 9 o'clock)
-    const startX = cx - width / 2;
-    const startY = cy;
-
-    // End point at right (90° = 3 o'clock)
-    const endX = cx + width / 2;
-    const endY = cy;
-
-    // Control points for bezier curve to create semicircle
-    // For a semicircle, the control point distance is approximately 0.552 * radius
-    const controlOffset = depth * 0.552;
-
-    const cp1X = startX;
-    const cp1Y = cy + controlOffset;
-
-    const cp2X = endX;
-    const cp2Y = cy + controlOffset;
-
-    // Create path: M (start) C (cubic bezier) (end)
-    const pathData = `M ${startX},${startY} C ${cp1X},${cp1Y} ${cp2X},${cp2Y} ${endX},${endY}`;
-
-    path.setAttribute('d', pathData);
-    path.setAttribute('fill', '#4a90e2');
-    path.setAttribute('stroke', '#000000');
-    path.setAttribute('stroke-width', '3');
-    path.setAttribute('class', 'pool-shape');
-
-    group.appendChild(path);
+    const width = pool.width;
 
     // Add connection points
-    // Left connection point (270° = 9 o'clock)
-    const leftPoint = this.createConnectionPoint(
-      cx - width / 2,
-      cy,
-      pool.id,
-      'start'
-    );
-
-    // Right connection point (90° = 3 o'clock)
-    const rightPoint = this.createConnectionPoint(
-      cx + width / 2,
-      cy,
-      pool.id,
-      'end'
-    );
-
+    const leftPoint = this.createConnectionPoint(cx - width / 2, cy, pool.id, 'start');
+    const rightPoint = this.createConnectionPoint(cx + width / 2, cy, pool.id, 'end');
     group.appendChild(leftPoint);
     group.appendChild(rightPoint);
 
@@ -992,8 +952,6 @@ class TopoEditor {
 
     // Make draggable
     this.makePoolDraggable(group, pool);
-
-    this.featureLayer.appendChild(group);
   }
 
   makePoolDraggable(element, pool) {
@@ -1006,9 +964,9 @@ class TopoEditor {
       if (e.target.classList.contains('connection-point')) return;
 
       isDragging = true;
-      const rect = this.svg.getBoundingClientRect();
-      startX = e.clientX - rect.left - pool.x;
-      startY = e.clientY - rect.top - pool.y;
+      const coords = this.screenToSVGCoords(e);
+      startX = coords.x - pool.x;
+      startY = coords.y - pool.y;
       element.style.cursor = 'grabbing';
       e.stopPropagation();
     });
@@ -1016,9 +974,9 @@ class TopoEditor {
     this.svg.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
 
-      const rect = this.svg.getBoundingClientRect();
-      let newX = e.clientX - rect.left - startX;
-      let newY = e.clientY - rect.top - startY;
+      const coords = this.screenToSVGCoords(e);
+      let newX = coords.x - startX;
+      let newY = coords.y - startY;
 
       // Snap to grid if enabled
       if (this.snapToGrid) {
@@ -1081,98 +1039,41 @@ class TopoEditor {
   }
 
   renderRappel(rappel) {
-    // Create rappel group
-    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('data-id', rappel.id);
-    group.setAttribute('data-type', 'rappel');
+    const group = super.renderRappel(rappel); // creates curve, arrowhead, description; appends to featureLayer
     group.style.cursor = 'move';
 
+    // Recompute the control point to position the curve midpoint handle.
+    // This mirrors the calculation in the base class.
+    const slopeRadians = (rappel.slope * Math.PI) / 180;
     const x1 = rappel.x;
     const y1 = rappel.y;
-    const length = rappel.length;
-    const slope = rappel.slope;
-
-    // Convert slope to radians
-    const slopeRadians = (slope * Math.PI) / 180;
-
-    // Calculate end point (connection point)
-    const x2 = x1 + length * Math.cos(slopeRadians);
-    const y2 = y1 + length * Math.sin(slopeRadians);
-
-    // Calculate perpendicular direction (to the right)
+    const x2 = x1 + rappel.length * Math.cos(slopeRadians);
+    const y2 = y1 + rappel.length * Math.sin(slopeRadians);
     const perpAngle = slopeRadians + Math.PI / 2;
     const perpX = Math.cos(perpAngle);
     const perpY = Math.sin(perpAngle);
-
-    // Offset amount to the right
-    const endpointOffset = -10;  // Offset for start and end points
-    const curveOffset = rappel.curveOffset || -15;  // Get from rappel object
-    const curvePosition = rappel.curvePosition !== undefined ? rappel.curvePosition : 0.5;  // Position along line (0-1)
-
-    // Calculate actual start and end points (offset from connection points)
-    const startX = x1 + perpX * endpointOffset;
-    const startY = y1 + perpY * endpointOffset;
-    const endX = x2 + perpX * endpointOffset;
-    const endY = y2 + perpY * endpointOffset;
-
-    // Calculate control point at the specified position along the line, with perpendicular offset
+    const lineDirectionX = Math.cos(slopeRadians);
+    const lineDirectionY = Math.sin(slopeRadians);
+    const perpOffset = -10;
+    const lengthShorten = 8;
+    const curveOffset = rappel.curveOffset || -15;
+    const curvePosition = rappel.curvePosition !== undefined ? rappel.curvePosition : 0.5;
+    const startX = x1 + perpX * perpOffset + lineDirectionX * lengthShorten;
+    const startY = y1 + perpY * perpOffset + lineDirectionY * lengthShorten;
+    const endX = x2 + perpX * perpOffset - lineDirectionX * lengthShorten;
+    const endY = y2 + perpY * perpOffset - lineDirectionY * lengthShorten;
     const lineX = startX + (endX - startX) * curvePosition;
     const lineY = startY + (endY - startY) * curvePosition;
-    const controlX = lineX + perpX * (curveOffset - endpointOffset);
-    const controlY = lineY + perpY * (curveOffset - endpointOffset);
+    const controlX = lineX + perpX * (curveOffset - perpOffset);
+    const controlY = lineY + perpY * (curveOffset - perpOffset);
 
-    // Create curved path with quadratic bezier
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    const pathData = `M ${startX},${startY} Q ${controlX},${controlY} ${endX},${endY}`;
-    path.setAttribute('d', pathData);
-    path.setAttribute('stroke', '#000');
-    path.setAttribute('stroke-width', '3');
-    path.setAttribute('stroke-linecap', 'round');
-    path.setAttribute('fill', 'none');
-    path.setAttribute('class', 'rappel-curve');
-    group.appendChild(path);
-
-    // Add draggable curve control point (midpoint on the curve)
+    // Add draggable curve control point handle
     const curveMidpoint = this.createCurveMidpoint(controlX, controlY, rappel.id);
     group.appendChild(curveMidpoint);
 
-    // Add arrowhead at the end
-    // Calculate direction at the end of the curve (tangent to the curve)
-    const dx = endX - controlX;
-    const dy = endY - controlY;
-    const tangentLength = Math.sqrt(dx * dx + dy * dy);
-    const tangentX = dx / tangentLength;
-    const tangentY = dy / tangentLength;
-
-    const arrowheadLength = 10;
-    const arrowWidth = 6;
-
-    // Arrow tip at actual end point
-    const arrowTipX = endX;
-    const arrowTipY = endY;
-
-    // Perpendicular to tangent for arrow width
-    const arrowPerpX = -tangentY;
-    const arrowPerpY = tangentX;
-
-    // Arrow base points
-    const base1X = arrowTipX - tangentX * arrowheadLength + arrowPerpX * arrowWidth;
-    const base1Y = arrowTipY - tangentY * arrowheadLength + arrowPerpY * arrowWidth;
-    const base2X = arrowTipX - tangentX * arrowheadLength - arrowPerpX * arrowWidth;
-    const base2Y = arrowTipY - tangentY * arrowheadLength - arrowPerpY * arrowWidth;
-
-    const arrowhead = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    arrowhead.setAttribute('points', `${arrowTipX},${arrowTipY} ${base1X},${base1Y} ${base2X},${base2Y}`);
-    arrowhead.setAttribute('fill', '#000');
-    arrowhead.setAttribute('stroke', '#000');
-    arrowhead.setAttribute('stroke-width', '1');
-    arrowhead.setAttribute('class', 'rappel-arrowhead');
-    group.appendChild(arrowhead);
-
-    // Add connection points
+    // Add connection points at the true start/end (before visual offset)
     const startPoint = this.createConnectionPoint(x1, y1, rappel.id, 'start');
     const endPoint = this.createConnectionPoint(x2, y2, rappel.id, 'end');
-
     group.appendChild(startPoint);
     group.appendChild(endPoint);
 
@@ -1184,8 +1085,6 @@ class TopoEditor {
 
     // Make draggable
     this.makeRappelDraggable(group, rappel);
-
-    this.featureLayer.appendChild(group);
   }
 
   makeRappelDraggable(element, rappel) {
@@ -1198,9 +1097,9 @@ class TopoEditor {
       if (e.target.classList.contains('connection-point')) return;
 
       isDragging = true;
-      const rect = this.svg.getBoundingClientRect();
-      startX = e.clientX - rect.left - rappel.x;
-      startY = e.clientY - rect.top - rappel.y;
+      const coords = this.screenToSVGCoords(e);
+      startX = coords.x - rappel.x;
+      startY = coords.y - rappel.y;
       element.style.cursor = 'grabbing';
       e.stopPropagation();
     });
@@ -1208,9 +1107,9 @@ class TopoEditor {
     this.svg.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
 
-      const rect = this.svg.getBoundingClientRect();
-      let newX = e.clientX - rect.left - startX;
-      let newY = e.clientY - rect.top - startY;
+      const coords = this.screenToSVGCoords(e);
+      let newX = coords.x - startX;
+      let newY = coords.y - startY;
 
       // Snap to grid if enabled
       if (this.snapToGrid) {
@@ -1254,28 +1153,36 @@ class TopoEditor {
     const perpX = Math.cos(perpAngle);
     const perpY = Math.sin(perpAngle);
 
-    // Offset amount to the right
-    const endpointOffset = -10;  // Offset for start and end points
+    // Calculate direction along the line
+    const lineDirectionX = Math.cos(slopeRadians);
+    const lineDirectionY = Math.sin(slopeRadians);
+
+    // Offset amounts
+    const perpOffset = -10;  // Offset perpendicular to the line (to the side)
+    const lengthShorten = 8;  // Shorten the line at both ends
     const curveOffset = rappel.curveOffset || -15;  // Get from rappel object
     const curvePosition = rappel.curvePosition !== undefined ? rappel.curvePosition : 0.5;  // Position along line (0-1)
 
     // Calculate actual start and end points (offset from connection points)
-    const startX = x1 + perpX * endpointOffset;
-    const startY = y1 + perpY * endpointOffset;
-    const endX = x2 + perpX * endpointOffset;
-    const endY = y2 + perpY * endpointOffset;
+    // Shorten from both ends along the line direction, and offset perpendicular
+    const startX = x1 + perpX * perpOffset + lineDirectionX * lengthShorten;
+    const startY = y1 + perpY * perpOffset + lineDirectionY * lengthShorten;
+    const endX = x2 + perpX * perpOffset - lineDirectionX * lengthShorten;
+    const endY = y2 + perpY * perpOffset - lineDirectionY * lengthShorten;
 
     // Calculate control point at the specified position along the line, with perpendicular offset
     const lineX = startX + (endX - startX) * curvePosition;
     const lineY = startY + (endY - startY) * curvePosition;
-    const controlX = lineX + perpX * (curveOffset - endpointOffset);
-    const controlY = lineY + perpY * (curveOffset - endpointOffset);
+    const controlX = lineX + perpX * (curveOffset - perpOffset);
+    const controlY = lineY + perpY * (curveOffset - perpOffset);
 
     // Update curved path
     const path = element.querySelector('.rappel-curve');
     if (path) {
       const pathData = `M ${startX},${startY} Q ${controlX},${controlY} ${endX},${endY}`;
       path.setAttribute('d', pathData);
+      path.setAttribute('stroke', '#666');
+      path.setAttribute('stroke-width', '2');
     }
 
     // Update curve midpoint position
@@ -1294,10 +1201,11 @@ class TopoEditor {
 
     const arrowheadLength = 10;
     const arrowWidth = 6;
+    const arrowForwardOffset = 5;  // Move arrow forward
 
-    // Arrow tip at actual end point
-    const arrowTipX = endX;
-    const arrowTipY = endY;
+    // Arrow tip extended forward from end point
+    const arrowTipX = endX + tangentX * arrowForwardOffset;
+    const arrowTipY = endY + tangentY * arrowForwardOffset;
 
     // Perpendicular to tangent for arrow width
     const arrowPerpX = -tangentY;
@@ -1313,6 +1221,8 @@ class TopoEditor {
     const arrowhead = element.querySelector('.rappel-arrowhead');
     if (arrowhead) {
       arrowhead.setAttribute('points', `${arrowTipX},${arrowTipY} ${base1X},${base1Y} ${base2X},${base2Y}`);
+      arrowhead.setAttribute('fill', '#666');
+      arrowhead.setAttribute('stroke', '#666');
     }
 
     // Update connection points
@@ -1327,53 +1237,39 @@ class TopoEditor {
         point.setAttribute('cy', y2);
       }
     });
+
+    // Update description text
+    let descText = element.querySelector('.rappel-description');
+    if (rappel.description) {
+      const textX = controlX + perpX * 15;
+      const textY = controlY + perpY * 15 - 20;  // Offset upward
+
+      if (descText) {
+        // Update existing text
+        descText.setAttribute('x', textX);
+        descText.setAttribute('y', textY);
+        descText.textContent = rappel.description;
+      } else {
+        // Create new text element
+        descText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        descText.setAttribute('x', textX);
+        descText.setAttribute('y', textY);
+        descText.setAttribute('font-size', '14');
+        descText.setAttribute('font-family', 'Arial, sans-serif');
+        descText.setAttribute('fill', '#666');
+        descText.setAttribute('class', 'rappel-description');
+        descText.textContent = rappel.description;
+        element.appendChild(descText);
+      }
+    } else if (descText) {
+      // Remove text if description is empty
+      descText.remove();
+    }
   }
 
   renderHazard(hazard) {
-    // Create hazard group
-    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('data-id', hazard.id);
-    group.setAttribute('data-type', 'hazard');
+    const group = super.renderHazard(hazard); // creates triangle and text, appends to featureLayer
     group.style.cursor = 'move';
-
-    const cx = hazard.x;
-    const cy = hazard.y;
-    const size = hazard.size;
-
-    // Create equilateral triangle pointing up
-    // Top point
-    const topX = cx;
-    const topY = cy - (size * Math.sqrt(3) / 3);
-
-    // Bottom left point
-    const leftX = cx - size / 2;
-    const leftY = cy + (size * Math.sqrt(3) / 6);
-
-    // Bottom right point
-    const rightX = cx + size / 2;
-    const rightY = cy + (size * Math.sqrt(3) / 6);
-
-    // Create triangle
-    const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    triangle.setAttribute('points', `${topX},${topY} ${leftX},${leftY} ${rightX},${rightY}`);
-    triangle.setAttribute('fill', '#FFD700');  // Gold/yellow warning color
-    triangle.setAttribute('stroke', '#000');
-    triangle.setAttribute('stroke-width', '3');
-    triangle.setAttribute('class', 'hazard-triangle');
-    group.appendChild(triangle);
-
-    // Add text in the center of the triangle
-    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    text.setAttribute('x', cx);
-    text.setAttribute('y', cy + 5);  // Slight offset for better centering
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('font-family', 'Arial, sans-serif');
-    text.setAttribute('font-size', size * 0.6);
-    text.setAttribute('font-weight', 'bold');
-    text.setAttribute('fill', '#333');
-    text.setAttribute('class', 'hazard-text');
-    text.textContent = hazard.text;
-    group.appendChild(text);
 
     // Add interactivity
     group.addEventListener('click', (e) => {
@@ -1383,8 +1279,6 @@ class TopoEditor {
 
     // Make draggable
     this.makeHazardDraggable(group, hazard);
-
-    this.featureLayer.appendChild(group);
   }
 
   makeHazardDraggable(element, hazard) {
@@ -1395,9 +1289,9 @@ class TopoEditor {
       if (e.button !== 0) return; // Only left click
 
       isDragging = true;
-      const rect = this.svg.getBoundingClientRect();
-      startX = e.clientX - rect.left - hazard.x;
-      startY = e.clientY - rect.top - hazard.y;
+      const coords = this.screenToSVGCoords(e);
+      startX = coords.x - hazard.x;
+      startY = coords.y - hazard.y;
       element.style.cursor = 'grabbing';
       e.stopPropagation();
     });
@@ -1405,9 +1299,9 @@ class TopoEditor {
     this.svg.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
 
-      const rect = this.svg.getBoundingClientRect();
-      let newX = e.clientX - rect.left - startX;
-      let newY = e.clientY - rect.top - startY;
+      const coords = this.screenToSVGCoords(e);
+      let newX = coords.x - startX;
+      let newY = coords.y - startY;
 
       // Snap to grid if enabled
       if (this.snapToGrid) {
@@ -1557,6 +1451,85 @@ class TopoEditor {
     console.log('Added line:', line);
   }
 
+  startRappel(x, y) {
+    this.drawingRappel = true;
+
+    // Store connection info if snapped to a connection point
+    let connectedTo = null;
+    let connectionPoint = null;
+
+    if (this.hoveredConnectionPoint) {
+      connectedTo = parseInt(this.hoveredConnectionPoint.featureId);
+      connectionPoint = this.hoveredConnectionPoint.pointType;
+    }
+
+    this.rappelStartPoint = {
+      x,
+      y,
+      connectedTo,
+      connectionPoint
+    };
+
+    // Create preview line
+    this.previewRappel = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    this.previewRappel.setAttribute('x1', x);
+    this.previewRappel.setAttribute('y1', y);
+    this.previewRappel.setAttribute('x2', x);
+    this.previewRappel.setAttribute('y2', y);
+    this.previewRappel.setAttribute('stroke', '#52ab98');
+    this.previewRappel.setAttribute('stroke-width', '3');
+    this.previewRappel.setAttribute('stroke-dasharray', '5,5');
+    this.previewRappel.setAttribute('stroke-linecap', 'round');
+    this.previewRappel.setAttribute('opacity', '0.7');
+    this.cursorLayer.appendChild(this.previewRappel);
+
+    // Update instructions
+    const instructions = document.querySelector('.instructions');
+    if (instructions) {
+      instructions.textContent = 'Click to place the end of the rappel';
+    }
+  }
+
+  finishRappel(x, y) {
+    const dx = x - this.rappelStartPoint.x;
+    const dy = y - this.rappelStartPoint.y;
+    const length = Math.round(Math.sqrt(dx * dx + dy * dy));
+    const slope = Math.round(Math.atan2(dy, dx) * 180 / Math.PI);
+
+    const rappel = {
+      id: this.nextId++,
+      type: 'rappel',
+      x: this.rappelStartPoint.x,
+      y: this.rappelStartPoint.y,
+      length: length,
+      slope: slope,
+      curveOffset: -15,  // Default curve offset to the right
+      curvePosition: 0.5,  // Position along the line (0=start, 1=end, 0.5=middle)
+      description: ''  // Description text to display next to the rappel
+    };
+
+    this.features.push(rappel);
+    this.renderRappel(rappel);
+
+    // Clean up
+    if (this.previewRappel) {
+      this.previewRappel.remove();
+      this.previewRappel = null;
+    }
+    this.drawingRappel = false;
+    this.rappelStartPoint = null;
+    this.clearConnectionPointHighlights();
+
+    // Restore instructions
+    const instructions = document.querySelector('.instructions');
+    if (instructions) {
+      instructions.textContent = 'Right-click on the canvas to add features';
+    }
+
+    this.saveState();
+    console.log('Added rappel:', rappel);
+  }
+
   selectFeature(id) {
     // Deselect previous
     if (this.selectedFeature !== null) {
@@ -1567,8 +1540,19 @@ class TopoEditor {
           const anchorLines = prevElement.querySelectorAll('.anchor-line');
           anchorLines.forEach(line => {
             line.setAttribute('stroke', '#000');
-            line.setAttribute('stroke-width', '3');
+            line.setAttribute('stroke-width', '2');
           });
+        } else if (prevFeature && prevFeature.type === 'rappel') {
+          const curve = prevElement.querySelector('.rappel-curve');
+          if (curve) {
+            curve.setAttribute('stroke', '#666');
+            curve.setAttribute('stroke-width', '2');
+          }
+          const arrowhead = prevElement.querySelector('.rappel-arrowhead');
+          if (arrowhead) {
+            arrowhead.setAttribute('fill', '#666');
+            arrowhead.setAttribute('stroke', '#666');
+          }
         } else {
           const shape = prevElement.querySelector('line, path');
           if (shape) {
@@ -1590,8 +1574,19 @@ class TopoEditor {
           const anchorLines = element.querySelectorAll('.anchor-line');
           anchorLines.forEach(line => {
             line.setAttribute('stroke', '#ff4444');
-            line.setAttribute('stroke-width', '4');
+            line.setAttribute('stroke-width', '3');
           });
+        } else if (feature && feature.type === 'rappel') {
+          const curve = element.querySelector('.rappel-curve');
+          if (curve) {
+            curve.setAttribute('stroke', '#ff4444');
+            curve.setAttribute('stroke-width', '3');
+          }
+          const arrowhead = element.querySelector('.rappel-arrowhead');
+          if (arrowhead) {
+            arrowhead.setAttribute('fill', '#ff4444');
+            arrowhead.setAttribute('stroke', '#ff4444');
+          }
         } else {
           const shape = element.querySelector('line, path');
           if (shape) {
@@ -1607,6 +1602,9 @@ class TopoEditor {
 
     // Update properties panel
     this.updatePropertiesPanel(feature);
+
+    // Update feature list highlighting
+    this.renderFeatureList();
   }
 
   updatePropertiesPanel(feature) {
@@ -1667,6 +1665,7 @@ class TopoEditor {
 
       nameInput.addEventListener('input', (e) => {
         feature.name = e.target.value;
+        this.renderFeatureList();
         console.log('Updated anchor name:', feature.name);
       });
 
@@ -1785,6 +1784,11 @@ class TopoEditor {
             <input type="number" id="rappel-slope" value="${feature.slope}" min="0" max="360"
                    style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
           </div>
+          <div>
+            <label for="rappel-description" style="display: block; margin-bottom: 4px; font-weight: 500;">Description:</label>
+            <input type="text" id="rappel-description" value="${feature.description || ''}" placeholder="e.g., 150', DBL"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
           <button id="delete-rappel" style="background-color: #e74c3c; margin-top: 8px;">Delete Rappel</button>
         </div>
       `;
@@ -1792,6 +1796,7 @@ class TopoEditor {
       // Add event listeners
       const lengthInput = document.getElementById('rappel-length');
       const slopeInput = document.getElementById('rappel-slope');
+      const descriptionInput = document.getElementById('rappel-description');
       const deleteBtn = document.getElementById('delete-rappel');
 
       lengthInput.addEventListener('input', (e) => {
@@ -1806,6 +1811,18 @@ class TopoEditor {
         this.updateRappel(feature);
         this.saveState();
         console.log('Updated rappel slope:', feature.slope);
+      });
+
+      descriptionInput.addEventListener('input', (e) => {
+        feature.description = e.target.value;
+        this.updateRappel(feature);
+        this.renderFeatureList();
+        console.log('Updated rappel description:', feature.description);
+      });
+
+      descriptionInput.addEventListener('blur', (e) => {
+        // Save state when user finishes editing description
+        this.saveState();
       });
 
       deleteBtn.addEventListener('click', () => {
@@ -1904,137 +1921,16 @@ class TopoEditor {
   }
 
   renderLine(line) {
-    // Create line group
-    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('data-id', line.id);
-    group.setAttribute('data-type', 'line');
+    const group = super.renderLine(line); // creates line, traverse, shorten, arrow; appends to featureLayer
     group.style.cursor = 'move';
 
-    const x1 = line.x1;
-    const y1 = line.y1;
-    const x2 = line.x2;
-    const y2 = line.y2;
-
-    // Always render the base straight line
-    const lineElem = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    lineElem.setAttribute('x1', x1);
-    lineElem.setAttribute('y1', y1);
-    lineElem.setAttribute('x2', x2);
-    lineElem.setAttribute('y2', y2);
-    lineElem.setAttribute('stroke', '#000');
-    lineElem.setAttribute('stroke-width', '3');
-    lineElem.setAttribute('stroke-linecap', 'round');
-    lineElem.setAttribute('class', 'line-shape');
-    group.appendChild(lineElem);
-
-    // Add traverse curve on top if enabled
-    if (line.traverse) {
-      const traverseHeight = 10;
-      const midX = (x1 + x2) / 2;
-      const midY = (y1 + y2) / 2;
-      const dip = midY - traverseHeight / 2;
-
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      const pathData = `M ${x1},${y1 - traverseHeight} Q ${midX},${dip} ${x2},${y2 - traverseHeight}`;
-      path.setAttribute('d', pathData);
-      path.setAttribute('stroke', '#000');
-      path.setAttribute('stroke-width', '3');
-      path.setAttribute('fill', 'none');
-      path.setAttribute('class', 'traverse-path');
-
-      group.appendChild(path);
-    }
-
-    // Add shorten slashes if enabled
-    if (line.shorten) {
-      const midX = (x1 + x2) / 2;
-      const midY = (y1 + y2) / 2;
-
-      // Calculate perpendicular direction
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const length = Math.sqrt(dx * dx + dy * dy);
-
-      // Perpendicular unit vector
-      const perpX = -dy / length;
-      const perpY = dx / length;
-
-      const slashLength = 8;
-      const slashSpacing = 4;
-
-      // First slash
-      const slash1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      slash1.setAttribute('x1', midX - slashSpacing - perpX * slashLength);
-      slash1.setAttribute('y1', midY - slashSpacing - perpY * slashLength);
-      slash1.setAttribute('x2', midX - slashSpacing + perpX * slashLength);
-      slash1.setAttribute('y2', midY - slashSpacing + perpY * slashLength);
-      slash1.setAttribute('stroke', '#000');
-      slash1.setAttribute('stroke-width', '3');
-      slash1.setAttribute('stroke-linecap', 'round');
-      slash1.setAttribute('class', 'shorten-slash');
-
-      // Second slash
-      const slash2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      slash2.setAttribute('x1', midX + slashSpacing - perpX * slashLength);
-      slash2.setAttribute('y1', midY + slashSpacing - perpY * slashLength);
-      slash2.setAttribute('x2', midX + slashSpacing + perpX * slashLength);
-      slash2.setAttribute('y2', midY + slashSpacing + perpY * slashLength);
-      slash2.setAttribute('stroke', '#000');
-      slash2.setAttribute('stroke-width', '3');
-      slash2.setAttribute('stroke-linecap', 'round');
-      slash2.setAttribute('class', 'shorten-slash');
-
-      group.appendChild(slash1);
-      group.appendChild(slash2);
-    }
-
-    // Add arrowhead if enabled
-    if (line.arrow) {
-      // Calculate direction vector
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const length = Math.sqrt(dx * dx + dy * dy);
-
-      // Unit vector in direction of line
-      const ux = dx / length;
-      const uy = dy / length;
-
-      // Perpendicular unit vector
-      const perpX = -uy;
-      const perpY = ux;
-
-      const arrowSize = 10;
-      const arrowWidth = 6;
-
-      // Arrowhead tip at the end point
-      const tipX = x2;
-      const tipY = y2;
-
-      // Two base points of the arrow triangle
-      const base1X = tipX - ux * arrowSize + perpX * arrowWidth;
-      const base1Y = tipY - uy * arrowSize + perpY * arrowWidth;
-      const base2X = tipX - ux * arrowSize - perpX * arrowWidth;
-      const base2Y = tipY - uy * arrowSize - perpY * arrowWidth;
-
-      // Create arrow polygon
-      const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      arrow.setAttribute('points', `${tipX},${tipY} ${base1X},${base1Y} ${base2X},${base2Y}`);
-      arrow.setAttribute('fill', '#000');
-      arrow.setAttribute('stroke', '#000');
-      arrow.setAttribute('stroke-width', '1');
-      arrow.setAttribute('class', 'arrow-head');
-
-      group.appendChild(arrow);
-    }
-
-    // Add connection points (endpoints)
+    // Add connection points at endpoints
     const startPoint = this.createConnectionPoint(line.x1, line.y1, line.id, 'start');
     const endPoint = this.createConnectionPoint(line.x2, line.y2, line.id, 'end');
-
     group.appendChild(startPoint);
     group.appendChild(endPoint);
 
-    // Add midpoint for splitting
+    // Add midpoint handle for splitting the line
     const midX = (line.x1 + line.x2) / 2;
     const midY = (line.y1 + line.y2) / 2;
     const midPoint = this.createMidpoint(midX, midY, line.id);
@@ -2048,8 +1944,6 @@ class TopoEditor {
 
     // Make draggable (moves the whole line)
     this.makeLineDraggable(group, line);
-
-    this.featureLayer.appendChild(group);
   }
 
   createConnectionPoint(x, y, featureId, pointType) {
@@ -2125,9 +2019,9 @@ class TopoEditor {
       const rappel = this.features.find(f => f.id === featureId);
       if (!rappel || rappel.type !== 'rappel') return;
 
-      const rect = this.svg.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+      const coords = this.screenToSVGCoords(e);
+      const mouseX = coords.x;
+      const mouseY = coords.y;
 
       // Calculate direction vectors
       const slopeRadians = (rappel.slope * Math.PI) / 180;
@@ -2142,12 +2036,13 @@ class TopoEditor {
       const x2 = x1 + rappel.length * lineX;
       const y2 = y1 + rappel.length * lineY;
 
-      // Calculate actual start/end with endpoint offset
-      const endpointOffset = -10;
-      const startX = x1 + perpX * endpointOffset;
-      const startY = y1 + perpY * endpointOffset;
-      const endX = x2 + perpX * endpointOffset;
-      const endY = y2 + perpY * endpointOffset;
+      // Calculate actual start/end with offsets
+      const perpOffset = -10;
+      const lengthShorten = 8;
+      const startX = x1 + perpX * perpOffset + lineX * lengthShorten;
+      const startY = y1 + perpY * perpOffset + lineY * lengthShorten;
+      const endX = x2 + perpX * perpOffset - lineX * lengthShorten;
+      const endY = y2 + perpY * perpOffset - lineY * lengthShorten;
 
       // Vector from start to mouse
       const toMouseX = mouseX - startX;
@@ -2167,7 +2062,7 @@ class TopoEditor {
       const pointOnLineY = startY + lineVecY * position;
       const offsetX = mouseX - pointOnLineX;
       const offsetY = mouseY - pointOnLineY;
-      const offset = (offsetX * perpX + offsetY * perpY) + endpointOffset;
+      const offset = (offsetX * perpX + offsetY * perpY) + perpOffset;
 
       // Update both properties
       rappel.curvePosition = position;
@@ -2196,9 +2091,9 @@ class TopoEditor {
       e.stopPropagation();
       isDragging = true;
 
-      const rect = this.svg.getBoundingClientRect();
-      dragStartX = e.clientX - rect.left;
-      dragStartY = e.clientY - rect.top;
+      const coords = this.screenToSVGCoords(e);
+      dragStartX = coords.x;
+      dragStartY = coords.y;
 
       circle.style.cursor = 'grabbing';
       circle.setAttribute('r', '7'); // Make it bigger while dragging
@@ -2241,9 +2136,9 @@ class TopoEditor {
     this.svg.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
 
-      const rect = this.svg.getBoundingClientRect();
-      let x = e.clientX - rect.left;
-      let y = e.clientY - rect.top;
+      const coords = this.screenToSVGCoords(e);
+      let x = coords.x;
+      let y = coords.y;
 
       // Snap to grid if enabled
       if (this.snapToGrid) {
@@ -2272,9 +2167,9 @@ class TopoEditor {
         circle.style.cursor = 'move';
         circle.setAttribute('r', '5'); // Back to normal size
 
-        const rect = this.svg.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
+        const coords = this.screenToSVGCoords(e);
+        let x = coords.x;
+        let y = coords.y;
 
         // Snap to grid if enabled
         if (this.snapToGrid) {
@@ -2403,9 +2298,9 @@ class TopoEditor {
     this.svg.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
 
-      const rect = this.svg.getBoundingClientRect();
-      let x = e.clientX - rect.left;
-      let y = e.clientY - rect.top;
+      const coords = this.screenToSVGCoords(e);
+      let x = coords.x;
+      let y = coords.y;
 
       // Snap to grid if enabled
       if (this.snapToGrid) {
@@ -2499,9 +2394,9 @@ class TopoEditor {
       if (e.target.classList.contains('connection-point') || e.target.classList.contains('midpoint')) return;
 
       isDragging = true;
-      const rect = this.svg.getBoundingClientRect();
-      startX = e.clientX - rect.left;
-      startY = e.clientY - rect.top;
+      const coords = this.screenToSVGCoords(e);
+      startX = coords.x;
+      startY = coords.y;
       element.style.cursor = 'grabbing';
       e.stopPropagation();
     });
@@ -2509,9 +2404,9 @@ class TopoEditor {
     this.svg.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
 
-      const rect = this.svg.getBoundingClientRect();
-      let newX = e.clientX - rect.left;
-      let newY = e.clientY - rect.top;
+      const coords = this.screenToSVGCoords(e);
+      let newX = coords.x;
+      let newY = coords.y;
 
       const dx = newX - startX;
       const dy = newY - startY;
@@ -2721,23 +2616,178 @@ class TopoEditor {
   }
 
   render() {
-    // Clear and re-render all features
-    this.featureLayer.innerHTML = '';
+    super.render(); // clears featureLayer, calls each renderXxx
+    // Update feature list in sidebar
+    this.renderFeatureList();
+  }
+
+  getSortedFeatures() {
+    // Helper function to get a representative position for a feature
+    const getFeaturePosition = (feature) => {
+      switch (feature.type) {
+        case 'line':
+          // Use start point
+          return { x: feature.x1, y: feature.y1 };
+        case 'rappel':
+          // Use start point
+          return { x: feature.x, y: feature.y };
+        case 'pool':
+          // Use center point
+          return { x: feature.x, y: feature.y };
+        case 'anchor':
+          // Use connection point
+          return { x: feature.connectionX, y: feature.connectionY };
+        case 'hazard':
+          return { x: feature.x, y: feature.y };
+        case 'exit':
+          return { x: feature.x, y: feature.y };
+        default:
+          return { x: 0, y: 0 };
+      }
+    };
+
+    // Build a graph of connections between features
+    const connections = new Map();
+    this.features.forEach(f => connections.set(f.id, new Set()));
+
+    // Find all connection points and group features that share them
+    const connectionPoints = new Map(); // Map from "x,y" to feature IDs
+
     this.features.forEach(feature => {
+      const addPoint = (x, y, featureId) => {
+        const key = `${Math.round(x)},${Math.round(y)}`;
+        if (!connectionPoints.has(key)) {
+          connectionPoints.set(key, new Set());
+        }
+        connectionPoints.get(key).add(featureId);
+      };
+
       if (feature.type === 'line') {
-        this.renderLine(feature);
-      } else if (feature.type === 'pool') {
-        this.renderPool(feature);
-      } else if (feature.type === 'anchor') {
-        this.renderAnchor(feature);
+        addPoint(feature.x1, feature.y1, feature.id);
+        addPoint(feature.x2, feature.y2, feature.id);
       } else if (feature.type === 'rappel') {
-        this.renderRappel(feature);
-      } else if (feature.type === 'hazard') {
-        this.renderHazard(feature);
-      } else if (feature.type === 'exit') {
-        this.renderExit(feature);
+        const slopeRadians = (feature.slope * Math.PI) / 180;
+        const x2 = feature.x + feature.length * Math.cos(slopeRadians);
+        const y2 = feature.y + feature.length * Math.sin(slopeRadians);
+        addPoint(feature.x, feature.y, feature.id);
+        addPoint(x2, y2, feature.id);
+      } else if (feature.type === 'pool') {
+        const leftX = feature.x - feature.width / 2;
+        const rightX = feature.x + feature.width / 2;
+        addPoint(leftX, feature.y, feature.id);
+        addPoint(rightX, feature.y, feature.id);
+      } else if (feature.type === 'anchor') {
+        addPoint(feature.connectionX, feature.connectionY, feature.id);
       }
     });
+
+    // Build connection graph
+    connectionPoints.forEach((featureIds) => {
+      const ids = Array.from(featureIds);
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+          connections.get(ids[i]).add(ids[j]);
+          connections.get(ids[j]).add(ids[i]);
+        }
+      }
+    });
+
+    // Sort features by Y position first (top to bottom), then X position (left to right)
+    const sorted = [...this.features].sort((a, b) => {
+      const posA = getFeaturePosition(a);
+      const posB = getFeaturePosition(b);
+
+      // Primary sort by Y coordinate (top to bottom)
+      if (Math.abs(posA.y - posB.y) > 50) { // Group features within 50 units vertically
+        return posA.y - posB.y;
+      }
+
+      // Secondary sort by X coordinate (left to right)
+      return posA.x - posB.x;
+    });
+
+    return sorted;
+  }
+
+  renderFeatureList() {
+    const featureListDiv = document.getElementById('feature-list');
+    if (!featureListDiv) return;
+
+    if (this.features.length === 0) {
+      featureListDiv.innerHTML = '<p class="empty-state">No features yet</p>';
+      return;
+    }
+
+    // Sort features by position (top to bottom, left to right)
+    const sortedFeatures = this.getSortedFeatures();
+
+    // Create a list of features
+    const list = document.createElement('ul');
+    list.style.listStyle = 'none';
+    list.style.padding = '0';
+    list.style.margin = '0';
+
+    sortedFeatures.forEach(feature => {
+      const listItem = document.createElement('li');
+      listItem.style.padding = '8px 12px';
+      listItem.style.marginBottom = '4px';
+      listItem.style.backgroundColor = this.selectedFeature === feature.id ? '#e8f4f8' : '#f9f9f9';
+      listItem.style.border = '1px solid #ddd';
+      listItem.style.borderRadius = '3px';
+      listItem.style.cursor = 'pointer';
+      listItem.style.transition = 'background-color 0.2s';
+      listItem.style.fontSize = '13px';
+
+      // Create feature label
+      let label = '';
+      switch (feature.type) {
+        case 'line':
+          label = `Line (${feature.length}m, ${feature.slope}°)`;
+          break;
+        case 'pool':
+          label = `Pool (${feature.width}×${feature.height})`;
+          break;
+        case 'anchor':
+          label = `Anchor (${feature.anchorType})`;
+          if (feature.name) label += ` - ${feature.name}`;
+          break;
+        case 'rappel':
+          label = `Rappel (${feature.length}m)`;
+          if (feature.description) label += ` - ${feature.description}`;
+          break;
+        case 'hazard':
+          label = `Hazard`;
+          break;
+        case 'exit':
+          label = `Exit`;
+          break;
+      }
+
+      listItem.textContent = label;
+
+      // Hover effect
+      listItem.addEventListener('mouseenter', () => {
+        if (this.selectedFeature !== feature.id) {
+          listItem.style.backgroundColor = '#f0f0f0';
+        }
+      });
+
+      listItem.addEventListener('mouseleave', () => {
+        if (this.selectedFeature !== feature.id) {
+          listItem.style.backgroundColor = '#f9f9f9';
+        }
+      });
+
+      // Click to select feature
+      listItem.addEventListener('click', () => {
+        this.selectFeature(feature.id);
+      });
+
+      list.appendChild(listItem);
+    });
+
+    featureListDiv.innerHTML = '';
+    featureListDiv.appendChild(list);
   }
 
   saveState() {
@@ -2923,8 +2973,7 @@ class TopoEditor {
     img.src = url;
   }
 
-  exportData() {
-    // Export features along with canvas settings
+  toYAML() {
     const exportObject = {
       version: '1.0',
       width: this.width,
@@ -2933,27 +2982,113 @@ class TopoEditor {
       features: this.features,
       nextId: this.nextId
     };
+    return jsyaml.dump(exportObject);
+  }
 
-    const jsonString = JSON.stringify(exportObject, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
+  exportData() {
+    const yamlString = this.toYAML();
+    const blob = new Blob([yamlString], { type: 'application/x-yaml' });
 
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'topo-data.json';
+    link.download = 'topo-data.yaml';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
 
-    console.log('Data exported successfully:', exportObject);
+  // ---------------------------------------------------------------------------
+  // MediaWiki save
+  // ---------------------------------------------------------------------------
+
+  isEditMode() {
+    return typeof mw !== 'undefined' && mw.config.get('wgAction') === 'edit-topo';
+  }
+
+  wikiPageName() {
+    return typeof mw !== 'undefined' ? mw.config.get('wgPageName') : null;
+  }
+
+  saveToWiki() {
+    const pageName = this.wikiPageName();
+    if (!pageName) {
+      alert('No wiki page name available (mw.config.get("wgPageName") returned null)');
+      return;
+    }
+
+    if (typeof mw === 'undefined' || !mw.Api) {
+      alert('MediaWiki API (mw.Api) is not available');
+      return;
+    }
+
+    const saveBtn = document.getElementById('save-wiki-btn');
+    saveBtn.textContent = 'Saving…';
+    saveBtn.disabled = true;
+
+    const api = new mw.Api();
+    api.postWithToken('csrf', {
+      action: 'edit',
+      title: pageName,
+      text: this.toYAML(),
+      format: 'json'
+    })
+      .then(data => {
+        if (data.edit && data.edit.result === 'Success') {
+          saveBtn.textContent = 'Saved!';
+          setTimeout(() => {
+            saveBtn.textContent = 'Save to Wiki';
+            saveBtn.disabled = false;
+          }, 2000);
+        } else if (data.error) {
+          throw new Error(data.error.info || data.error.code || 'Unknown API error');
+        } else {
+          throw new Error('Unexpected response from wiki API');
+        }
+      })
+      .catch(err => {
+        console.error('Wiki save failed:', err);
+        alert(`Save failed: ${err.message}`);
+        saveBtn.textContent = 'Save Failed';
+        setTimeout(() => {
+          saveBtn.textContent = 'Save to Wiki';
+          saveBtn.disabled = false;
+        }, 2000);
+      });
+  }
+
+  loadFromYAML(yamlString) {
+    const importObject = jsyaml.load(yamlString);
+
+    if (!importObject.features || !Array.isArray(importObject.features)) {
+      throw new Error('Invalid data format: missing features array');
+    }
+
+    this.features = importObject.features;
+    this.nextId = importObject.nextId || this.features.length;
+
+    if (importObject.width) this.width = importObject.width;
+    if (importObject.height) this.height = importObject.height;
+    if (importObject.gridSize) this.gridSize = importObject.gridSize;
+
+    this.svg.setAttribute('width', this.width);
+    this.svg.setAttribute('height', this.height);
+
+    const gridSelect = document.getElementById('grid-size');
+    if (gridSelect) gridSelect.value = this.gridSize;
+
+    this.drawGrid();
+    this.render();
+    this.fitToContent();
+    this.selectFeature(null);
+    this.saveState();
   }
 
   importData() {
-    // Create file input
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json';
+    input.accept = '.yaml,.yml';
 
     input.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -2962,42 +3097,7 @@ class TopoEditor {
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const importObject = JSON.parse(event.target.result);
-
-          // Validate the import
-          if (!importObject.features || !Array.isArray(importObject.features)) {
-            throw new Error('Invalid data format: missing features array');
-          }
-
-          // Apply imported data
-          this.features = importObject.features;
-          this.nextId = importObject.nextId || this.features.length;
-
-          // Update canvas settings if available
-          if (importObject.width) this.width = importObject.width;
-          if (importObject.height) this.height = importObject.height;
-          if (importObject.gridSize) this.gridSize = importObject.gridSize;
-
-          // Update SVG size
-          this.svg.setAttribute('width', this.width);
-          this.svg.setAttribute('height', this.height);
-
-          // Update grid size selector
-          const gridSelect = document.getElementById('grid-size');
-          if (gridSelect) {
-            gridSelect.value = this.gridSize;
-          }
-
-          // Re-render everything
-          this.drawGrid();
-          this.render();
-          this.selectFeature(null);
-
-          // Save imported state
-          this.saveState();
-
-          console.log('Data imported successfully:', importObject);
-          alert('Data imported successfully!');
+          this.loadFromYAML(event.target.result);
         } catch (error) {
           console.error('Error importing data:', error);
           alert(`Failed to import data: ${error.message}`);
@@ -3009,9 +3109,68 @@ class TopoEditor {
 
     input.click();
   }
+
+}
+
+function loadPage() {
+
+  // Main container
+  const mainContainer = document.createElement('div');
+  mainContainer.className = 'main-container';
+
+  // Canvas section
+  const canvasSection = document.createElement('div');
+  canvasSection.className = 'canvas-section';
+
+  const canvasContainer = document.createElement('div');
+  canvasContainer.id = 'canvas-container';
+
+  canvasSection.appendChild(canvasContainer);
+
+  // Sidebar
+  const sidebar = document.createElement('div');
+  sidebar.className = 'sidebar';
+
+  const featuresDetails = document.createElement('details');
+
+  const featuresSummary = document.createElement('summary');
+  featuresSummary.textContent = 'Features';
+  featuresSummary.style.cursor = 'pointer';
+  featuresSummary.style.userSelect = 'none';
+  featuresDetails.appendChild(featuresSummary);
+
+  const featureList = document.createElement('div');
+  featureList.id = 'feature-list';
+  featuresDetails.appendChild(featureList);
+
+  const propertiesHeading = document.createElement('h2');
+  propertiesHeading.textContent = 'Properties';
+
+  const propertiesPanel = document.createElement('div');
+  propertiesPanel.id = 'properties-panel';
+
+  const emptyState = document.createElement('p');
+  emptyState.className = 'empty-state';
+  emptyState.textContent = 'Select a feature to edit properties';
+  propertiesPanel.appendChild(emptyState);
+
+  sidebar.appendChild(featuresDetails);
+  sidebar.appendChild(propertiesHeading);
+  sidebar.appendChild(propertiesPanel);
+
+  mainContainer.appendChild(canvasSection);
+  mainContainer.appendChild(sidebar);
+
+  container = document.getElementById("topo-container");
+
+  container.appendChild(mainContainer);
 }
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+  loadPage();
   window.topoEditor = new TopoEditor('canvas-container');
+  if (typeof raw_yaml !== 'undefined' && raw_yaml) {
+    window.topoEditor.loadFromYAML(raw_yaml);
+  }
 });
