@@ -1,58 +1,10 @@
-/* Body styles */
-* {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Roboto', sans-serif;
-  background-color: #f4f7f6;
-  margin: 0;
-  padding: 0;
-  color: #333;
-}
-
-/* Header */
-.header {
-  background-color: #2b6777;
-  color: white;
-  padding: 20px;
-  text-align: center;
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 28px;
-}
-
-.header .instructions {
-  margin: 10px 0 0 0;
-  font-size: 14px;
-  opacity: 0.9;
-}
-
-/* Main container */
-.main-container {
-  display: flex;
-  gap: 20px;
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-/* Canvas section */
-.canvas-section {
-  flex: 0 0 auto;
-}
-
+/* Canvas */
 #canvas-container {
   display: inline-block;
 }
 
 #canvas-controls {
-  background-color: white;
-  padding: 10px 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  margin-top: 10px;
   font-size: 14px;
 }
 
@@ -75,12 +27,7 @@ body {
   font-size: 14px;
 }
 
-#canvas-controls select:focus {
-  outline: none;
-  border-color: #52ab98;
-}
-
-/* Connection points */
+/* Connection points (editor only) */
 .connection-point {
   transition: all 0.15s ease;
 }
@@ -90,7 +37,7 @@ body {
   fill: #ff4444;
 }
 
-/* Midpoints */
+/* Midpoints (editor only) */
 .midpoint {
   transition: all 0.15s ease;
 }
@@ -101,10 +48,15 @@ body {
   opacity: 1 !important;
 }
 
-/* Sidebar */
+/* Sidebar (editor only) */
+.main-container {
+  display: flex;
+  gap: 20px;
+}
+
 .sidebar {
   flex: 1;
-  min-width: 300px;
+  min-width: 250px;
 }
 
 .sidebar h2 {
@@ -129,6 +81,8 @@ body {
   padding-bottom: 5px;
   border-bottom: 2px solid #52ab98;
   list-style-position: inside;
+  cursor: pointer;
+  user-select: none;
 }
 
 #feature-list {
@@ -162,12 +116,6 @@ body {
   font-size: 13px;
 }
 
-#properties-panel input[type="text"],
-#properties-panel input[type="number"],
-#properties-panel select {
-  font-family: 'Roboto', sans-serif;
-}
-
 #properties-panel input[type="text"]:focus,
 #properties-panel input[type="number"]:focus,
 #properties-panel select:focus {
@@ -187,15 +135,15 @@ body {
   margin: 20px 0;
 }
 
-/* Button styles */
+/* Buttons */
 button {
   background-color: #52ab98;
   color: white;
   border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
+  padding: 6px 12px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease;
 }
 
 button:hover {

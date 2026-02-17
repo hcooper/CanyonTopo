@@ -119,7 +119,7 @@ function loadViewerPage() {
 
   mainContainer.appendChild(canvasSection);
 
-  document.body.appendChild(mainContainer);
+  document.getElementById('topo-container').appendChild(mainContainer);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
