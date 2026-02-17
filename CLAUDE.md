@@ -10,10 +10,21 @@ The old implementation lives in `old/` for reference. Active development is in `
 
 ## Architecture (`redux/`)
 
-Three plain JavaScript classes, no build step:
+Plain JavaScript classes, no build step. The editor is split across multiple files that extend the class via `Object.assign(TopoEditor.prototype, { ... })`.
+
+### Base class
 
 - **`redux/lib/renderer.js`** — `TopoRenderer` base class. Owns: SVG canvas creation, grid drawing, all feature render methods (visual only), zoom/pan state and methods, `screenToSVGCoords()`, `fitToContent()`, middle-mouse pan and mouse-wheel zoom event listeners.
-- **`redux/lib/editor.js`** — `TopoEditor extends TopoRenderer`. Adds: interactive handles on features, right-click context menu, properties panel, feature list sidebar, undo/redo, snap-to-grid, YAML import/export, MediaWiki save via `mw.Api`.
+
+### Editor (4 files, loaded in order)
+
+- **`redux/lib/editor.js`** — `TopoEditor extends TopoRenderer`. Core class declaration + constructor, canvas/cursor, event listeners, drawing state machine (`startLine/finishLine/startRappel/finishRappel/startPool/finishPool/cancelDrawing`), cursor snap logic, `selectFeature`, `deleteFeature`, `render`, page bootstrap (`loadPage`, `DOMContentLoaded`).
+- **`redux/lib/editor-features.js`** — Per-feature render/drag/update/add methods: `renderLine/Rappel/Pool/Anchor/Hazard/Exit`, `updateLine/…`, `makeLineDraggable/…`, `addPool/Anchor/Rappel/Hazard/Exit`. Also: connection point and midpoint factories (`createConnectionPoint`, `createMidpoint`, `createCurveMidpoint`) and their drag handlers (`makeConnectionPointDraggable`, `makeMidpointDraggable`, `makeCurveMidpointDraggable`, `makePoolCurveMidpointDraggable`, `makeRappelTextDraggable`).
+- **`redux/lib/editor-ui.js`** — Toolbar, controls bar, right-click context menu, properties panel, feature list sidebar: `createToolbar`, `createControls`, `showContextMenu/hideContextMenu`, `updatePropertiesPanel`, `getSortedFeatures`, `renderFeatureList`.
+- **`redux/lib/editor-io.js`** — Persistence and history: `saveState`, `undo/redo`, `restoreState`, `updateUndoRedoButtons`, `toYAML`, `loadFromYAML`, `exportSVG`, `exportPNG`, `exportData`, `importData`, `isEditMode`, `wikiPageName`, `saveToWiki`.
+
+### Viewer (1 file)
+
 - **`redux/lib/viewer.js`** — `TopoViewer extends TopoRenderer`. Read-only view. Overrides `drawGrid()` to a no-op. Has a file-load button and zoom controls only.
 
 ## Key Files
@@ -26,24 +37,47 @@ Three plain JavaScript classes, no build step:
 
 ## Script Load Order
 
-Both pages load scripts in this order:
+The editor page loads scripts in this order:
 1. `deps/js-yaml.min.js`
 2. `lib/renderer.js`
-3. `lib/editor.js` or `lib/viewer.js`
+3. `lib/editor.js`
+4. `lib/editor-features.js`
+5. `lib/editor-ui.js`
+6. `lib/editor-io.js`
+
+The viewer page loads:
+1. `deps/js-yaml.min.js`
+2. `lib/renderer.js`
+3. `lib/viewer.js`
+
+## Prototype Extension Pattern
+
+`editor-features.js`, `editor-ui.js`, and `editor-io.js` each use:
+
+```javascript
+Object.assign(TopoEditor.prototype, {
+  methodName(args) { ... },
+  // ...
+});
+```
+
+This requires no build step. All methods share `this` (the `TopoEditor` instance) as usual. Cross-file method calls work because prototype lookups are resolved at runtime — all files must be loaded before `new TopoEditor()` is called.
+
+**`super` does not work in extension files.** Methods defined in `Object.assign({...})` have their `[[HomeObject]]` set to the temporary object literal, not `TopoEditor.prototype`, so `super.foo()` resolves against `Object.prototype` and throws. Use the explicit form instead:
+
+```javascript
+// WRONG — super resolves against Object.prototype, throws at runtime
+const group = super.renderLine(line);
+
+// CORRECT — explicit prototype call
+const group = TopoRenderer.prototype.renderLine.call(this, line);
+```
 
 ## Embedding in MediaWiki
 
-A wiki page embeds the editor or viewer by setting globals before loading the scripts:
+`TopoContentHandler/includes/TopoEditAction.php` injects the editor by outputting all 6 `<script>` tags (plus `raw_yaml` as a JS global) into the page via `addHTML()`.
 
-```html
-<script>
-  var rw_domain = 'https://ropewiki.com'; // used as mw.Api base (optional, mw.Api handles it)
-  var rw_page   = 'Canyon_Page_Name';     // wiki page to save to (read via mw.config.get('wgPageName'))
-  var raw_yaml  = '...';                  // YAML string to preload on init
-</script>
-```
-
-- The Save to Wiki button is always visible in the editor.
+- `raw_yaml` — YAML string preloaded from the wiki page content (empty string for new pages).
 - Saving uses `mw.Api.postWithToken('csrf', { action: 'edit', ... })`.
 - Edit mode is detected via `mw.config.get('wgAction') === 'edit-topo'`.
 
@@ -71,11 +105,13 @@ features:
     id: 2
     x: 150
     y: 150
-    length: 120
-    slope: 90
+    length: 120          # float, not rounded — preserves exact grid-snap endpoint
+    slope: 90            # float degrees
     curveOffset: -15
     curvePosition: 0.5
     description: '30m'
+    textOffsetX: 0       # optional; pixels the label is offset from its natural position
+    textOffsetY: 0       # optional; drag the label independently of the rappel line
   - type: pool
     id: 3
     x: 200
@@ -105,7 +141,10 @@ features:
 ## Design Notes
 
 - `TopoRenderer` constructor does NOT call `this.init()` — each subclass calls it after setting its own state.
-- Each `renderXxx()` method appends the SVG group to `featureLayer` and returns it so `TopoEditor` can attach interactive elements.
+- Each `renderXxx()` method in the base class appends the SVG group to `featureLayer` and returns it so `TopoEditor` can attach interactive elements.
 - `applyViewTransform()` calls `this.drawGrid()` — the viewer overrides `drawGrid()` to a no-op, so no conditional needed.
 - `fitToContent()` is called automatically after `loadFromYAML()` in both editor and viewer.
 - Grid and cursor are editor-only; the viewer has neither.
+- Pool depth control: the orange curve-midpoint handle sits at `(cx, cy + depth * 0.552 * 0.75)`. Dragging it vertically sets `depth = (mouseY - pool.y) / (0.552 * 0.75)`.
+- Rappel `length` and `slope` are stored as floats (not rounded integers). Rounding them causes the rendered endpoint (`x2 = x + length*cos(slope)`) to drift from the snapped grid position.
+- Rappel description text has an independent drag handle. `textOffsetX`/`textOffsetY` store the pixel offset from the natural position (`controlX + perpX*15`, `controlY + perpY*15 - 20`). Both fields default to 0 when absent. The viewer also respects them.
