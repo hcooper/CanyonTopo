@@ -1,6 +1,37 @@
 /* Canvas */
+#canvas-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 6px;
+}
+
 #canvas-container {
-  display: inline-block;
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+
+#canvas-container svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+#toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+#toolbar button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #canvas-controls {

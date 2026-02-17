@@ -404,9 +404,11 @@ class TopoRenderer {
 
     // Description text if present
     if (rappel.description) {
+      const textOffsetX = rappel.textOffsetX || 0;
+      const textOffsetY = rappel.textOffsetY || 0;
       const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', controlX + perpX * 15);
-      text.setAttribute('y', controlY + perpY * 15 - 20);
+      text.setAttribute('x', controlX + perpX * 15 + textOffsetX);
+      text.setAttribute('y', controlY + perpY * 15 - 20 + textOffsetY);
       text.setAttribute('font-size', '14');
       text.setAttribute('font-family', 'Arial, sans-serif');
       text.setAttribute('fill', '#666');
@@ -509,11 +511,26 @@ class TopoRenderer {
   // ---------------------------------------------------------------------------
 
   attachEventListeners() {
-    // Mouse wheel zoom
+    // Mouse wheel zoom — zooms toward the cursor position
     this.svg.addEventListener('wheel', (e) => {
       e.preventDefault();
       const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
-      this.setZoom(this.zoomLevel * zoomDelta);
+
+      // Cursor in SVG coords before zoom
+      const rect = this.svg.getBoundingClientRect();
+      const screenX = e.clientX - rect.left;
+      const screenY = e.clientY - rect.top;
+      const svgX = this.panX + (screenX / rect.width)  * (this.width  / this.zoomLevel);
+      const svgY = this.panY + (screenY / rect.height) * (this.height / this.zoomLevel);
+
+      // Apply zoom
+      this.zoomLevel = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoomLevel * zoomDelta));
+
+      // Adjust pan so the same SVG point stays under the cursor
+      this.panX = svgX - (screenX / rect.width)  * (this.width  / this.zoomLevel);
+      this.panY = svgY - (screenY / rect.height) * (this.height / this.zoomLevel);
+
+      this.applyViewTransform();
     });
 
     // Pan with middle mouse button

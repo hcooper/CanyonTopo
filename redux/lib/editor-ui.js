@@ -1,0 +1,856 @@
+// Canyon Topo Editor — UI/controls methods
+// Loaded after editor.js; extends TopoEditor.prototype
+
+Object.assign(TopoEditor.prototype, {
+
+  // Returns the SVG coordinates of the center of the current viewport.
+  // Used by createToolbar() to place new features in the visible area.
+  viewCenter() {
+    return {
+      x: this.panX + (this.width / this.zoomLevel) / 2,
+      y: this.panY + (this.height / this.zoomLevel) / 2
+    };
+  },
+
+  createControls() {
+    // Create controls panel
+    const controlsDiv = document.createElement('div');
+    controlsDiv.id = 'canvas-controls';
+    controlsDiv.style.marginTop = '10px';
+    controlsDiv.style.display = 'flex';
+    controlsDiv.style.flexWrap = 'wrap';
+    controlsDiv.style.gap = '15px';
+    controlsDiv.style.alignItems = 'center';
+
+    // Snap to grid checkbox
+    const snapLabel = document.createElement('label');
+    snapLabel.style.display = 'flex';
+    snapLabel.style.alignItems = 'center';
+    snapLabel.style.gap = '5px';
+    snapLabel.style.cursor = 'pointer';
+
+    const snapCheckbox = document.createElement('input');
+    snapCheckbox.type = 'checkbox';
+    snapCheckbox.checked = this.snapToGrid;
+    snapCheckbox.id = 'snap-to-grid';
+    snapCheckbox.addEventListener('change', (e) => {
+      this.snapToGrid = e.target.checked;
+    });
+
+    const snapText = document.createElement('span');
+    snapText.textContent = 'Snap to Grid';
+
+    snapLabel.appendChild(snapCheckbox);
+    snapLabel.appendChild(snapText);
+
+    // Grid size selector
+    const gridSizeLabel = document.createElement('label');
+    gridSizeLabel.style.display = 'flex';
+    gridSizeLabel.style.alignItems = 'center';
+    gridSizeLabel.style.gap = '5px';
+
+    const gridSizeText = document.createElement('span');
+    gridSizeText.textContent = 'Grid Size:';
+
+    const gridSizeSelect = document.createElement('select');
+    gridSizeSelect.id = 'grid-size';
+    [5, 10, 15, 20, 25, 50].forEach(size => {
+      const option = document.createElement('option');
+      option.value = size;
+      option.textContent = `${size}px`;
+      if (size === this.gridSize) option.selected = true;
+      gridSizeSelect.appendChild(option);
+    });
+
+    gridSizeSelect.addEventListener('change', (e) => {
+      this.gridSize = parseInt(e.target.value);
+      this.drawGrid();
+    });
+
+    gridSizeLabel.appendChild(gridSizeText);
+    gridSizeLabel.appendChild(gridSizeSelect);
+
+    // Undo button
+    const undoBtn = document.createElement('button');
+    undoBtn.id = 'undo-btn';
+    undoBtn.textContent = '↶';
+    undoBtn.title = 'Undo (Ctrl+Z)';
+    undoBtn.style.fontSize = '20px';
+    undoBtn.addEventListener('click', () => this.undo());
+
+    // Redo button
+    const redoBtn = document.createElement('button');
+    redoBtn.id = 'redo-btn';
+    redoBtn.textContent = '↷';
+    redoBtn.title = 'Redo (Ctrl+Shift+Z)';
+    redoBtn.style.fontSize = '20px';
+    redoBtn.addEventListener('click', () => this.redo());
+
+    // Zoom In button
+    const zoomInBtn = document.createElement('button');
+    zoomInBtn.textContent = '+';
+    zoomInBtn.title = 'Zoom In';
+    zoomInBtn.style.fontSize = '20px';
+    zoomInBtn.addEventListener('click', () => this.zoomIn());
+
+    // Zoom Out button
+    const zoomOutBtn = document.createElement('button');
+    zoomOutBtn.textContent = '−';
+    zoomOutBtn.title = 'Zoom Out';
+    zoomOutBtn.style.fontSize = '20px';
+    zoomOutBtn.addEventListener('click', () => this.zoomOut());
+
+    // Zoom Reset button
+    const zoomResetBtn = document.createElement('button');
+    zoomResetBtn.textContent = '1:1';
+    zoomResetBtn.title = 'Reset Zoom & Pan';
+    zoomResetBtn.addEventListener('click', () => this.resetView());
+
+    // Zoom level display
+    const zoomDisplay = document.createElement('span');
+    zoomDisplay.id = 'zoom-display';
+    zoomDisplay.style.padding = '0 10px';
+    zoomDisplay.style.fontSize = '14px';
+    zoomDisplay.textContent = '100%';
+
+    // Export SVG button
+    const exportSvgBtn = document.createElement('button');
+    exportSvgBtn.textContent = 'Export SVG';
+    exportSvgBtn.addEventListener('click', () => this.exportSVG());
+
+    // Export PNG button
+    const exportPngBtn = document.createElement('button');
+    exportPngBtn.textContent = 'Export PNG';
+    exportPngBtn.addEventListener('click', () => this.exportPNG());
+
+    // Export Data button
+    const exportDataBtn = document.createElement('button');
+    exportDataBtn.textContent = 'Export Data';
+    exportDataBtn.addEventListener('click', () => this.exportData());
+
+    // Import Data button
+    const importDataBtn = document.createElement('button');
+    importDataBtn.textContent = 'Import Data';
+    importDataBtn.addEventListener('click', () => this.importData());
+
+    // Save to Wiki button
+    const saveWikiBtn = document.createElement('button');
+    saveWikiBtn.id = 'save-wiki-btn';
+    saveWikiBtn.textContent = 'Save to Wiki';
+    saveWikiBtn.addEventListener('click', () => this.saveToWiki());
+
+    controlsDiv.appendChild(snapLabel);
+    controlsDiv.appendChild(gridSizeLabel);
+    controlsDiv.appendChild(undoBtn);
+    controlsDiv.appendChild(redoBtn);
+    controlsDiv.appendChild(zoomOutBtn);
+    controlsDiv.appendChild(zoomResetBtn);
+    controlsDiv.appendChild(zoomInBtn);
+    controlsDiv.appendChild(zoomDisplay);
+    const rowBreak = document.createElement('div');
+    rowBreak.style.width = '100%';
+    rowBreak.style.height = '0';
+    controlsDiv.appendChild(rowBreak);
+    controlsDiv.appendChild(exportSvgBtn);
+    controlsDiv.appendChild(exportPngBtn);
+    controlsDiv.appendChild(exportDataBtn);
+    controlsDiv.appendChild(importDataBtn);
+    controlsDiv.appendChild(saveWikiBtn);
+
+    this.container.appendChild(controlsDiv);
+
+    // Update button states initially
+    this.updateUndoRedoButtons();
+  },
+
+  createToolbar() {
+    const toolbar = document.createElement('div');
+    toolbar.id = 'toolbar';
+
+    const tools = [
+      {
+        name: 'Line',
+        action: () => { this.pendingTool = 'line'; },
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+          <line x1="4" y1="4" x2="20" y2="20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>`
+      },
+      {
+        name: 'Rappel',
+        action: () => { this.pendingTool = 'rappel'; },
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+          <path d="M 6,4 Q 18,12 6,20" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <polygon points="6,20 2,13 10,13" fill="white"/>
+        </svg>`
+      },
+      {
+        name: 'Pool',
+        action: () => { this.pendingTool = 'pool'; },
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+          <path d="M 4,12 C 4,20 20,20 20,12" stroke="white" stroke-width="2.5" fill="#4a90e2"/>
+        </svg>`
+      },
+      {
+        name: 'Anchor',
+        action: () => { const c = this.viewCenter(); this.addAnchor(c.x, c.y); },
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+          <line x1="5" y1="8" x2="11" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="11" y1="8" x2="5" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="13" y1="8" x2="19" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="19" y1="8" x2="13" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>`
+      },
+      {
+        name: 'Hazard',
+        action: () => { const c = this.viewCenter(); this.addHazard(c.x, c.y); },
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+          <polygon points="12,3 22,21 2,21" stroke="white" stroke-width="2" fill="#FFD700"/>
+          <text x="12" y="18" text-anchor="middle" font-size="9" font-weight="bold" fill="#333">!</text>
+        </svg>`
+      },
+      {
+        name: 'Exit',
+        action: () => { const c = this.viewCenter(); this.addExit(c.x, c.y); },
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+          <line x1="5" y1="19" x2="19" y2="5" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          <polygon points="19,5 13,5 19,11" fill="white"/>
+        </svg>`
+      }
+    ];
+
+    tools.forEach(tool => {
+      const btn = document.createElement('button');
+      btn.title = tool.name;
+      btn.innerHTML = tool.icon;
+      btn.addEventListener('click', tool.action);
+      toolbar.appendChild(btn);
+    });
+
+    // Insert into canvas-row before canvas-container so it appears to the left
+    this.container.parentElement.insertBefore(toolbar, this.container);
+  },
+
+  showContextMenu(e) {
+    const coords = this.screenToSVGCoords(e);
+    let x = coords.x;
+    let y = coords.y;
+
+    // Check for nearby connection points first
+    const nearbyPoint = this.findNearbyConnectionPoint(x, y);
+
+    if (nearbyPoint) {
+      x = nearbyPoint.x;
+      y = nearbyPoint.y;
+    } else if (this.snapToGrid) {
+      // Snap to grid if enabled
+      x = Math.round(x / this.gridSize) * this.gridSize;
+      y = Math.round(y / this.gridSize) * this.gridSize;
+    }
+
+    // Remove existing menu
+    this.hideContextMenu();
+
+    // Create context menu
+    const menu = document.createElement('div');
+    menu.id = 'context-menu';
+    menu.style.position = 'absolute';
+    menu.style.left = `${e.pageX}px`;
+    menu.style.top = `${e.pageY}px`;
+    menu.style.backgroundColor = 'white';
+    menu.style.border = '2px solid #333';
+    menu.style.borderRadius = '5px';
+    menu.style.padding = '5px 0';
+    menu.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    menu.style.zIndex = '1000';
+    menu.style.minWidth = '150px';
+
+    // Menu structure with sub-menus
+    const menuStructure = [
+      {
+        label: 'Add',
+        submenu: [
+          { label: 'Pool', action: () => this.addPool(x, y) },
+          { label: 'Anchor', action: () => this.addAnchor(x, y) },
+          { label: 'Hazard', action: () => this.addHazard(x, y) },
+          { label: 'Exit', action: () => this.addExit(x, y) }
+        ]
+      },
+      {
+        label: 'Draw',
+        submenu: [
+          { label: 'Line', action: () => this.startLine(x, y) },
+          { label: 'Rappel', action: () => this.startRappel(x, y) }
+        ]
+      }
+    ];
+
+    let activeSubmenu = null;
+
+    menuStructure.forEach(item => {
+      const menuItem = document.createElement('div');
+      menuItem.style.padding = '8px 16px';
+      menuItem.style.cursor = 'pointer';
+      menuItem.style.transition = 'background-color 0.2s';
+      menuItem.style.position = 'relative';
+      menuItem.style.display = 'flex';
+      menuItem.style.justifyContent = 'space-between';
+      menuItem.style.alignItems = 'center';
+
+      const label = document.createElement('span');
+      label.textContent = item.label;
+      menuItem.appendChild(label);
+
+      if (item.submenu) {
+        // Add arrow indicator for submenu
+        const arrow = document.createElement('span');
+        arrow.textContent = '▶';
+        arrow.style.marginLeft = '10px';
+        arrow.style.fontSize = '10px';
+        menuItem.appendChild(arrow);
+      }
+
+      menuItem.addEventListener('mouseenter', () => {
+        menuItem.style.backgroundColor = '#52ab98';
+        menuItem.style.color = 'white';
+
+        // Remove any existing submenu
+        if (activeSubmenu) {
+          activeSubmenu.remove();
+          activeSubmenu = null;
+        }
+
+        // Show submenu if present
+        if (item.submenu) {
+          const submenu = document.createElement('div');
+          submenu.style.position = 'absolute';
+          submenu.style.left = '100%';
+          submenu.style.top = '0';
+          submenu.style.backgroundColor = 'white';
+          submenu.style.border = '2px solid #333';
+          submenu.style.borderRadius = '5px';
+          submenu.style.padding = '5px 0';
+          submenu.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+          submenu.style.minWidth = '130px';
+          submenu.style.zIndex = '1001';
+
+          item.submenu.forEach(subitem => {
+            const subMenuItem = document.createElement('div');
+            subMenuItem.textContent = subitem.label;
+            subMenuItem.style.padding = '8px 16px';
+            subMenuItem.style.cursor = 'pointer';
+            subMenuItem.style.transition = 'background-color 0.2s';
+            subMenuItem.style.color = 'black';
+
+            subMenuItem.addEventListener('mouseenter', () => {
+              subMenuItem.style.backgroundColor = '#52ab98';
+              subMenuItem.style.color = 'white';
+            });
+
+            subMenuItem.addEventListener('mouseleave', () => {
+              subMenuItem.style.backgroundColor = 'transparent';
+              subMenuItem.style.color = 'black';
+            });
+
+            subMenuItem.addEventListener('click', (e) => {
+              e.stopPropagation();
+              subitem.action();
+              this.hideContextMenu();
+            });
+
+            submenu.appendChild(subMenuItem);
+          });
+
+          menuItem.appendChild(submenu);
+          activeSubmenu = submenu;
+        }
+      });
+
+      menuItem.addEventListener('mouseleave', () => {
+        menuItem.style.backgroundColor = 'transparent';
+        menuItem.style.color = 'black';
+      });
+
+      menu.appendChild(menuItem);
+    });
+
+    document.body.appendChild(menu);
+  },
+
+  hideContextMenu() {
+    const menu = document.getElementById('context-menu');
+    if (menu) {
+      menu.remove();
+    }
+  },
+
+  updatePropertiesPanel(feature) {
+    const panel = document.getElementById('properties-panel');
+    if (!panel) return;
+
+    if (!feature) {
+      panel.innerHTML = '<p class="empty-state">Select a feature to edit properties</p>';
+      return;
+    }
+
+    if (feature.type === 'anchor') {
+      panel.innerHTML = `
+        <h3>Anchor</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label for="anchor-type" style="display: block; margin-bottom: 4px; font-weight: 500;">Type:</label>
+            <select id="anchor-type" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+              <option value="bolt" ${feature.anchorType === 'bolt' ? 'selected' : ''}>Bolt</option>
+              <option value="natural" ${feature.anchorType === 'natural' ? 'selected' : ''}>Natural</option>
+              <option value="piton" ${feature.anchorType === 'piton' ? 'selected' : ''}>Piton</option>
+              <option value="tree" ${feature.anchorType === 'tree' ? 'selected' : ''}>Tree</option>
+              <option value="rock" ${feature.anchorType === 'rock' ? 'selected' : ''}>Rock</option>
+            </select>
+          </div>
+          <div>
+            <label for="anchor-count" style="display: block; margin-bottom: 4px; font-weight: 500;">Count:</label>
+            <input type="number" id="anchor-count" value="${feature.count}" min="1" max="10"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <div>
+            <label for="anchor-name" style="display: block; margin-bottom: 4px; font-weight: 500;">Name:</label>
+            <input type="text" id="anchor-name" value="${feature.name}" placeholder="Optional label"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <button id="delete-anchor" style="background-color: #e74c3c; margin-top: 8px;">Delete Anchor</button>
+        </div>
+      `;
+
+      // Add event listeners
+      const typeSelect = document.getElementById('anchor-type');
+      const countInput = document.getElementById('anchor-count');
+      const nameInput = document.getElementById('anchor-name');
+      const deleteBtn = document.getElementById('delete-anchor');
+
+      typeSelect.addEventListener('change', (e) => {
+        feature.anchorType = e.target.value;
+        this.saveState();
+        console.log('Updated anchor type:', feature.anchorType);
+      });
+
+      countInput.addEventListener('input', (e) => {
+        feature.count = parseInt(e.target.value) || 1;
+        this.updateAnchor(feature);
+        this.saveState();
+        console.log('Updated anchor count:', feature.count);
+      });
+
+      nameInput.addEventListener('input', (e) => {
+        feature.name = e.target.value;
+        this.renderFeatureList();
+        console.log('Updated anchor name:', feature.name);
+      });
+
+      nameInput.addEventListener('blur', (e) => {
+        // Save state when user finishes editing name
+        this.saveState();
+      });
+
+      deleteBtn.addEventListener('click', () => {
+        this.deleteFeature(feature.id);
+      });
+    } else if (feature.type === 'line') {
+      panel.innerHTML = `
+        <h3>Line</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="line-shorten" ${feature.shorten ? 'checked' : ''}
+                   style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="line-shorten" style="cursor: pointer; font-weight: 500;">Shorten</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="line-traverse" ${feature.traverse ? 'checked' : ''}
+                   style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="line-traverse" style="cursor: pointer; font-weight: 500;">Traverse</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="line-arrow" ${feature.arrow ? 'checked' : ''}
+                   style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="line-arrow" style="cursor: pointer; font-weight: 500;">Arrow</label>
+          </div>
+          <button id="delete-line" style="background-color: #e74c3c; margin-top: 8px;">Delete Line</button>
+        </div>
+      `;
+
+      // Add event listeners
+      const shortenCheckbox = document.getElementById('line-shorten');
+      const traverseCheckbox = document.getElementById('line-traverse');
+      const arrowCheckbox = document.getElementById('line-arrow');
+      const deleteBtn = document.getElementById('delete-line');
+
+      shortenCheckbox.addEventListener('change', (e) => {
+        feature.shorten = e.target.checked;
+        this.updateLine(feature);
+        this.saveState();
+        console.log('Updated line shorten:', feature.shorten);
+      });
+
+      traverseCheckbox.addEventListener('change', (e) => {
+        feature.traverse = e.target.checked;
+        this.updateLine(feature);
+        this.saveState();
+        console.log('Updated line traverse:', feature.traverse);
+      });
+
+      arrowCheckbox.addEventListener('change', (e) => {
+        feature.arrow = e.target.checked;
+        this.updateLine(feature);
+        this.saveState();
+        console.log('Updated line arrow:', feature.arrow);
+      });
+
+      deleteBtn.addEventListener('click', () => {
+        this.deleteFeature(feature.id);
+      });
+    } else if (feature.type === 'pool') {
+      panel.innerHTML = `
+        <h3>Pool</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label for="pool-width" style="display: block; margin-bottom: 4px; font-weight: 500;">Width:</label>
+            <input type="number" id="pool-width" value="${feature.width}" min="10" max="200"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <div>
+            <label for="pool-depth" style="display: block; margin-bottom: 4px; font-weight: 500;">Depth:</label>
+            <input type="number" id="pool-depth" value="${feature.depth}" min="10" max="100"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <button id="delete-pool" style="background-color: #e74c3c; margin-top: 8px;">Delete Pool</button>
+        </div>
+      `;
+
+      // Add event listeners
+      const widthInput = document.getElementById('pool-width');
+      const depthInput = document.getElementById('pool-depth');
+      const deleteBtn = document.getElementById('delete-pool');
+
+      widthInput.addEventListener('input', (e) => {
+        feature.width = parseInt(e.target.value) || 50;
+        this.updatePool(feature);
+        this.saveState();
+        console.log('Updated pool width:', feature.width);
+      });
+
+      depthInput.addEventListener('input', (e) => {
+        feature.depth = parseInt(e.target.value) || 30;
+        this.updatePool(feature);
+        this.saveState();
+        console.log('Updated pool depth:', feature.depth);
+      });
+
+      deleteBtn.addEventListener('click', () => {
+        this.deleteFeature(feature.id);
+      });
+    } else if (feature.type === 'rappel') {
+      panel.innerHTML = `
+        <h3>Rappel</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label for="rappel-length" style="display: block; margin-bottom: 4px; font-weight: 500;">Length:</label>
+            <input type="number" id="rappel-length" value="${feature.length}" min="10" max="500"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <div>
+            <label for="rappel-slope" style="display: block; margin-bottom: 4px; font-weight: 500;">Slope (degrees):</label>
+            <input type="number" id="rappel-slope" value="${feature.slope}" min="0" max="360"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <div>
+            <label for="rappel-description" style="display: block; margin-bottom: 4px; font-weight: 500;">Description:</label>
+            <input type="text" id="rappel-description" value="${feature.description || ''}" placeholder="e.g., 150', DBL"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <button id="delete-rappel" style="background-color: #e74c3c; margin-top: 8px;">Delete Rappel</button>
+        </div>
+      `;
+
+      // Add event listeners
+      const lengthInput = document.getElementById('rappel-length');
+      const slopeInput = document.getElementById('rappel-slope');
+      const descriptionInput = document.getElementById('rappel-description');
+      const deleteBtn = document.getElementById('delete-rappel');
+
+      lengthInput.addEventListener('input', (e) => {
+        feature.length = parseInt(e.target.value) || 100;
+        this.updateRappel(feature);
+        this.saveState();
+        console.log('Updated rappel length:', feature.length);
+      });
+
+      slopeInput.addEventListener('input', (e) => {
+        feature.slope = parseInt(e.target.value) || 90;
+        this.updateRappel(feature);
+        this.saveState();
+        console.log('Updated rappel slope:', feature.slope);
+      });
+
+      descriptionInput.addEventListener('input', (e) => {
+        feature.description = e.target.value;
+        this.updateRappel(feature);
+        this.renderFeatureList();
+        console.log('Updated rappel description:', feature.description);
+      });
+
+      descriptionInput.addEventListener('blur', (e) => {
+        // Save state when user finishes editing description
+        this.saveState();
+      });
+
+      deleteBtn.addEventListener('click', () => {
+        this.deleteFeature(feature.id);
+      });
+    } else if (feature.type === 'hazard') {
+      panel.innerHTML = `
+        <h3>Hazard</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label for="hazard-text" style="display: block; margin-bottom: 4px; font-weight: 500;">Text:</label>
+            <input type="text" id="hazard-text" value="${feature.text}" maxlength="20"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <div>
+            <label for="hazard-size" style="display: block; margin-bottom: 4px; font-weight: 500;">Size:</label>
+            <input type="number" id="hazard-size" value="${feature.size}" min="15" max="60"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <button id="delete-hazard" style="background-color: #e74c3c; margin-top: 8px;">Delete Hazard</button>
+        </div>
+      `;
+
+      // Add event listeners
+      const textInput = document.getElementById('hazard-text');
+      const sizeInput = document.getElementById('hazard-size');
+      const deleteBtn = document.getElementById('delete-hazard');
+
+      textInput.addEventListener('input', (e) => {
+        feature.text = e.target.value;
+        this.updateHazard(feature);
+        console.log('Updated hazard text:', feature.text);
+      });
+
+      textInput.addEventListener('blur', (e) => {
+        // Save state when user finishes editing text
+        this.saveState();
+      });
+
+      sizeInput.addEventListener('input', (e) => {
+        feature.size = parseInt(e.target.value) || 30;
+        this.updateHazard(feature);
+        this.saveState();
+        console.log('Updated hazard size:', feature.size);
+      });
+
+      deleteBtn.addEventListener('click', () => {
+        this.deleteFeature(feature.id);
+      });
+    } else if (feature.type === 'exit') {
+      panel.innerHTML = `
+        <h3>Exit</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label for="exit-length" style="display: block; margin-bottom: 4px; font-weight: 500;">Length:</label>
+            <input type="number" id="exit-length" value="${feature.length}" min="20" max="200"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <button id="delete-exit" style="background-color: #e74c3c; margin-top: 8px;">Delete Exit</button>
+        </div>
+      `;
+
+      // Add event listeners
+      const lengthInput = document.getElementById('exit-length');
+      const deleteBtn = document.getElementById('delete-exit');
+
+      lengthInput.addEventListener('input', (e) => {
+        feature.length = parseInt(e.target.value) || 60;
+        this.updateExit(feature);
+        this.saveState();
+        console.log('Updated exit length:', feature.length);
+      });
+
+      deleteBtn.addEventListener('click', () => {
+        this.deleteFeature(feature.id);
+      });
+    } else {
+      // Other feature types can be added later
+      panel.innerHTML = `
+        <h3>${feature.type.charAt(0).toUpperCase() + feature.type.slice(1)}</h3>
+        <p style="color: #666; font-size: 14px;">Properties for this feature type are not yet implemented.</p>
+      `;
+    }
+  },
+
+  getSortedFeatures() {
+    // Helper function to get a representative position for a feature
+    const getFeaturePosition = (feature) => {
+      switch (feature.type) {
+        case 'line':
+          // Use start point
+          return { x: feature.x1, y: feature.y1 };
+        case 'rappel':
+          // Use start point
+          return { x: feature.x, y: feature.y };
+        case 'pool':
+          // Use center point
+          return { x: feature.x, y: feature.y };
+        case 'anchor':
+          // Use connection point
+          return { x: feature.connectionX, y: feature.connectionY };
+        case 'hazard':
+          return { x: feature.x, y: feature.y };
+        case 'exit':
+          return { x: feature.x, y: feature.y };
+        default:
+          return { x: 0, y: 0 };
+      }
+    };
+
+    // Build a graph of connections between features
+    const connections = new Map();
+    this.features.forEach(f => connections.set(f.id, new Set()));
+
+    // Find all connection points and group features that share them
+    const connectionPoints = new Map(); // Map from "x,y" to feature IDs
+
+    this.features.forEach(feature => {
+      const addPoint = (x, y, featureId) => {
+        const key = `${Math.round(x)},${Math.round(y)}`;
+        if (!connectionPoints.has(key)) {
+          connectionPoints.set(key, new Set());
+        }
+        connectionPoints.get(key).add(featureId);
+      };
+
+      if (feature.type === 'line') {
+        addPoint(feature.x1, feature.y1, feature.id);
+        addPoint(feature.x2, feature.y2, feature.id);
+      } else if (feature.type === 'rappel') {
+        const slopeRadians = (feature.slope * Math.PI) / 180;
+        const x2 = feature.x + feature.length * Math.cos(slopeRadians);
+        const y2 = feature.y + feature.length * Math.sin(slopeRadians);
+        addPoint(feature.x, feature.y, feature.id);
+        addPoint(x2, y2, feature.id);
+      } else if (feature.type === 'pool') {
+        const leftX = feature.x - feature.width / 2;
+        const rightX = feature.x + feature.width / 2;
+        addPoint(leftX, feature.y, feature.id);
+        addPoint(rightX, feature.y, feature.id);
+      } else if (feature.type === 'anchor') {
+        addPoint(feature.connectionX, feature.connectionY, feature.id);
+      }
+    });
+
+    // Build connection graph
+    connectionPoints.forEach((featureIds) => {
+      const ids = Array.from(featureIds);
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+          connections.get(ids[i]).add(ids[j]);
+          connections.get(ids[j]).add(ids[i]);
+        }
+      }
+    });
+
+    // Sort features by Y position first (top to bottom), then X position (left to right)
+    const sorted = [...this.features].sort((a, b) => {
+      const posA = getFeaturePosition(a);
+      const posB = getFeaturePosition(b);
+
+      // Primary sort by Y coordinate (top to bottom)
+      if (Math.abs(posA.y - posB.y) > 50) { // Group features within 50 units vertically
+        return posA.y - posB.y;
+      }
+
+      // Secondary sort by X coordinate (left to right)
+      return posA.x - posB.x;
+    });
+
+    return sorted;
+  },
+
+  renderFeatureList() {
+    const featureListDiv = document.getElementById('feature-list');
+    if (!featureListDiv) return;
+
+    if (this.features.length === 0) {
+      featureListDiv.innerHTML = '<p class="empty-state">No features yet</p>';
+      return;
+    }
+
+    // Sort features by position (top to bottom, left to right)
+    const sortedFeatures = this.getSortedFeatures();
+
+    // Create a list of features
+    const list = document.createElement('ul');
+    list.style.listStyle = 'none';
+    list.style.padding = '0';
+    list.style.margin = '0';
+
+    sortedFeatures.forEach(feature => {
+      const listItem = document.createElement('li');
+      listItem.style.padding = '8px 12px';
+      listItem.style.marginBottom = '4px';
+      listItem.style.backgroundColor = this.selectedFeature === feature.id ? '#e8f4f8' : '#f9f9f9';
+      listItem.style.border = '1px solid #ddd';
+      listItem.style.borderRadius = '3px';
+      listItem.style.cursor = 'pointer';
+      listItem.style.transition = 'background-color 0.2s';
+      listItem.style.fontSize = '13px';
+
+      // Create feature label
+      let label = '';
+      switch (feature.type) {
+        case 'line':
+          label = `Line (${feature.length}m, ${feature.slope}°)`;
+          break;
+        case 'pool':
+          label = `Pool (${feature.width}×${feature.height})`;
+          break;
+        case 'anchor':
+          label = `Anchor (${feature.anchorType})`;
+          if (feature.name) label += ` - ${feature.name}`;
+          break;
+        case 'rappel':
+          label = `Rappel (${feature.length}m)`;
+          if (feature.description) label += ` - ${feature.description}`;
+          break;
+        case 'hazard':
+          label = `Hazard`;
+          break;
+        case 'exit':
+          label = `Exit`;
+          break;
+      }
+
+      listItem.textContent = label;
+
+      // Hover effect
+      listItem.addEventListener('mouseenter', () => {
+        if (this.selectedFeature !== feature.id) {
+          listItem.style.backgroundColor = '#f0f0f0';
+        }
+      });
+
+      listItem.addEventListener('mouseleave', () => {
+        if (this.selectedFeature !== feature.id) {
+          listItem.style.backgroundColor = '#f9f9f9';
+        }
+      });
+
+      // Click to select feature
+      listItem.addEventListener('click', () => {
+        this.selectFeature(feature.id);
+      });
+
+      list.appendChild(listItem);
+    });
+
+    featureListDiv.innerHTML = '';
+    featureListDiv.appendChild(list);
+  }
+
+});
