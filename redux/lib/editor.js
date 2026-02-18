@@ -23,6 +23,9 @@ class TopoEditor extends TopoRenderer {
     this.historyIndex = -1;
     this.maxHistorySize = 50;
 
+    // Unsaved-changes tracking
+    this.isDirty = false;
+
     this.init();
   }
 
@@ -33,6 +36,7 @@ class TopoEditor extends TopoRenderer {
     this.updatePropertiesPanel(null); // Initialize empty properties panel
     this.renderFeatureList(); // Initialize empty feature list
     this.saveState(); // Save initial empty state
+    this.isDirty = false; // Opening the page is not a user change
   }
 
   createCanvas() {
@@ -178,6 +182,14 @@ class TopoEditor extends TopoRenderer {
       // Escape to cancel active drawing
       else if (e.key === 'Escape') {
         this.cancelDrawing();
+      }
+    });
+
+    // Warn before leaving the page if there are unsaved changes
+    window.addEventListener('beforeunload', (e) => {
+      if (this.isDirty) {
+        e.preventDefault();
+        e.returnValue = ''; // Required for Chrome to show the dialog
       }
     });
   }

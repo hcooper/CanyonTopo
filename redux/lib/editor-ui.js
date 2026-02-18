@@ -606,13 +606,11 @@ Object.assign(TopoEditor.prototype, {
       });
     } else if (feature.type === 'note') {
       const icons = [
-        { value: 'warning',  label: 'Warning (!)' },
-        { value: 'swim',     label: 'Swim / Water' },
-        { value: 'keeper',   label: 'Keeper Pothole' },
-        { value: 'flood',    label: 'Flash Flood' },
-        { value: 'cold',     label: 'Cold Water' },
-        { value: 'rockfall',     label: 'Rockfall' },
-        { value: 'constriction', label: 'Constriction' },
+        { value: 'info',      label: 'Info Label' },
+        { value: 'warning',   label: 'Warning' },
+        { value: 'swim',      label: 'Water' },
+        { value: 'hydraulic', label: 'Hydraulic' },
+        { value: 'rockfall',  label: 'Rockfall' },
       ];
       const iconOptions = icons.map(ic =>
         `<option value="${ic.value}" ${(feature.iconType || 'warning') === ic.value ? 'selected' : ''}>${ic.label}</option>`

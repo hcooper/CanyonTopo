@@ -25,6 +25,7 @@ Object.assign(TopoEditor.prototype, {
       this.historyIndex++;
     }
 
+    this.isDirty = true;
     this.updateUndoRedoButtons();
   },
 
@@ -249,6 +250,7 @@ Object.assign(TopoEditor.prototype, {
     })
       .then(data => {
         if (data.edit && data.edit.result === 'Success') {
+          this.isDirty = false;
           saveBtn.textContent = 'Saved!';
           setTimeout(() => {
             saveBtn.textContent = 'Save to Wiki';
@@ -328,6 +330,7 @@ Object.assign(TopoEditor.prototype, {
     this.fitToContent();
     this.selectFeature(null);
     this.saveState();
+    this.isDirty = false; // Loading is not a user edit
   },
 
   importData() {

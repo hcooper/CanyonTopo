@@ -135,8 +135,8 @@ features:
     x: 300
     y: 200
     size: 20
-    iconType: warning   # warning | swim | keeper | flood | cold | constriction | rockfall
-    text: 'Keeper pothole'
+    iconType: warning   # info | warning | swim | hydraulic | rockfall
+    text: 'Hydraulic hazard'
     textOffsetX: 0      # optional
     textOffsetY: 0      # optional
   - type: access
@@ -155,6 +155,7 @@ features:
 |---|---|---|
 | `type: hazard` | `type: note` | `iconType` defaults to `'warning'` |
 | `type: exit` | `type: access` | `accessType` defaults to `'exit'` |
+| `type: keeper` | `type: note` | `iconType` defaults to `'hydraulic'` |
 | Any unrecognized field | *(deleted)* | Logged as a console warning |
 
 Fields not in the schema for a given feature type are deleted on load. The authoritative list of valid types, valid fields per type, and subtype values is `TopoRenderer.FEATURE_SCHEMA` (defined at the bottom of `renderer.js`). Migrations are in `TopoRenderer.FEATURE_MIGRATIONS`. `loadFromYAML()` in `editor-io.js` reads both statics — adding a new migration or field only requires editing `renderer.js`.
@@ -170,3 +171,6 @@ Fields not in the schema for a given feature type are deleted on load. The autho
 - Rappel `length` and `slope` are stored as floats (not rounded integers). Rounding them causes the rendered endpoint (`x2 = x + length*cos(slope)`) to drift from the snapped grid position.
 - Rappel description text has an independent drag handle. `textOffsetX`/`textOffsetY` store the pixel offset from the natural position (`controlX + perpX*15`, `controlY + perpY*15 - 20`). Both fields default to 0 when absent. The viewer also respects them.
 - Anchor `connectionX`/`connectionY` is the snap/connection point (the green dot). It differs from `x`/`y` because the X mark symbol is rendered with a visual offset. Dragging the X symbol moves `x`/`y` only; dragging the connection point moves everything together.
+- Important: all schema changes need to be recorded in TopoRenderer.FEATURE_SCHEMA - it is the source of truth
+- `isDirty` flag: set to `true` by `saveState()`, reset to `false` after the initial load in `init()`, after `loadFromYAML()`, and after a successful `saveToWiki()`. A `beforeunload` listener in `editor.js` shows the browser's native "Leave site?" dialog when `isDirty` is true.
+- Traverse lines render in `#666` (same grey as rappel lines) to visually distinguish them from regular terrain lines (`#000`).
