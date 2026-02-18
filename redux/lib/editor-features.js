@@ -948,7 +948,7 @@ Object.assign(TopoEditor.prototype, {
     const size = note.size;
 
     // Redraw icon shapes (clears old ones internally)
-    this.drawHazardIconElements(element, cx, cy, size, note.iconType);
+    this.drawNoteIconElements(element, cx, cy, size, note.iconType);
 
     // Update label text (outside the icon)
     const textOffsetX = note.textOffsetX || 0;

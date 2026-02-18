@@ -168,7 +168,7 @@ class TopoRenderer {
 
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', `M ${x1},${y1 - traverseHeight} Q ${midX},${dip} ${x2},${y2 - traverseHeight}`);
-      path.setAttribute('stroke', '#000');
+      path.setAttribute('stroke', '#666');
       path.setAttribute('stroke-width', '3');
       path.setAttribute('fill', 'none');
       path.setAttribute('class', 'traverse-path');
@@ -471,105 +471,65 @@ class TopoRenderer {
         });
         break;
       }
-      case 'keeper': {
-        // Dark filled circle (pothole) with lighter inner highlight
-        const outer = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        outer.setAttribute('cx', cx);
-        outer.setAttribute('cy', cy);
-        outer.setAttribute('r', size / 2);
-        outer.setAttribute('fill', '#1a1a2e');
-        outer.setAttribute('stroke', '#000');
-        outer.setAttribute('stroke-width', '2');
-        outer.setAttribute('class', 'note-icon');
-        group.appendChild(outer);
-        const inner = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
-        inner.setAttribute('cx', cx + size * 0.08);
-        inner.setAttribute('cy', cy - size * 0.08);
-        inner.setAttribute('rx', size * 0.18);
-        inner.setAttribute('ry', size * 0.12);
-        inner.setAttribute('fill', 'none');
-        inner.setAttribute('stroke', '#666');
-        inner.setAttribute('stroke-width', '1.5');
-        inner.setAttribute('class', 'note-icon');
-        group.appendChild(inner);
-        break;
-      }
-      case 'flood': {
-        // Orange lightning bolt
-        const s = size * 0.42;
-        const bolt = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        bolt.setAttribute('points',
-          `${cx + s*0.28},${cy - s} ` +
-          `${cx - s*0.14},${cy + s*0.08} ` +
-          `${cx + s*0.1},${cy + s*0.08} ` +
-          `${cx - s*0.28},${cy + s} ` +
-          `${cx + s*0.14},${cy - s*0.08} ` +
-          `${cx - s*0.1},${cy - s*0.08}`
+      case 'hydraulic': {
+        // Two half-circle arrows forming a recirculating loop (blue).
+        // Each arc starts 15° past the previous arrowhead tip to leave a gap.
+        const r   = size * 0.40;
+        const sw  = Math.max(1.5, size * 0.09);
+        const aw  = size * 0.14;   // arrowhead half-width
+        const al  = size * 0.18;   // arrowhead length back from tip
+        const gap = Math.PI / 12;  // 15° gap at each junction
+        const gC  = Math.cos(gap);
+        const gS  = Math.sin(gap);
+
+        // Top arc: 195° → 345°, clockwise = over the top (150° arc)
+        // start (195°): (cx - r·gC, cy - r·gS)   end (345°): (cx + r·gC, cy - r·gS)
+        const s1x = cx - r * gC,  s1y = cy - r * gS;
+        const e1x = cx + r * gC,  e1y = cy - r * gS;
+        const arc1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        arc1.setAttribute('d', `M ${s1x},${s1y} A ${r},${r} 0 0 1 ${e1x},${e1y}`);
+        arc1.setAttribute('stroke', '#2980b9');
+        arc1.setAttribute('stroke-width', sw);
+        arc1.setAttribute('fill', 'none');
+        arc1.setAttribute('stroke-linecap', 'round');
+        arc1.setAttribute('class', 'note-icon');
+        group.appendChild(arc1);
+
+        // Arrowhead at 345°: clockwise tangent = (gS, gC); perp = (-gC, gS)
+        const arr1 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        arr1.setAttribute('points',
+          `${e1x},${e1y} ` +
+          `${e1x - gS*al - gC*aw},${e1y - gC*al + gS*aw} ` +
+          `${e1x - gS*al + gC*aw},${e1y - gC*al - gS*aw}`
         );
-        bolt.setAttribute('fill', '#e67e22');
-        bolt.setAttribute('stroke', '#c0392b');
-        bolt.setAttribute('stroke-width', '1');
-        bolt.setAttribute('stroke-linejoin', 'round');
-        bolt.setAttribute('class', 'note-icon');
-        group.appendChild(bolt);
-        break;
-      }
-      case 'cold': {
-        // Blue snowflake — 6 arms with crossbars
-        const r = size * 0.44;
-        const cr = size * 0.15;
-        const sw = Math.max(1.5, size * 0.08);
-        for (let i = 0; i < 6; i++) {
-          const angle = i * Math.PI / 3;
-          const ex = cx + r * Math.cos(angle);
-          const ey = cy + r * Math.sin(angle);
-          const arm = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          arm.setAttribute('x1', cx); arm.setAttribute('y1', cy);
-          arm.setAttribute('x2', ex); arm.setAttribute('y2', ey);
-          arm.setAttribute('stroke', '#2980b9');
-          arm.setAttribute('stroke-width', sw);
-          arm.setAttribute('stroke-linecap', 'round');
-          arm.setAttribute('class', 'note-icon');
-          group.appendChild(arm);
-          const mx = cx + r * 0.58 * Math.cos(angle);
-          const my = cy + r * 0.58 * Math.sin(angle);
-          const pa = angle + Math.PI / 2;
-          const cb = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          cb.setAttribute('x1', mx - cr * Math.cos(pa)); cb.setAttribute('y1', my - cr * Math.sin(pa));
-          cb.setAttribute('x2', mx + cr * Math.cos(pa)); cb.setAttribute('y2', my + cr * Math.sin(pa));
-          cb.setAttribute('stroke', '#2980b9');
-          cb.setAttribute('stroke-width', sw * 0.85);
-          cb.setAttribute('stroke-linecap', 'round');
-          cb.setAttribute('class', 'note-icon');
-          group.appendChild(cb);
-        }
-        break;
-      }
-      case 'constriction': {
-        // Two rock wedges pointing inward, leaving a narrow gap
-        const gap = size * 0.08;
-        const w   = size * 0.45;
-        const h   = size * 0.42;
-        const left = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        left.setAttribute('points',
-          `${cx - w},${cy - h} ${cx - gap},${cy} ${cx - w},${cy + h}`
+        arr1.setAttribute('fill', '#2980b9');
+        arr1.setAttribute('class', 'note-icon');
+        group.appendChild(arr1);
+
+        // Bottom arc: 15° → 165°, clockwise = under the bottom (150° arc)
+        // start (15°): (cx + r·gC, cy + r·gS)   end (165°): (cx - r·gC, cy + r·gS)
+        const s2x = cx + r * gC,  s2y = cy + r * gS;
+        const e2x = cx - r * gC,  e2y = cy + r * gS;
+        const arc2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        arc2.setAttribute('d', `M ${s2x},${s2y} A ${r},${r} 0 0 1 ${e2x},${e2y}`);
+        arc2.setAttribute('stroke', '#2980b9');
+        arc2.setAttribute('stroke-width', sw);
+        arc2.setAttribute('fill', 'none');
+        arc2.setAttribute('stroke-linecap', 'round');
+        arc2.setAttribute('class', 'note-icon');
+        group.appendChild(arc2);
+
+        // Arrowhead at 165°: clockwise tangent = (-gS, -gC); perp = (gC, -gS)
+        const arr2 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        arr2.setAttribute('points',
+          `${e2x},${e2y} ` +
+          `${e2x + gS*al + gC*aw},${e2y + gC*al - gS*aw} ` +
+          `${e2x + gS*al - gC*aw},${e2y + gC*al + gS*aw}`
         );
-        left.setAttribute('fill', '#7f8c8d');
-        left.setAttribute('stroke', '#000');
-        left.setAttribute('stroke-width', '1.5');
-        left.setAttribute('stroke-linejoin', 'round');
-        left.setAttribute('class', 'note-icon');
-        group.appendChild(left);
-        const right = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        right.setAttribute('points',
-          `${cx + w},${cy - h} ${cx + gap},${cy} ${cx + w},${cy + h}`
-        );
-        right.setAttribute('fill', '#7f8c8d');
-        right.setAttribute('stroke', '#000');
-        right.setAttribute('stroke-width', '1.5');
-        right.setAttribute('stroke-linejoin', 'round');
-        right.setAttribute('class', 'note-icon');
-        group.appendChild(right);
+        arr2.setAttribute('fill', '#2980b9');
+        arr2.setAttribute('class', 'note-icon');
+        group.appendChild(arr2);
+
         break;
       }
       case 'rockfall': {
@@ -620,6 +580,33 @@ class TopoRenderer {
         group.appendChild(arr);
         break;
       }
+      case 'info': {
+        // Light-blue circle outline with bold lowercase "i"
+        const circ = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circ.setAttribute('cx', cx);
+        circ.setAttribute('cy', cy);
+        circ.setAttribute('r', size / 2);
+        circ.setAttribute('fill', '#eaf4fb');
+        circ.setAttribute('stroke', '#2980b9');
+        circ.setAttribute('stroke-width', '2');
+        circ.setAttribute('class', 'note-icon');
+        group.appendChild(circ);
+        const letter = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        letter.setAttribute('x', cx);
+        letter.setAttribute('y', cy + size * 0.18);
+        letter.setAttribute('text-anchor', 'middle');
+        letter.setAttribute('font-size', size * 0.55);
+        letter.setAttribute('font-weight', 'bold');
+        letter.setAttribute('font-family', 'serif');
+        letter.setAttribute('fill', '#2980b9');
+        letter.setAttribute('class', 'note-icon');
+        letter.textContent = 'i';
+        group.appendChild(letter);
+        break;
+      }
+      default:
+        console.warn(`[topo] Unknown note iconType "${iconType}" — rendering as warning`);
+        this.drawNoteIconElements(group, cx, cy, size, 'warning');
     }
   }
 
@@ -930,7 +917,7 @@ TopoRenderer.FEATURE_SCHEMA = {
   },
   note: {
     fields: new Set(['type', 'id', 'x', 'y', 'size', 'iconType', 'text', 'textOffsetX', 'textOffsetY']),
-    subtypes: { iconType: ['warning', 'swim', 'keeper', 'flood', 'cold', 'constriction', 'rockfall'] },
+    subtypes: { iconType: ['info', 'warning', 'swim', 'hydraulic', 'rockfall'] },
   },
   access: {
     fields: new Set(['type', 'id', 'x', 'y', 'length', 'accessType']),
@@ -943,4 +930,5 @@ TopoRenderer.FEATURE_SCHEMA = {
 TopoRenderer.FEATURE_MIGRATIONS = [
   { from: 'exit',   to: 'access', defaults: { accessType: 'exit' } },
   { from: 'hazard', to: 'note',   defaults: { iconType: 'warning' } },
+  { from: 'keeper', to: 'note',   defaults: { iconType: 'hydraulic' } },
 ];
