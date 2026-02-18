@@ -116,18 +116,17 @@ class TopoRenderer {
   render() {
     this.featureLayer.innerHTML = '';
     this.features.forEach(feature => {
-      if (feature.type === 'line') {
-        this.renderLine(feature);
-      } else if (feature.type === 'pool') {
-        this.renderPool(feature);
-      } else if (feature.type === 'anchor') {
-        this.renderAnchor(feature);
-      } else if (feature.type === 'rappel') {
-        this.renderRappel(feature);
-      } else if (feature.type === 'hazard') {
-        this.renderHazard(feature);
-      } else if (feature.type === 'exit') {
-        this.renderExit(feature);
+      switch (feature.type) {
+        case 'line':    this.renderLine(feature);    break;
+        case 'pool':    this.renderPool(feature);    break;
+        case 'anchor':  this.renderAnchor(feature);  break;
+        case 'rappel':  this.renderRappel(feature);  break;
+        case 'note':    this.renderNote(feature);    break;
+        case 'access':  this.renderAccess(feature);  break;
+        default:
+          if (!(feature.type in TopoRenderer.FEATURE_SCHEMA)) {
+            console.warn(`[topo] Unrecognized feature type "${feature.type}" (id=${feature.id}) — skipped`);
+          }
       }
     });
   }
@@ -421,85 +420,302 @@ class TopoRenderer {
     return group;
   }
 
-  renderHazard(hazard) {
+  // Draw the icon shapes for a note into an existing group element.
+  // Clears any existing .note-icon children first so it can be called
+  // on both initial render and updates.
+  drawNoteIconElements(group, cx, cy, size, iconType) {
+    group.querySelectorAll('.note-icon').forEach(el => el.remove());
+
+    switch (iconType || 'warning') {
+      case 'warning': {
+        // Yellow equilateral triangle with hardcoded !
+        const h = size * Math.sqrt(3) / 2;
+        const topY = cy - h * 2 / 3;
+        const botY = cy + h / 3;
+        const tri = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        tri.setAttribute('points', `${cx},${topY} ${cx - size/2},${botY} ${cx + size/2},${botY}`);
+        tri.setAttribute('fill', '#FFD700');
+        tri.setAttribute('stroke', '#000');
+        tri.setAttribute('stroke-width', '2');
+        tri.setAttribute('class', 'note-icon');
+        group.appendChild(tri);
+        const excl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        excl.setAttribute('x', cx);
+        excl.setAttribute('y', cy + size * 0.18);
+        excl.setAttribute('text-anchor', 'middle');
+        excl.setAttribute('font-size', size * 0.5);
+        excl.setAttribute('font-weight', 'bold');
+        excl.setAttribute('fill', '#333');
+        excl.setAttribute('class', 'note-icon');
+        excl.textContent = '!';
+        group.appendChild(excl);
+        break;
+      }
+      case 'swim': {
+        // Three horizontal blue wavy lines
+        const ww = size * 0.8;
+        const wh = size * 0.14;
+        const sx = cx - ww / 2;
+        [-size * 0.22, 0, size * 0.22].forEach(dy => {
+          const y = cy + dy;
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d',
+            `M ${sx},${y} q ${ww/4},${-wh} ${ww/2},0 q ${ww/4},${wh} ${ww/2},0`
+          );
+          path.setAttribute('stroke', '#2980b9');
+          path.setAttribute('stroke-width', Math.max(1.5, size * 0.08));
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke-linecap', 'round');
+          path.setAttribute('class', 'note-icon');
+          group.appendChild(path);
+        });
+        break;
+      }
+      case 'keeper': {
+        // Dark filled circle (pothole) with lighter inner highlight
+        const outer = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        outer.setAttribute('cx', cx);
+        outer.setAttribute('cy', cy);
+        outer.setAttribute('r', size / 2);
+        outer.setAttribute('fill', '#1a1a2e');
+        outer.setAttribute('stroke', '#000');
+        outer.setAttribute('stroke-width', '2');
+        outer.setAttribute('class', 'note-icon');
+        group.appendChild(outer);
+        const inner = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        inner.setAttribute('cx', cx + size * 0.08);
+        inner.setAttribute('cy', cy - size * 0.08);
+        inner.setAttribute('rx', size * 0.18);
+        inner.setAttribute('ry', size * 0.12);
+        inner.setAttribute('fill', 'none');
+        inner.setAttribute('stroke', '#666');
+        inner.setAttribute('stroke-width', '1.5');
+        inner.setAttribute('class', 'note-icon');
+        group.appendChild(inner);
+        break;
+      }
+      case 'flood': {
+        // Orange lightning bolt
+        const s = size * 0.42;
+        const bolt = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        bolt.setAttribute('points',
+          `${cx + s*0.28},${cy - s} ` +
+          `${cx - s*0.14},${cy + s*0.08} ` +
+          `${cx + s*0.1},${cy + s*0.08} ` +
+          `${cx - s*0.28},${cy + s} ` +
+          `${cx + s*0.14},${cy - s*0.08} ` +
+          `${cx - s*0.1},${cy - s*0.08}`
+        );
+        bolt.setAttribute('fill', '#e67e22');
+        bolt.setAttribute('stroke', '#c0392b');
+        bolt.setAttribute('stroke-width', '1');
+        bolt.setAttribute('stroke-linejoin', 'round');
+        bolt.setAttribute('class', 'note-icon');
+        group.appendChild(bolt);
+        break;
+      }
+      case 'cold': {
+        // Blue snowflake — 6 arms with crossbars
+        const r = size * 0.44;
+        const cr = size * 0.15;
+        const sw = Math.max(1.5, size * 0.08);
+        for (let i = 0; i < 6; i++) {
+          const angle = i * Math.PI / 3;
+          const ex = cx + r * Math.cos(angle);
+          const ey = cy + r * Math.sin(angle);
+          const arm = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          arm.setAttribute('x1', cx); arm.setAttribute('y1', cy);
+          arm.setAttribute('x2', ex); arm.setAttribute('y2', ey);
+          arm.setAttribute('stroke', '#2980b9');
+          arm.setAttribute('stroke-width', sw);
+          arm.setAttribute('stroke-linecap', 'round');
+          arm.setAttribute('class', 'note-icon');
+          group.appendChild(arm);
+          const mx = cx + r * 0.58 * Math.cos(angle);
+          const my = cy + r * 0.58 * Math.sin(angle);
+          const pa = angle + Math.PI / 2;
+          const cb = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          cb.setAttribute('x1', mx - cr * Math.cos(pa)); cb.setAttribute('y1', my - cr * Math.sin(pa));
+          cb.setAttribute('x2', mx + cr * Math.cos(pa)); cb.setAttribute('y2', my + cr * Math.sin(pa));
+          cb.setAttribute('stroke', '#2980b9');
+          cb.setAttribute('stroke-width', sw * 0.85);
+          cb.setAttribute('stroke-linecap', 'round');
+          cb.setAttribute('class', 'note-icon');
+          group.appendChild(cb);
+        }
+        break;
+      }
+      case 'constriction': {
+        // Two rock wedges pointing inward, leaving a narrow gap
+        const gap = size * 0.08;
+        const w   = size * 0.45;
+        const h   = size * 0.42;
+        const left = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        left.setAttribute('points',
+          `${cx - w},${cy - h} ${cx - gap},${cy} ${cx - w},${cy + h}`
+        );
+        left.setAttribute('fill', '#7f8c8d');
+        left.setAttribute('stroke', '#000');
+        left.setAttribute('stroke-width', '1.5');
+        left.setAttribute('stroke-linejoin', 'round');
+        left.setAttribute('class', 'note-icon');
+        group.appendChild(left);
+        const right = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        right.setAttribute('points',
+          `${cx + w},${cy - h} ${cx + gap},${cy} ${cx + w},${cy + h}`
+        );
+        right.setAttribute('fill', '#7f8c8d');
+        right.setAttribute('stroke', '#000');
+        right.setAttribute('stroke-width', '1.5');
+        right.setAttribute('stroke-linejoin', 'round');
+        right.setAttribute('class', 'note-icon');
+        group.appendChild(right);
+        break;
+      }
+      case 'rockfall': {
+        // Two falling rock polygons + downward arrow
+        const rs = size * 0.22;
+        // Rock 1 (upper left)
+        const r1 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        r1.setAttribute('points',
+          `${cx - rs*1.1},${cy - rs*1.1} ` +
+          `${cx - rs*0.3},${cy - rs*1.4} ` +
+          `${cx + rs*0.1},${cy - rs*0.6} ` +
+          `${cx - rs*0.7},${cy - rs*0.3}`
+        );
+        r1.setAttribute('fill', '#7f8c8d');
+        r1.setAttribute('stroke', '#000');
+        r1.setAttribute('stroke-width', '1');
+        r1.setAttribute('class', 'note-icon');
+        group.appendChild(r1);
+        // Rock 2 (lower right)
+        const r2 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        r2.setAttribute('points',
+          `${cx + rs*0.4},${cy + rs*0.1} ` +
+          `${cx + rs*1.2},${cy - rs*0.3} ` +
+          `${cx + rs*1.3},${cy + rs*0.6} ` +
+          `${cx + rs*0.5},${cy + rs*0.7}`
+        );
+        r2.setAttribute('fill', '#7f8c8d');
+        r2.setAttribute('stroke', '#000');
+        r2.setAttribute('stroke-width', '1');
+        r2.setAttribute('class', 'note-icon');
+        group.appendChild(r2);
+        // Downward arrow in the middle
+        const arrowX = cx - rs * 0.1;
+        const ay1 = cy - rs * 0.2;
+        const ay2 = cy + rs * 1.5;
+        const aw = rs * 0.6;
+        const arr = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        arr.setAttribute('d',
+          `M ${arrowX},${ay1} L ${arrowX},${ay2} ` +
+          `M ${arrowX - aw},${ay2 - aw} L ${arrowX},${ay2} L ${arrowX + aw},${ay2 - aw}`
+        );
+        arr.setAttribute('stroke', '#c0392b');
+        arr.setAttribute('stroke-width', '2');
+        arr.setAttribute('fill', 'none');
+        arr.setAttribute('stroke-linecap', 'round');
+        arr.setAttribute('stroke-linejoin', 'round');
+        arr.setAttribute('class', 'note-icon');
+        group.appendChild(arr);
+        break;
+      }
+    }
+  }
+
+  renderNote(note) {
     const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('data-id', hazard.id);
-    group.setAttribute('data-type', 'hazard');
+    group.setAttribute('data-id', note.id);
+    group.setAttribute('data-type', 'note');
 
-    const cx = hazard.x;
-    const cy = hazard.y;
-    const size = hazard.size;
+    const cx = note.x;
+    const cy = note.y;
+    const size = note.size;
 
-    const topX = cx;
-    const topY = cy - (size * Math.sqrt(3) / 3);
-    const leftX = cx - size / 2;
-    const leftY = cy + (size * Math.sqrt(3) / 6);
-    const rightX = cx + size / 2;
-    const rightY = cy + (size * Math.sqrt(3) / 6);
+    this.drawNoteIconElements(group, cx, cy, size, note.iconType);
 
-    const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    triangle.setAttribute('points', `${topX},${topY} ${leftX},${leftY} ${rightX},${rightY}`);
-    triangle.setAttribute('fill', '#FFD700');
-    triangle.setAttribute('stroke', '#000');
-    triangle.setAttribute('stroke-width', '3');
-    triangle.setAttribute('class', 'hazard-triangle');
-    group.appendChild(triangle);
-
-    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    text.setAttribute('x', cx);
-    text.setAttribute('y', cy + 5);
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('font-family', 'Arial, sans-serif');
-    text.setAttribute('font-size', size * 0.6);
-    text.setAttribute('font-weight', 'bold');
-    text.setAttribute('fill', '#333');
-    text.setAttribute('class', 'hazard-text');
-    text.textContent = hazard.text;
-    group.appendChild(text);
+    // Label text placed next to the icon
+    if (note.text) {
+      const textOffsetX = note.textOffsetX || 0;
+      const textOffsetY = note.textOffsetY || 0;
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', cx + size * 0.65 + textOffsetX);
+      text.setAttribute('y', cy + 5 + textOffsetY);
+      text.setAttribute('font-size', '12');
+      text.setAttribute('font-family', 'Arial, sans-serif');
+      text.setAttribute('fill', '#333');
+      text.setAttribute('class', 'note-text');
+      text.textContent = note.text;
+      group.appendChild(text);
+    }
 
     this.featureLayer.appendChild(group);
     return group;
   }
 
-  renderExit(exit) {
+  renderAccess(access) {
     const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('data-id', exit.id);
-    group.setAttribute('data-type', 'exit');
+    group.setAttribute('data-id', access.id);
+    group.setAttribute('data-type', 'access');
 
-    const x1 = exit.x;
-    const y1 = exit.y;
-    const angle45 = -Math.PI / 4;
-    const x2 = x1 + exit.length * Math.cos(angle45);
-    const y2 = y1 + exit.length * Math.sin(angle45);
+    const accessType = access.accessType || 'exit';
+    const color = accessType === 'entrance' ? '#27ae60' : '#000';
+
+    const x1 = access.x;
+    const y1 = access.y;
+    // Exit goes NE (-45°), entrance goes NW (-135°) so connection point is at SE end
+    const angle = accessType === 'entrance' ? -3 * Math.PI / 4 : -Math.PI / 4;
+    const x2 = x1 + access.length * Math.cos(angle);
+    const y2 = y1 + access.length * Math.sin(angle);
+
+    // Pull the visual line back from the connection point so it doesn't overlap the dot
+    const shorten = 8;
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    const lineX1 = x1 + dx * shorten;
+    const lineY1 = y1 + dy * shorten;
 
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
+    line.setAttribute('x1', lineX1);
+    line.setAttribute('y1', lineY1);
     line.setAttribute('x2', x2);
     line.setAttribute('y2', y2);
-    line.setAttribute('stroke', '#000');
-    line.setAttribute('stroke-width', '3');
+    line.setAttribute('stroke', color);
+    line.setAttribute('stroke-width', '5');
     line.setAttribute('stroke-linecap', 'round');
-    line.setAttribute('class', 'exit-line');
+    line.setAttribute('class', 'access-line');
     group.appendChild(line);
 
-    const dx = Math.cos(angle45);
-    const dy = Math.sin(angle45);
     const perpX = -dy;
     const perpY = dx;
     const arrowSize = 10;
     const arrowWidth = 6;
 
+    // Exit: tip pushed slightly beyond far end (NE); entrance: tip pulled back from connection point (NW)
+    const arrowOffset = 5;
+    let tipX, tipY, dirX, dirY;
+    if (accessType === 'entrance') {
+      tipX = x1 + dx * arrowOffset;
+      tipY = y1 + dy * arrowOffset;
+      dirX = -dx;
+      dirY = -dy;
+    } else {
+      tipX = x2 + dx * arrowOffset;
+      tipY = y2 + dy * arrowOffset;
+      dirX = dx;
+      dirY = dy;
+    }
+
     const arrowhead = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
     arrowhead.setAttribute('points',
-      `${x2},${y2} ` +
-      `${x2 - dx * arrowSize + perpX * arrowWidth},${y2 - dy * arrowSize + perpY * arrowWidth} ` +
-      `${x2 - dx * arrowSize - perpX * arrowWidth},${y2 - dy * arrowSize - perpY * arrowWidth}`
+      `${tipX},${tipY} ` +
+      `${tipX - dirX * arrowSize + perpX * arrowWidth},${tipY - dirY * arrowSize + perpY * arrowWidth} ` +
+      `${tipX - dirX * arrowSize - perpX * arrowWidth},${tipY - dirY * arrowSize - perpY * arrowWidth}`
     );
-    arrowhead.setAttribute('fill', '#000');
-    arrowhead.setAttribute('stroke', '#000');
+    arrowhead.setAttribute('fill', color);
+    arrowhead.setAttribute('stroke', color);
     arrowhead.setAttribute('stroke-width', '1');
-    arrowhead.setAttribute('class', 'exit-arrowhead');
+    arrowhead.setAttribute('class', 'access-arrowhead');
     group.appendChild(arrowhead);
 
     this.featureLayer.appendChild(group);
@@ -632,12 +848,12 @@ class TopoRenderer {
           expand(f.x + f.length * Math.cos(rad), f.y + f.length * Math.sin(rad));
           break;
         }
-        case 'hazard':
+        case 'note':
           expand(f.x - f.size, f.y - f.size);
           expand(f.x + f.size, f.y + f.size);
           break;
-        case 'exit': {
-          const angle = -Math.PI / 4;
+        case 'access': {
+          const angle = (f.accessType === 'entrance') ? -3 * Math.PI / 4 : -Math.PI / 4;
           expand(f.x, f.y);
           expand(f.x + f.length * Math.cos(angle), f.y + f.length * Math.sin(angle));
           break;
@@ -692,3 +908,39 @@ class TopoRenderer {
     this.drawGrid();
   }
 }
+
+// ---------------------------------------------------------------------------
+// Feature schema — single source of truth for valid types, fields, subtypes,
+// and legacy migrations. Used by render() and loadFromYAML().
+// ---------------------------------------------------------------------------
+
+TopoRenderer.FEATURE_SCHEMA = {
+  line: {
+    fields: new Set(['type', 'id', 'x1', 'y1', 'x2', 'y2', 'slope', 'length', 'arrow', 'shorten', 'traverse']),
+  },
+  rappel: {
+    fields: new Set(['type', 'id', 'x', 'y', 'length', 'slope', 'curveOffset', 'curvePosition', 'description', 'textOffsetX', 'textOffsetY']),
+  },
+  pool: {
+    fields: new Set(['type', 'id', 'x', 'y', 'width', 'depth']),
+  },
+  anchor: {
+    fields: new Set(['type', 'id', 'x', 'y', 'size', 'connectionX', 'connectionY', 'anchorType', 'count', 'name']),
+    subtypes: { anchorType: ['bolt', 'natural', 'piton', 'tree', 'rock'] },
+  },
+  note: {
+    fields: new Set(['type', 'id', 'x', 'y', 'size', 'iconType', 'text', 'textOffsetX', 'textOffsetY']),
+    subtypes: { iconType: ['warning', 'swim', 'keeper', 'flood', 'cold', 'constriction', 'rockfall'] },
+  },
+  access: {
+    fields: new Set(['type', 'id', 'x', 'y', 'length', 'accessType']),
+    subtypes: { accessType: ['exit', 'entrance'] },
+  },
+};
+
+// Migrations applied by loadFromYAML() before field validation.
+// Each entry: { from: oldType, to: newType, defaults: { field: defaultValue, ... } }
+TopoRenderer.FEATURE_MIGRATIONS = [
+  { from: 'exit',   to: 'access', defaults: { accessType: 'exit' } },
+  { from: 'hazard', to: 'note',   defaults: { iconType: 'warning' } },
+];

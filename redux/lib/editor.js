@@ -287,22 +287,7 @@ class TopoEditor extends TopoRenderer {
 
   startLine(x, y) {
     this.drawingLine = true;
-
-    // Store connection info if snapped to a connection point
-    let connectedTo = null;
-    let connectionPoint = null;
-
-    if (this.hoveredConnectionPoint) {
-      connectedTo = parseInt(this.hoveredConnectionPoint.featureId);
-      connectionPoint = this.hoveredConnectionPoint.pointType;
-    }
-
-    this.lineStartPoint = {
-      x,
-      y,
-      connectedTo,
-      connectionPoint
-    };
+    this.lineStartPoint = { x, y };
 
     // Create preview line
     this.previewLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -330,15 +315,6 @@ class TopoEditor extends TopoRenderer {
     const length = Math.round(Math.sqrt(dx * dx + dy * dy));
     const slope = Math.round(Math.atan2(dy, dx) * 180 / Math.PI);
 
-    // Check if end point is connected to something
-    let endConnectedTo = null;
-    let endConnectionPoint = null;
-
-    if (this.hoveredConnectionPoint) {
-      endConnectedTo = parseInt(this.hoveredConnectionPoint.featureId);
-      endConnectionPoint = this.hoveredConnectionPoint.pointType;
-    }
-
     const line = {
       id: this.nextId++,
       type: 'line',
@@ -350,12 +326,7 @@ class TopoEditor extends TopoRenderer {
       slope: slope,
       shorten: false,
       traverse: false,
-      arrow: false,
-      // Connection information
-      startConnectedTo: this.lineStartPoint.connectedTo,
-      startConnectionPoint: this.lineStartPoint.connectionPoint,
-      endConnectedTo: endConnectedTo,
-      endConnectionPoint: endConnectionPoint
+      arrow: false
     };
 
     this.features.push(line);
@@ -414,22 +385,7 @@ class TopoEditor extends TopoRenderer {
 
   startRappel(x, y) {
     this.drawingRappel = true;
-
-    // Store connection info if snapped to a connection point
-    let connectedTo = null;
-    let connectionPoint = null;
-
-    if (this.hoveredConnectionPoint) {
-      connectedTo = parseInt(this.hoveredConnectionPoint.featureId);
-      connectionPoint = this.hoveredConnectionPoint.pointType;
-    }
-
-    this.rappelStartPoint = {
-      x,
-      y,
-      connectedTo,
-      connectionPoint
-    };
+    this.rappelStartPoint = { x, y };
 
     // Create preview line
     this.previewRappel = document.createElementNS('http://www.w3.org/2000/svg', 'line');
