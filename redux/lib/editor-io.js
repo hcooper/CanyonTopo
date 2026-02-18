@@ -196,6 +196,8 @@ Object.assign(TopoEditor.prototype, {
       features: this.features,
       nextId: this.nextId
     };
+    if (this.title) exportObject.title = this.title;
+    if (this.grade) exportObject.grade = this.grade;
     return jsyaml.dump(exportObject);
   },
 
@@ -281,7 +283,7 @@ Object.assign(TopoEditor.prototype, {
     }
 
     // Warn on unrecognized top-level keys
-    const knownTopLevel = new Set(['version', 'width', 'height', 'gridSize', 'nextId', 'features']);
+    const knownTopLevel = new Set(['version', 'width', 'height', 'gridSize', 'nextId', 'features', 'title', 'grade']);
     Object.keys(importObject).forEach(key => {
       if (!knownTopLevel.has(key)) {
         console.warn(`[topo] Unknown top-level YAML key "${key}" — ignored`);
@@ -319,11 +321,19 @@ Object.assign(TopoEditor.prototype, {
     if (importObject.height) this.height = importObject.height;
     if (importObject.gridSize) this.gridSize = importObject.gridSize;
 
+    this.title = importObject.title || '';
+    this.grade = importObject.grade || '';
+
     this.svg.setAttribute('width', this.width);
     this.svg.setAttribute('height', this.height);
 
     const gridSelect = document.getElementById('grid-size');
     if (gridSelect) gridSelect.value = this.gridSize;
+
+    const titleInput = document.getElementById('topo-title');
+    if (titleInput) titleInput.value = this.title;
+    const gradeInput = document.getElementById('topo-grade');
+    if (gradeInput) gradeInput.value = this.grade;
 
     this.drawGrid();
     this.render();

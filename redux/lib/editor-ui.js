@@ -22,6 +22,56 @@ Object.assign(TopoEditor.prototype, {
     controlsDiv.style.gap = '15px';
     controlsDiv.style.alignItems = 'center';
 
+    // Canyon title input
+    const titleLabel = document.createElement('label');
+    titleLabel.style.display = 'flex';
+    titleLabel.style.alignItems = 'center';
+    titleLabel.style.gap = '5px';
+
+    const titleText = document.createElement('span');
+    titleText.textContent = 'Title:';
+
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.id = 'topo-title';
+    titleInput.placeholder = 'Canyon name';
+    titleInput.value = this.title || '';
+    titleInput.style.width = '160px';
+    titleInput.style.padding = '3px 6px';
+    titleInput.addEventListener('input', (e) => {
+      this.title = e.target.value;
+      this.renderMetadata();
+      this.isDirty = true;
+    });
+
+    titleLabel.appendChild(titleText);
+    titleLabel.appendChild(titleInput);
+
+    // Grade input
+    const gradeLabel = document.createElement('label');
+    gradeLabel.style.display = 'flex';
+    gradeLabel.style.alignItems = 'center';
+    gradeLabel.style.gap = '5px';
+
+    const gradeText = document.createElement('span');
+    gradeText.textContent = 'Grade:';
+
+    const gradeInput = document.createElement('input');
+    gradeInput.type = 'text';
+    gradeInput.id = 'topo-grade';
+    gradeInput.placeholder = 'e.g. IV A3';
+    gradeInput.value = this.grade || '';
+    gradeInput.style.width = '90px';
+    gradeInput.style.padding = '3px 6px';
+    gradeInput.addEventListener('input', (e) => {
+      this.grade = e.target.value;
+      this.renderMetadata();
+      this.isDirty = true;
+    });
+
+    gradeLabel.appendChild(gradeText);
+    gradeLabel.appendChild(gradeInput);
+
     // Snap to grid checkbox
     const snapLabel = document.createElement('label');
     snapLabel.style.display = 'flex';
@@ -139,6 +189,8 @@ Object.assign(TopoEditor.prototype, {
     saveWikiBtn.textContent = 'Save to Wiki';
     saveWikiBtn.addEventListener('click', () => this.saveToWiki());
 
+    controlsDiv.appendChild(titleLabel);
+    controlsDiv.appendChild(gradeLabel);
     controlsDiv.appendChild(snapLabel);
     controlsDiv.appendChild(gridSizeLabel);
     controlsDiv.appendChild(undoBtn);
@@ -620,6 +672,7 @@ Object.assign(TopoEditor.prototype, {
         { value: 'swim',      label: 'Water' },
         { value: 'hydraulic', label: 'Hydraulic' },
         { value: 'rockfall',  label: 'Rockfall' },
+        { value: 'name',      label: 'Name (italic text)' },
       ];
       const iconOptions = icons.map(ic =>
         `<option value="${ic.value}" ${(feature.iconType || 'warning') === ic.value ? 'selected' : ''}>${ic.label}</option>`
