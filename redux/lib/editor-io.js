@@ -278,6 +278,38 @@ Object.assign(TopoEditor.prototype, {
       throw new Error('Invalid data format: missing features array');
     }
 
+    // Warn on unrecognized top-level keys
+    const knownTopLevel = new Set(['version', 'width', 'height', 'gridSize', 'nextId', 'features']);
+    Object.keys(importObject).forEach(key => {
+      if (!knownTopLevel.has(key)) {
+        console.warn(`[topo] Unknown top-level YAML key "${key}" — ignored`);
+      }
+    });
+
+    // Migrate legacy feature types before field validation
+    importObject.features.forEach(f => {
+      const migration = TopoRenderer.FEATURE_MIGRATIONS.find(m => m.from === f.type);
+      if (migration) {
+        console.warn(`[topo] Migrating legacy feature type "${f.type}" (id=${f.id}) to "${migration.to}"`);
+        f.type = migration.to;
+        for (const [key, value] of Object.entries(migration.defaults)) {
+          if (!(key in f)) f[key] = value;
+        }
+      }
+    });
+
+    // Strip unrecognized/deprecated fields per feature
+    importObject.features.forEach((f, i) => {
+      const schema = TopoRenderer.FEATURE_SCHEMA[f.type];
+      if (!schema) return; // unknown type — render() will warn
+      Object.keys(f).forEach(key => {
+        if (!schema.fields.has(key)) {
+          console.warn(`[topo] Feature #${i} (type=${f.type}, id=${f.id}): removing deprecated field "${key}"`);
+          delete f[key];
+        }
+      });
+    });
+
     this.features = importObject.features;
     this.nextId = importObject.nextId || this.features.length;
 

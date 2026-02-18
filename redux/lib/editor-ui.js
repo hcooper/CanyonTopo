@@ -201,16 +201,16 @@ Object.assign(TopoEditor.prototype, {
         </svg>`
       },
       {
-        name: 'Hazard',
-        action: () => { const c = this.viewCenter(); this.addHazard(c.x, c.y); },
+        name: 'Note',
+        action: () => { const c = this.viewCenter(); this.addNote(c.x, c.y); },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <polygon points="12,3 22,21 2,21" stroke="white" stroke-width="2" fill="#FFD700"/>
           <text x="12" y="18" text-anchor="middle" font-size="9" font-weight="bold" fill="#333">!</text>
         </svg>`
       },
       {
-        name: 'Exit',
-        action: () => { const c = this.viewCenter(); this.addExit(c.x, c.y); },
+        name: 'Access',
+        action: () => { const c = this.viewCenter(); this.addAccess(c.x, c.y); },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <line x1="5" y1="19" x2="19" y2="5" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
           <polygon points="19,5 13,5 19,11" fill="white"/>
@@ -271,8 +271,8 @@ Object.assign(TopoEditor.prototype, {
         submenu: [
           { label: 'Pool', action: () => this.addPool(x, y) },
           { label: 'Anchor', action: () => this.addAnchor(x, y) },
-          { label: 'Hazard', action: () => this.addHazard(x, y) },
-          { label: 'Exit', action: () => this.addExit(x, y) }
+          { label: 'Note', action: () => this.addNote(x, y) },
+          { label: 'Access', action: () => this.addAccess(x, y) }
         ]
       },
       {
@@ -604,72 +604,109 @@ Object.assign(TopoEditor.prototype, {
       deleteBtn.addEventListener('click', () => {
         this.deleteFeature(feature.id);
       });
-    } else if (feature.type === 'hazard') {
+    } else if (feature.type === 'note') {
+      const icons = [
+        { value: 'warning',  label: 'Warning (!)' },
+        { value: 'swim',     label: 'Swim / Water' },
+        { value: 'keeper',   label: 'Keeper Pothole' },
+        { value: 'flood',    label: 'Flash Flood' },
+        { value: 'cold',     label: 'Cold Water' },
+        { value: 'rockfall',     label: 'Rockfall' },
+        { value: 'constriction', label: 'Constriction' },
+      ];
+      const iconOptions = icons.map(ic =>
+        `<option value="${ic.value}" ${(feature.iconType || 'warning') === ic.value ? 'selected' : ''}>${ic.label}</option>`
+      ).join('');
+
       panel.innerHTML = `
-        <h3>Hazard</h3>
+        <h3>Note</h3>
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div>
-            <label for="hazard-text" style="display: block; margin-bottom: 4px; font-weight: 500;">Text:</label>
-            <input type="text" id="hazard-text" value="${feature.text}" maxlength="20"
+            <label for="note-icon" style="display: block; margin-bottom: 4px; font-weight: 500;">Icon:</label>
+            <select id="note-icon" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+              ${iconOptions}
+            </select>
+          </div>
+          <div>
+            <label for="note-text" style="display: block; margin-bottom: 4px; font-weight: 500;">Label:</label>
+            <input type="text" id="note-text" value="${feature.text || ''}" maxlength="40" placeholder="Optional label (draggable)"
                    style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
           </div>
           <div>
-            <label for="hazard-size" style="display: block; margin-bottom: 4px; font-weight: 500;">Size:</label>
-            <input type="number" id="hazard-size" value="${feature.size}" min="15" max="60"
+            <label for="note-size" style="display: block; margin-bottom: 4px; font-weight: 500;">Size:</label>
+            <input type="number" id="note-size" value="${feature.size}" min="15" max="60"
                    style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
           </div>
-          <button id="delete-hazard" style="background-color: #e74c3c; margin-top: 8px;">Delete Hazard</button>
+          <button id="delete-note" style="background-color: #e74c3c; margin-top: 8px;">Delete Note</button>
         </div>
       `;
 
       // Add event listeners
-      const textInput = document.getElementById('hazard-text');
-      const sizeInput = document.getElementById('hazard-size');
-      const deleteBtn = document.getElementById('delete-hazard');
+      const iconSelect = document.getElementById('note-icon');
+      const textInput = document.getElementById('note-text');
+      const sizeInput = document.getElementById('note-size');
+      const deleteBtn = document.getElementById('delete-note');
+
+      iconSelect.addEventListener('change', (e) => {
+        feature.iconType = e.target.value;
+        this.updateNote(feature);
+        this.saveState();
+      });
 
       textInput.addEventListener('input', (e) => {
         feature.text = e.target.value;
-        this.updateHazard(feature);
-        console.log('Updated hazard text:', feature.text);
+        this.updateNote(feature);
       });
 
-      textInput.addEventListener('blur', (e) => {
-        // Save state when user finishes editing text
+      textInput.addEventListener('blur', () => {
         this.saveState();
       });
 
       sizeInput.addEventListener('input', (e) => {
         feature.size = parseInt(e.target.value) || 30;
-        this.updateHazard(feature);
+        this.updateNote(feature);
         this.saveState();
-        console.log('Updated hazard size:', feature.size);
       });
 
       deleteBtn.addEventListener('click', () => {
         this.deleteFeature(feature.id);
       });
-    } else if (feature.type === 'exit') {
+    } else if (feature.type === 'access') {
+      const currentType = feature.accessType || 'exit';
       panel.innerHTML = `
-        <h3>Exit</h3>
+        <h3>Access</h3>
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div>
-            <label for="exit-length" style="display: block; margin-bottom: 4px; font-weight: 500;">Length:</label>
-            <input type="number" id="exit-length" value="${feature.length}" min="20" max="200"
+            <label for="access-type" style="display: block; margin-bottom: 4px; font-weight: 500;">Type:</label>
+            <select id="access-type" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+              <option value="exit"     ${currentType === 'exit'     ? 'selected' : ''}>Exit (black, arrow out)</option>
+              <option value="entrance" ${currentType === 'entrance' ? 'selected' : ''}>Entrance (green, arrow in)</option>
+            </select>
+          </div>
+          <div>
+            <label for="access-length" style="display: block; margin-bottom: 4px; font-weight: 500;">Length:</label>
+            <input type="number" id="access-length" value="${feature.length}" min="10" max="200"
                    style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
           </div>
-          <button id="delete-exit" style="background-color: #e74c3c; margin-top: 8px;">Delete Exit</button>
+          <button id="delete-access" style="background-color: #e74c3c; margin-top: 8px;">Delete Access</button>
         </div>
       `;
 
-      // Add event listeners
-      const lengthInput = document.getElementById('exit-length');
-      const deleteBtn = document.getElementById('delete-exit');
+      const typeSelect = document.getElementById('access-type');
+      const lengthInput = document.getElementById('access-length');
+      const deleteBtn = document.getElementById('delete-access');
+
+      typeSelect.addEventListener('change', (e) => {
+        feature.accessType = e.target.value;
+        this.updateAccess(feature);
+        this.renderFeatureList();
+        this.saveState();
+      });
 
       lengthInput.addEventListener('input', (e) => {
         feature.length = parseInt(e.target.value) || 60;
-        this.updateExit(feature);
+        this.updateAccess(feature);
         this.saveState();
-        console.log('Updated exit length:', feature.length);
       });
 
       deleteBtn.addEventListener('click', () => {
@@ -684,173 +721,9 @@ Object.assign(TopoEditor.prototype, {
     }
   },
 
-  getSortedFeatures() {
-    // Helper function to get a representative position for a feature
-    const getFeaturePosition = (feature) => {
-      switch (feature.type) {
-        case 'line':
-          // Use start point
-          return { x: feature.x1, y: feature.y1 };
-        case 'rappel':
-          // Use start point
-          return { x: feature.x, y: feature.y };
-        case 'pool':
-          // Use center point
-          return { x: feature.x, y: feature.y };
-        case 'anchor':
-          // Use connection point
-          return { x: feature.connectionX, y: feature.connectionY };
-        case 'hazard':
-          return { x: feature.x, y: feature.y };
-        case 'exit':
-          return { x: feature.x, y: feature.y };
-        default:
-          return { x: 0, y: 0 };
-      }
-    };
-
-    // Build a graph of connections between features
-    const connections = new Map();
-    this.features.forEach(f => connections.set(f.id, new Set()));
-
-    // Find all connection points and group features that share them
-    const connectionPoints = new Map(); // Map from "x,y" to feature IDs
-
-    this.features.forEach(feature => {
-      const addPoint = (x, y, featureId) => {
-        const key = `${Math.round(x)},${Math.round(y)}`;
-        if (!connectionPoints.has(key)) {
-          connectionPoints.set(key, new Set());
-        }
-        connectionPoints.get(key).add(featureId);
-      };
-
-      if (feature.type === 'line') {
-        addPoint(feature.x1, feature.y1, feature.id);
-        addPoint(feature.x2, feature.y2, feature.id);
-      } else if (feature.type === 'rappel') {
-        const slopeRadians = (feature.slope * Math.PI) / 180;
-        const x2 = feature.x + feature.length * Math.cos(slopeRadians);
-        const y2 = feature.y + feature.length * Math.sin(slopeRadians);
-        addPoint(feature.x, feature.y, feature.id);
-        addPoint(x2, y2, feature.id);
-      } else if (feature.type === 'pool') {
-        const leftX = feature.x - feature.width / 2;
-        const rightX = feature.x + feature.width / 2;
-        addPoint(leftX, feature.y, feature.id);
-        addPoint(rightX, feature.y, feature.id);
-      } else if (feature.type === 'anchor') {
-        addPoint(feature.connectionX, feature.connectionY, feature.id);
-      }
-    });
-
-    // Build connection graph
-    connectionPoints.forEach((featureIds) => {
-      const ids = Array.from(featureIds);
-      for (let i = 0; i < ids.length; i++) {
-        for (let j = i + 1; j < ids.length; j++) {
-          connections.get(ids[i]).add(ids[j]);
-          connections.get(ids[j]).add(ids[i]);
-        }
-      }
-    });
-
-    // Sort features by Y position first (top to bottom), then X position (left to right)
-    const sorted = [...this.features].sort((a, b) => {
-      const posA = getFeaturePosition(a);
-      const posB = getFeaturePosition(b);
-
-      // Primary sort by Y coordinate (top to bottom)
-      if (Math.abs(posA.y - posB.y) > 50) { // Group features within 50 units vertically
-        return posA.y - posB.y;
-      }
-
-      // Secondary sort by X coordinate (left to right)
-      return posA.x - posB.x;
-    });
-
-    return sorted;
-  },
-
-  renderFeatureList() {
-    const featureListDiv = document.getElementById('feature-list');
-    if (!featureListDiv) return;
-
-    if (this.features.length === 0) {
-      featureListDiv.innerHTML = '<p class="empty-state">No features yet</p>';
-      return;
-    }
-
-    // Sort features by position (top to bottom, left to right)
-    const sortedFeatures = this.getSortedFeatures();
-
-    // Create a list of features
-    const list = document.createElement('ul');
-    list.style.listStyle = 'none';
-    list.style.padding = '0';
-    list.style.margin = '0';
-
-    sortedFeatures.forEach(feature => {
-      const listItem = document.createElement('li');
-      listItem.style.padding = '8px 12px';
-      listItem.style.marginBottom = '4px';
-      listItem.style.backgroundColor = this.selectedFeature === feature.id ? '#e8f4f8' : '#f9f9f9';
-      listItem.style.border = '1px solid #ddd';
-      listItem.style.borderRadius = '3px';
-      listItem.style.cursor = 'pointer';
-      listItem.style.transition = 'background-color 0.2s';
-      listItem.style.fontSize = '13px';
-
-      // Create feature label
-      let label = '';
-      switch (feature.type) {
-        case 'line':
-          label = `Line (${feature.length}m, ${feature.slope}°)`;
-          break;
-        case 'pool':
-          label = `Pool (${feature.width}×${feature.height})`;
-          break;
-        case 'anchor':
-          label = `Anchor (${feature.anchorType})`;
-          if (feature.name) label += ` - ${feature.name}`;
-          break;
-        case 'rappel':
-          label = `Rappel (${feature.length}m)`;
-          if (feature.description) label += ` - ${feature.description}`;
-          break;
-        case 'hazard':
-          label = `Hazard`;
-          break;
-        case 'exit':
-          label = `Exit`;
-          break;
-      }
-
-      listItem.textContent = label;
-
-      // Hover effect
-      listItem.addEventListener('mouseenter', () => {
-        if (this.selectedFeature !== feature.id) {
-          listItem.style.backgroundColor = '#f0f0f0';
-        }
-      });
-
-      listItem.addEventListener('mouseleave', () => {
-        if (this.selectedFeature !== feature.id) {
-          listItem.style.backgroundColor = '#f9f9f9';
-        }
-      });
-
-      // Click to select feature
-      listItem.addEventListener('click', () => {
-        this.selectFeature(feature.id);
-      });
-
-      list.appendChild(listItem);
-    });
-
-    featureListDiv.innerHTML = '';
-    featureListDiv.appendChild(list);
-  }
+  // Stub — real implementation provided by editor-feature-list.js when loaded.
+  // Kept here so init() works even if that file is absent.
+  renderFeatureList() {},
 
 });
+

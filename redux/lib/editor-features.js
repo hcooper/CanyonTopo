@@ -76,74 +76,70 @@ Object.assign(TopoEditor.prototype, {
     console.log('Added rappel:', rappel);
   },
 
-  addHazard(x, y) {
-    const size = 30;  // Size of the triangle
+  addNote(x, y) {
+    const size = 30;
 
-    const hazard = {
+    const note = {
       id: this.nextId++,
-      type: 'hazard',
+      type: 'note',
       x: x,
       y: y,
       size: size,
-      text: '!'  // Default warning text
+      iconType: 'warning',
+      text: ''
     };
 
-    this.features.push(hazard);
-    this.renderHazard(hazard);
+    this.features.push(note);
+    this.renderNote(note);
     this.saveState();
-    console.log('Added hazard:', hazard);
+    console.log('Added note:', note);
   },
 
-  addExit(x, y) {
-    const length = 60;  // Length of the exit arrow (diagonal distance)
-
-    const exit = {
+  addAccess(x, y) {
+    const access = {
       id: this.nextId++,
-      type: 'exit',
+      type: 'access',
+      accessType: 'exit',  // 'exit' (black, arrow at far end) or 'entrance' (green, arrow at near end)
       x: x,
       y: y,
-      length: length
+      length: 30
     };
 
-    this.features.push(exit);
-    this.renderExit(exit);
+    this.features.push(access);
+    this.renderAccess(access);
     this.saveState();
-    console.log('Added exit:', exit);
   },
 
-  renderExit(exit) {
-    const group = TopoRenderer.prototype.renderExit.call(this, exit); // creates visual elements, appends to featureLayer
+  renderAccess(access) {
+    const group = TopoRenderer.prototype.renderAccess.call(this, access); // creates visual elements, appends to featureLayer
     group.style.cursor = 'move';
 
-    // Add connection point at the start (for line snapping)
-    const x1 = exit.x;
-    const y1 = exit.y;
-    const startPoint = this.createConnectionPoint(x1, y1, exit.id, 'start');
+    // Add connection point at the origin (x,y)
+    const startPoint = this.createConnectionPoint(access.x, access.y, access.id, 'start');
     group.appendChild(startPoint);
 
     // Add interactivity
     group.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.selectFeature(exit.id);
+      this.selectFeature(access.id);
     });
 
     // Make draggable
-    this.makeExitDraggable(group, exit);
+    this.makeAccessDraggable(group, access);
   },
 
-  makeExitDraggable(element, exit) {
+  makeAccessDraggable(element, access) {
     let isDragging = false;
     let startX, startY;
 
     element.addEventListener('mousedown', (e) => {
-      if (e.button !== 0) return; // Only left click
-      // Don't drag if clicking on a connection point
+      if (e.button !== 0) return;
       if (e.target.classList.contains('connection-point')) return;
 
       isDragging = true;
       const coords = this.screenToSVGCoords(e);
-      startX = coords.x - exit.x;
-      startY = coords.y - exit.y;
+      startX = coords.x - access.x;
+      startY = coords.y - access.y;
       element.style.cursor = 'grabbing';
       e.stopPropagation();
     });
@@ -155,16 +151,15 @@ Object.assign(TopoEditor.prototype, {
       let newX = coords.x - startX;
       let newY = coords.y - startY;
 
-      // Snap to grid if enabled
       if (this.snapToGrid) {
         newX = Math.round(newX / this.gridSize) * this.gridSize;
         newY = Math.round(newY / this.gridSize) * this.gridSize;
       }
 
-      exit.x = newX;
-      exit.y = newY;
+      access.x = newX;
+      access.y = newY;
 
-      this.updateExit(exit);
+      this.updateAccess(access);
     });
 
     document.addEventListener('mouseup', () => {
@@ -176,45 +171,60 @@ Object.assign(TopoEditor.prototype, {
     });
   },
 
-  updateExit(exit) {
-    const element = this.featureLayer.querySelector(`[data-id="${exit.id}"]`);
+  updateAccess(access) {
+    const element = this.featureLayer.querySelector(`[data-id="${access.id}"]`);
     if (!element) return;
 
-    const x1 = exit.x;
-    const y1 = exit.y;
+    const accessType = access.accessType || 'exit';
+    const color = accessType === 'entrance' ? '#27ae60' : '#000';
 
-    const angle45 = -Math.PI / 4;
-    const x2 = x1 + exit.length * Math.cos(angle45);
-    const y2 = y1 + exit.length * Math.sin(angle45);
+    const x1 = access.x;
+    const y1 = access.y;
+    // Exit goes NE (-45°), entrance goes NW (-135°) so connection point is at SE end
+    const angle = accessType === 'entrance' ? -3 * Math.PI / 4 : -Math.PI / 4;
+    const x2 = x1 + access.length * Math.cos(angle);
+    const y2 = y1 + access.length * Math.sin(angle);
 
-    // Update line
-    const line = element.querySelector('.exit-line');
-    if (line) {
-      line.setAttribute('x1', x1);
-      line.setAttribute('y1', y1);
-      line.setAttribute('x2', x2);
-      line.setAttribute('y2', y2);
-    }
+    const shorten = 8;
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    const lineX1 = x1 + dx * shorten;
+    const lineY1 = y1 + dy * shorten;
 
-    // Update arrowhead
+    const perpX = -dy;
+    const perpY = dx;
     const arrowSize = 10;
     const arrowWidth = 6;
 
-    const dx = Math.cos(angle45);
-    const dy = Math.sin(angle45);
-    const perpX = -dy;
-    const perpY = dx;
+    // Update line (shortened at connection-point end)
+    const line = element.querySelector('.access-line');
+    if (line) {
+      line.setAttribute('x1', lineX1);
+      line.setAttribute('y1', lineY1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('stroke', color);
+      line.setAttribute('stroke-width', '5');
+    }
 
-    const tipX = x2;
-    const tipY = y2;
-    const base1X = tipX - dx * arrowSize + perpX * arrowWidth;
-    const base1Y = tipY - dy * arrowSize + perpY * arrowWidth;
-    const base2X = tipX - dx * arrowSize - perpX * arrowWidth;
-    const base2Y = tipY - dy * arrowSize - perpY * arrowWidth;
+    // Update arrowhead (tip offset matches renderer)
+    const arrowOffset = 5;
+    let tipX, tipY, dirX, dirY;
+    if (accessType === 'entrance') {
+      tipX = x1 + dx * arrowOffset; tipY = y1 + dy * arrowOffset; dirX = -dx; dirY = -dy;
+    } else {
+      tipX = x2 + dx * arrowOffset; tipY = y2 + dy * arrowOffset; dirX = dx; dirY = dy;
+    }
 
-    const arrowhead = element.querySelector('.exit-arrowhead');
+    const arrowhead = element.querySelector('.access-arrowhead');
     if (arrowhead) {
-      arrowhead.setAttribute('points', `${tipX},${tipY} ${base1X},${base1Y} ${base2X},${base2Y}`);
+      arrowhead.setAttribute('points',
+        `${tipX},${tipY} ` +
+        `${tipX - dirX * arrowSize + perpX * arrowWidth},${tipY - dirY * arrowSize + perpY * arrowWidth} ` +
+        `${tipX - dirX * arrowSize - perpX * arrowWidth},${tipY - dirY * arrowSize - perpY * arrowWidth}`
+      );
+      arrowhead.setAttribute('fill', color);
+      arrowhead.setAttribute('stroke', color);
     }
 
     // Update connection point
@@ -829,31 +839,74 @@ Object.assign(TopoEditor.prototype, {
     }
   },
 
-  renderHazard(hazard) {
-    const group = TopoRenderer.prototype.renderHazard.call(this, hazard); // creates triangle and text, appends to featureLayer
+  renderNote(note) {
+    const group = TopoRenderer.prototype.renderNote.call(this, note); // creates icon + text, appends to featureLayer
     group.style.cursor = 'move';
+
+    // Make the label text independently draggable
+    if (note.text) {
+      const textEl = group.querySelector('.note-text');
+      if (textEl) {
+        textEl.style.cursor = 'move';
+        this.makeNoteTextDraggable(textEl, note);
+      }
+    }
 
     // Add interactivity
     group.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.selectFeature(hazard.id);
+      this.selectFeature(note.id);
     });
 
     // Make draggable
-    this.makeHazardDraggable(group, hazard);
+    this.makeNoteDraggable(group, note);
   },
 
-  makeHazardDraggable(element, hazard) {
+  makeNoteTextDraggable(textEl, note) {
+    let isDragging = false;
+    let startX, startY, startOffsetX, startOffsetY;
+
+    textEl.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+      isDragging = true;
+      const coords = this.screenToSVGCoords(e);
+      startX = coords.x;
+      startY = coords.y;
+      startOffsetX = note.textOffsetX || 0;
+      startOffsetY = note.textOffsetY || 0;
+      textEl.style.cursor = 'grabbing';
+    });
+
+    this.svg.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const coords = this.screenToSVGCoords(e);
+      note.textOffsetX = startOffsetX + (coords.x - startX);
+      note.textOffsetY = startOffsetY + (coords.y - startY);
+      this.updateNote(note);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        textEl.style.cursor = 'move';
+        this.saveState();
+      }
+    });
+  },
+
+  makeNoteDraggable(element, note) {
     let isDragging = false;
     let startX, startY;
 
     element.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return; // Only left click
+      if (e.target.classList.contains('note-text')) return;
 
       isDragging = true;
       const coords = this.screenToSVGCoords(e);
-      startX = coords.x - hazard.x;
-      startY = coords.y - hazard.y;
+      startX = coords.x - note.x;
+      startY = coords.y - note.y;
       element.style.cursor = 'grabbing';
       e.stopPropagation();
     });
@@ -871,10 +924,10 @@ Object.assign(TopoEditor.prototype, {
         newY = Math.round(newY / this.gridSize) * this.gridSize;
       }
 
-      hazard.x = newX;
-      hazard.y = newY;
+      note.x = newX;
+      note.y = newY;
 
-      this.updateHazard(hazard);
+      this.updateNote(note);
     });
 
     document.addEventListener('mouseup', () => {
@@ -886,35 +939,44 @@ Object.assign(TopoEditor.prototype, {
     });
   },
 
-  updateHazard(hazard) {
-    const element = this.featureLayer.querySelector(`[data-id="${hazard.id}"]`);
+  updateNote(note) {
+    const element = this.featureLayer.querySelector(`[data-id="${note.id}"]`);
     if (!element) return;
 
-    const cx = hazard.x;
-    const cy = hazard.y;
-    const size = hazard.size;
+    const cx = note.x;
+    const cy = note.y;
+    const size = note.size;
 
-    // Calculate triangle points
-    const topX = cx;
-    const topY = cy - (size * Math.sqrt(3) / 3);
-    const leftX = cx - size / 2;
-    const leftY = cy + (size * Math.sqrt(3) / 6);
-    const rightX = cx + size / 2;
-    const rightY = cy + (size * Math.sqrt(3) / 6);
+    // Redraw icon shapes (clears old ones internally)
+    this.drawHazardIconElements(element, cx, cy, size, note.iconType);
 
-    // Update triangle
-    const triangle = element.querySelector('.hazard-triangle');
-    if (triangle) {
-      triangle.setAttribute('points', `${topX},${topY} ${leftX},${leftY} ${rightX},${rightY}`);
-    }
+    // Update label text (outside the icon)
+    const textOffsetX = note.textOffsetX || 0;
+    const textOffsetY = note.textOffsetY || 0;
+    const textX = cx + size * 0.65 + textOffsetX;
+    const textY = cy + 5 + textOffsetY;
 
-    // Update text
-    const text = element.querySelector('.hazard-text');
-    if (text) {
-      text.setAttribute('x', cx);
-      text.setAttribute('y', cy + 5);
-      text.setAttribute('font-size', size * 0.6);
-      text.textContent = hazard.text;
+    let textEl = element.querySelector('.note-text');
+    if (note.text) {
+      if (textEl) {
+        textEl.setAttribute('x', textX);
+        textEl.setAttribute('y', textY);
+        textEl.textContent = note.text;
+      } else {
+        textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textEl.setAttribute('x', textX);
+        textEl.setAttribute('y', textY);
+        textEl.setAttribute('font-size', '12');
+        textEl.setAttribute('font-family', 'Arial, sans-serif');
+        textEl.setAttribute('fill', '#333');
+        textEl.setAttribute('class', 'note-text');
+        textEl.style.cursor = 'move';
+        textEl.textContent = note.text;
+        element.appendChild(textEl);
+        this.makeNoteTextDraggable(textEl, note);
+      }
+    } else if (textEl) {
+      textEl.remove();
     }
   },
 
