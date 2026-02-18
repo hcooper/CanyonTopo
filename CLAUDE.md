@@ -18,7 +18,7 @@ Plain JavaScript classes, no build step. The editor is split across multiple fil
 
 ### Editor (5 files, loaded in order)
 
-- **`redux/lib/editor.js`** — `TopoEditor extends TopoRenderer`. Core class declaration + constructor, canvas/cursor, event listeners, drawing state machine (`startLine/finishLine/startRappel/finishRappel/startPool/finishPool/cancelDrawing`), cursor snap logic, `selectFeature`, `deleteFeature`, `render`, page bootstrap (`loadPage`, `DOMContentLoaded`).
+- **`redux/lib/editor.js`** — `TopoEditor extends TopoRenderer`. Core class declaration + constructor, canvas/cursor, event listeners, drawing state machine (`startLine/finishLine/startRappel/finishRappel/startPool/finishPool/cancelDrawing`), cursor snap logic, `selectFeature`, `deleteFeature`, `render`, page bootstrap (`loadPage`, `DOMContentLoaded`). Also owns the box-selection / group-move subsystem: `toggleSelectMode`, `startBoxSelect/updateBoxSelect/endBoxSelect`, `selectFeaturesInBox`, `featurePrimaryPoint`, `featureBounds`, `renderSelectionHighlights`, `startGroupDrag/updateGroupDrag/endGroupDrag`, `applySnapshotWithOffset`.
 - **`redux/lib/editor-features.js`** — Per-feature render/drag/update/add methods: `renderLine/Rappel/Pool/Anchor/Note/Access`, `updateLine/…`, `makeLineDraggable/…`, `addPool/Anchor/Rappel/Note/Access`. Also: connection point and midpoint factories (`createConnectionPoint`, `createMidpoint`, `createCurveMidpoint`) and their drag handlers (`makeConnectionPointDraggable`, `makeMidpointDraggable`, `makeCurveMidpointDraggable`, `makePoolCurveMidpointDraggable`, `makeRappelTextDraggable`).
 - **`redux/lib/editor-ui.js`** — Toolbar, controls bar, right-click context menu, properties panel: `createToolbar`, `createControls`, `showContextMenu/hideContextMenu`, `updatePropertiesPanel`. Also declares a stub `renderFeatureList()` (overridden by `editor-feature-list.js`).
 - **`redux/lib/editor-feature-list.js`** — Feature list sidebar: `getSortedFeatures`, `renderFeatureList`. Renders the route as a spine-flattened ASCII tree; branches (anchors, notes, mid-route access features) indent to the right.
@@ -82,6 +82,7 @@ const group = TopoRenderer.prototype.renderLine.call(this, line);
 - `raw_yaml` — YAML string preloaded from the wiki page content (empty string for new pages).
 - Saving uses `mw.Api.postWithToken('csrf', { action: 'edit', ... })`.
 - Edit mode is detected via `mw.config.get('wgAction') === 'edit-topo'`.
+- Undo URLs (`?undo=X&undoafter=Y`) are handled in `TopoEditAction.php`: the `undoafter` revision's YAML is loaded into the editor instead of the current content. A 3-way text merge is not attempted — the user saves the restored content as a new revision.
 
 ## YAML Topo Format
 
@@ -174,3 +175,4 @@ Fields not in the schema for a given feature type are deleted on load. The autho
 - Important: all schema changes need to be recorded in TopoRenderer.FEATURE_SCHEMA - it is the source of truth
 - `isDirty` flag: set to `true` by `saveState()`, reset to `false` after the initial load in `init()`, after `loadFromYAML()`, and after a successful `saveToWiki()`. A `beforeunload` listener in `editor.js` shows the browser's native "Leave site?" dialog when `isDirty` is true.
 - Traverse lines render in `#666` (same grey as rappel lines) to visually distinguish them from regular terrain lines (`#000`).
+- **Box select / group move**: toolbar "Select" button (dashed-rect icon) toggles `selectMode`. In select mode, dragging empty canvas draws a selection box; features whose primary point falls inside are added to `selectedFeatures` (a `Set` of IDs). Dragging any selected feature moves all of them together (grid-snapped; undo-able). Shift+click toggles a single feature in/out of the selection. ESC clears selection; second ESC exits select mode. Selection highlights (blue dashed rects) are drawn in the cursor layer by `renderSelectionHighlights()`, which is called from `render()` so they survive full redraws. `applySnapshotWithOffset()` offsets both `x`/`y` and `connectionX`/`connectionY` (present on anchors) to keep the snap point aligned.
