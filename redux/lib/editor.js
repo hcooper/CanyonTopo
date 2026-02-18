@@ -26,6 +26,15 @@ class TopoEditor extends TopoRenderer {
     // Unsaved-changes tracking
     this.isDirty = false;
 
+    // Box selection / group move state
+    this.selectMode = false;
+    this.selectedFeatures = new Set();
+    this.isBoxSelecting = false;
+    this.boxSelectStart = null;
+    this.boxSelectRect = null;
+    this.groupDragState = null;
+    this._selectDragStart = null;
+
     this.init();
   }
 
@@ -109,7 +118,7 @@ class TopoEditor extends TopoRenderer {
     });
 
     this.svg.addEventListener('mouseleave', () => {
-      this.cursorLayer.style.display = 'none';
+      if (!this.selectMode) this.cursorLayer.style.display = 'none';
     });
 
     // Left click for line/rappel drawing and deselecting
@@ -179,9 +188,18 @@ class TopoEditor extends TopoRenderer {
         e.preventDefault();
         this.redo();
       }
-      // Escape to cancel active drawing
+      // Escape to cancel active drawing or clear/exit selection
       else if (e.key === 'Escape') {
-        this.cancelDrawing();
+        if (this.selectMode) {
+          if (this.selectedFeatures.size > 0) {
+            this.selectedFeatures.clear();
+            this.renderSelectionHighlights();
+          } else {
+            this.toggleSelectMode();
+          }
+        } else {
+          this.cancelDrawing();
+        }
       }
     });
 
@@ -192,6 +210,79 @@ class TopoEditor extends TopoRenderer {
         e.returnValue = ''; // Required for Chrome to show the dialog
       }
     });
+
+    // ── Select-mode mouse events ──────────────────────────────────────────────
+
+    // Capture-phase mousedown on SVG: intercept before individual drag handlers
+    this.svg.addEventListener('mousedown', (e) => {
+      if (!this.selectMode || e.button !== 0) return;
+      e.stopPropagation();
+      const coords = this.screenToSVGCoords(e);
+      const featureGroup = e.target.closest('[data-id]');
+      const id = featureGroup ? parseInt(featureGroup.getAttribute('data-id')) : null;
+      this._selectDragStart = { x: coords.x, y: coords.y, id, moved: false };
+    }, true); // capture phase
+
+    // Capture-phase click on SVG: suppress drawing state machine in select mode
+    this.svg.addEventListener('click', (e) => {
+      if (!this.selectMode) return;
+      e.stopPropagation();
+    }, true); // capture phase
+
+    // Document-level mousemove: update box select or group drag
+    document.addEventListener('mousemove', (e) => {
+      if (!this.selectMode || !this._selectDragStart) return;
+      const coords = this.screenToSVGCoords(e);
+      const dx = coords.x - this._selectDragStart.x;
+      const dy = coords.y - this._selectDragStart.y;
+      if (!this._selectDragStart.moved && Math.sqrt(dx * dx + dy * dy) < 4) return;
+      this._selectDragStart.moved = true;
+
+      if (this.groupDragState) {
+        this.updateGroupDrag(coords.x, coords.y);
+      } else if (this.isBoxSelecting) {
+        this.updateBoxSelect(coords.x, coords.y);
+      } else {
+        const id = this._selectDragStart.id;
+        if (id !== null && this.selectedFeatures.has(id)) {
+          this.cursorLayer.style.display = 'block';
+          this.startGroupDrag(this._selectDragStart.x, this._selectDragStart.y);
+          this.updateGroupDrag(coords.x, coords.y);
+        } else {
+          this.cursorLayer.style.display = 'block';
+          this.startBoxSelect(this._selectDragStart.x, this._selectDragStart.y);
+          this.updateBoxSelect(coords.x, coords.y);
+        }
+      }
+    }, false);
+
+    // Document-level mouseup: finish box select or group drag, or handle click
+    document.addEventListener('mouseup', (e) => {
+      if (!this.selectMode || !this._selectDragStart) return;
+      const coords = this.screenToSVGCoords(e);
+
+      if (this.groupDragState) {
+        this.endGroupDrag();
+      } else if (this.isBoxSelecting) {
+        this.endBoxSelect(coords.x, coords.y);
+      } else {
+        // Was a click (no drag)
+        const id = this._selectDragStart.id;
+        if (id !== null) {
+          if (e.shiftKey) {
+            if (this.selectedFeatures.has(id)) this.selectedFeatures.delete(id);
+            else this.selectedFeatures.add(id);
+          } else {
+            this.selectedFeatures = new Set([id]);
+          }
+          this.renderSelectionHighlights();
+        } else {
+          this.selectedFeatures.clear();
+          this.renderSelectionHighlights();
+        }
+      }
+      this._selectDragStart = null;
+    }, false);
   }
 
   updateCursor(e) {
@@ -609,8 +700,209 @@ class TopoEditor extends TopoRenderer {
 
   render() {
     super.render(); // clears featureLayer, calls each renderXxx
+    this.renderSelectionHighlights();
     // Update feature list in sidebar
     this.renderFeatureList();
+  }
+
+  // ── Select mode ────────────────────────────────────────────────────────────
+
+  toggleSelectMode() {
+    this.selectMode = !this.selectMode;
+
+    // Cancel any in-progress sub-operations
+    if (this.isBoxSelecting) {
+      this.isBoxSelecting = false;
+      if (this.boxSelectRect) { this.boxSelectRect.remove(); this.boxSelectRect = null; }
+      this.boxSelectStart = null;
+    }
+    if (this.groupDragState) {
+      this.groupDragState = null;
+    }
+    this._selectDragStart = null;
+
+    const selectBtn = document.getElementById('select-mode-btn');
+
+    if (this.selectMode) {
+      this.cancelDrawing();
+      this.svg.style.cursor = 'crosshair';
+      // Hide just the crosshair elements; keep cursor layer visible for highlights
+      this.cursorVLine.style.display = 'none';
+      this.cursorHLine.style.display = 'none';
+      this.cursorCircle.style.display = 'none';
+      this.cursorLayer.style.display = 'block';
+      if (selectBtn) {
+        selectBtn.style.outline = '2px solid #fff';
+        selectBtn.style.backgroundColor = '#3a7ca5';
+      }
+    } else {
+      this.svg.style.cursor = 'none';
+      this.cursorVLine.style.display = '';
+      this.cursorHLine.style.display = '';
+      this.cursorCircle.style.display = '';
+      this.cursorLayer.style.display = 'none'; // hide until mouseenter
+      this.selectedFeatures.clear();
+      this.renderSelectionHighlights();
+      if (selectBtn) {
+        selectBtn.style.outline = '';
+        selectBtn.style.backgroundColor = '';
+      }
+    }
+  }
+
+  // ── Box select ─────────────────────────────────────────────────────────────
+
+  startBoxSelect(x, y) {
+    this.isBoxSelecting = true;
+    this.boxSelectStart = { x, y };
+    this.boxSelectRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    this.boxSelectRect.setAttribute('x', x);
+    this.boxSelectRect.setAttribute('y', y);
+    this.boxSelectRect.setAttribute('width', 0);
+    this.boxSelectRect.setAttribute('height', 0);
+    this.boxSelectRect.setAttribute('fill', 'rgba(51,153,255,0.10)');
+    this.boxSelectRect.setAttribute('stroke', '#3399ff');
+    this.boxSelectRect.setAttribute('stroke-width', '1.5');
+    this.boxSelectRect.setAttribute('stroke-dasharray', '4,3');
+    this.cursorLayer.appendChild(this.boxSelectRect);
+  }
+
+  updateBoxSelect(x, y) {
+    if (!this.isBoxSelecting || !this.boxSelectRect) return;
+    const x1 = Math.min(this.boxSelectStart.x, x);
+    const y1 = Math.min(this.boxSelectStart.y, y);
+    this.boxSelectRect.setAttribute('x', x1);
+    this.boxSelectRect.setAttribute('y', y1);
+    this.boxSelectRect.setAttribute('width', Math.abs(x - this.boxSelectStart.x));
+    this.boxSelectRect.setAttribute('height', Math.abs(y - this.boxSelectStart.y));
+  }
+
+  endBoxSelect(x, y) {
+    if (!this.isBoxSelecting) return;
+    this.isBoxSelecting = false;
+    if (this.boxSelectRect) { this.boxSelectRect.remove(); this.boxSelectRect = null; }
+    const x1 = Math.min(this.boxSelectStart.x, x);
+    const y1 = Math.min(this.boxSelectStart.y, y);
+    const x2 = Math.max(this.boxSelectStart.x, x);
+    const y2 = Math.max(this.boxSelectStart.y, y);
+    this.boxSelectStart = null;
+    this.selectFeaturesInBox(x1, y1, x2, y2);
+  }
+
+  selectFeaturesInBox(x1, y1, x2, y2) {
+    this.selectedFeatures.clear();
+    for (const f of this.features) {
+      const pt = this.featurePrimaryPoint(f);
+      if (pt.x >= x1 && pt.x <= x2 && pt.y >= y1 && pt.y <= y2) {
+        this.selectedFeatures.add(f.id);
+      }
+    }
+    this.renderSelectionHighlights();
+  }
+
+  featurePrimaryPoint(f) {
+    if (f.type === 'line') return { x: (f.x1 + f.x2) / 2, y: (f.y1 + f.y2) / 2 };
+    return { x: f.x, y: f.y };
+  }
+
+  featureBounds(f) {
+    const pad = 6;
+    if (f.type === 'line') {
+      const minX = Math.min(f.x1, f.x2), maxX = Math.max(f.x1, f.x2);
+      const minY = Math.min(f.y1, f.y2), maxY = Math.max(f.y1, f.y2);
+      return { x: minX - pad, y: minY - pad, w: (maxX - minX) + pad * 2, h: (maxY - minY) + pad * 2 };
+    }
+    if (f.type === 'rappel') {
+      const rad = f.slope * Math.PI / 180;
+      const x2 = f.x + f.length * Math.cos(rad);
+      const y2 = f.y + f.length * Math.sin(rad);
+      const minX = Math.min(f.x, x2), maxX = Math.max(f.x, x2);
+      const minY = Math.min(f.y, y2), maxY = Math.max(f.y, y2);
+      return { x: minX - pad, y: minY - pad, w: (maxX - minX) + pad * 2, h: (maxY - minY) + pad * 2 };
+    }
+    if (f.type === 'pool') {
+      return { x: f.x - f.width / 2 - pad, y: f.y - pad, w: f.width + pad * 2, h: f.depth + pad * 2 };
+    }
+    if (f.type === 'note') {
+      const s = f.size || 30;
+      return { x: f.x - s / 2 - pad, y: f.y - s / 2 - pad, w: s + pad * 2, h: s + pad * 2 };
+    }
+    if (f.type === 'anchor') {
+      return { x: f.x - 20 - pad, y: f.y - 20 - pad, w: 40 + pad * 2, h: 40 + pad * 2 };
+    }
+    if (f.type === 'access') {
+      const len = f.length || 60;
+      return { x: f.x - len / 2 - pad, y: f.y - len / 2 - pad, w: len + pad * 2, h: len + pad * 2 };
+    }
+    return { x: f.x - 20 - pad, y: f.y - 20 - pad, w: 40 + pad * 2, h: 40 + pad * 2 };
+  }
+
+  renderSelectionHighlights() {
+    if (!this.cursorLayer) return;
+    this.cursorLayer.querySelectorAll('.select-highlight').forEach(el => el.remove());
+    if (!this.selectedFeatures || !this.selectedFeatures.size) return;
+    for (const id of this.selectedFeatures) {
+      const f = this.features.find(f => f.id === id);
+      if (!f) continue;
+      const b = this.featureBounds(f);
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', b.x);
+      rect.setAttribute('y', b.y);
+      rect.setAttribute('width', b.w);
+      rect.setAttribute('height', b.h);
+      rect.setAttribute('fill', 'none');
+      rect.setAttribute('stroke', '#3399ff');
+      rect.setAttribute('stroke-width', '1.5');
+      rect.setAttribute('stroke-dasharray', '4,3');
+      rect.classList.add('select-highlight');
+      this.cursorLayer.appendChild(rect);
+    }
+  }
+
+  // ── Group drag ─────────────────────────────────────────────────────────────
+
+  startGroupDrag(startX, startY) {
+    const snapshots = [];
+    for (const id of this.selectedFeatures) {
+      const f = this.features.find(f => f.id === id);
+      if (f) snapshots.push(JSON.parse(JSON.stringify(f)));
+    }
+    this.groupDragState = { startX, startY, snapshots };
+  }
+
+  updateGroupDrag(x, y) {
+    if (!this.groupDragState) return;
+    let dx = x - this.groupDragState.startX;
+    let dy = y - this.groupDragState.startY;
+    if (this.snapToGrid) {
+      dx = Math.round(dx / this.gridSize) * this.gridSize;
+      dy = Math.round(dy / this.gridSize) * this.gridSize;
+    }
+    for (const snap of this.groupDragState.snapshots) {
+      const f = this.features.find(f => f.id === snap.id);
+      if (!f) continue;
+      this.applySnapshotWithOffset(f, snap, dx, dy);
+    }
+    this.render();
+  }
+
+  endGroupDrag() {
+    if (!this.groupDragState) return;
+    this.groupDragState = null;
+    this.saveState();
+  }
+
+  applySnapshotWithOffset(f, snap, dx, dy) {
+    if (f.type === 'line') {
+      f.x1 = snap.x1 + dx;  f.y1 = snap.y1 + dy;
+      f.x2 = snap.x2 + dx;  f.y2 = snap.y2 + dy;
+    } else {
+      f.x = snap.x + dx;
+      f.y = snap.y + dy;
+    }
+    // Move any absolute connection-point coords (e.g. anchor's connectionX/Y)
+    if (snap.connectionX !== undefined) f.connectionX = snap.connectionX + dx;
+    if (snap.connectionY !== undefined) f.connectionY = snap.connectionY + dy;
   }
 
 }

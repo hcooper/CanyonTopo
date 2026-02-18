@@ -169,6 +169,14 @@ Object.assign(TopoEditor.prototype, {
 
     const tools = [
       {
+        name: 'Select',
+        id: 'select-mode-btn',
+        action: () => { this.toggleSelectMode(); },
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="18" rx="2" fill="rgba(255,255,255,0.12)" stroke="white" stroke-width="2" stroke-dasharray="4,3"/>
+        </svg>`
+      },
+      {
         name: 'Line',
         action: () => { this.pendingTool = 'line'; },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -221,6 +229,7 @@ Object.assign(TopoEditor.prototype, {
     tools.forEach(tool => {
       const btn = document.createElement('button');
       btn.title = tool.name;
+      if (tool.id) btn.id = tool.id;
       btn.innerHTML = tool.icon;
       btn.addEventListener('click', tool.action);
       toolbar.appendChild(btn);
