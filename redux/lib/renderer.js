@@ -22,6 +22,10 @@ class TopoRenderer {
     this.gridSize = 10;
     this.features = [];
 
+    // Topo metadata
+    this.title = '';
+    this.grade = '';
+
     // Zoom and pan state
     this.zoomLevel = 1;
     this.panX = 0;
@@ -55,10 +59,14 @@ class TopoRenderer {
     this.gridLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     this.gridLayer.id = 'grid-layer';
 
+    this.metadataLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    this.metadataLayer.id = 'metadata-layer';
+
     this.featureLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     this.featureLayer.id = 'feature-layer';
 
     this.svg.appendChild(this.gridLayer);
+    this.svg.appendChild(this.metadataLayer);
     this.svg.appendChild(this.featureLayer);
 
     this.container.appendChild(this.svg);
@@ -113,8 +121,34 @@ class TopoRenderer {
   // Render dispatch
   // ---------------------------------------------------------------------------
 
+  renderMetadata() {
+    this.metadataLayer.innerHTML = '';
+    if (this.title) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', 10);
+      t.setAttribute('y', 20);
+      t.setAttribute('font-size', '16');
+      t.setAttribute('font-weight', 'bold');
+      t.setAttribute('font-family', 'Arial, sans-serif');
+      t.setAttribute('fill', '#222');
+      t.textContent = this.title;
+      this.metadataLayer.appendChild(t);
+    }
+    if (this.grade) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', 10);
+      t.setAttribute('y', this.title ? 38 : 20);
+      t.setAttribute('font-size', '13');
+      t.setAttribute('font-family', 'Arial, sans-serif');
+      t.setAttribute('fill', '#444');
+      t.textContent = this.grade;
+      this.metadataLayer.appendChild(t);
+    }
+  }
+
   render() {
     this.featureLayer.innerHTML = '';
+    this.renderMetadata();
     this.features.forEach(feature => {
       switch (feature.type) {
         case 'line':    this.renderLine(feature);    break;
@@ -604,6 +638,9 @@ class TopoRenderer {
         group.appendChild(letter);
         break;
       }
+      case 'name':
+        // No icon — text-only label rendered in italic by renderNote()
+        break;
       default:
         console.warn(`[topo] Unknown note iconType "${iconType}" — rendering as warning`);
         this.drawNoteIconElements(group, cx, cy, size, 'warning');
@@ -621,16 +658,22 @@ class TopoRenderer {
 
     this.drawNoteIconElements(group, cx, cy, size, note.iconType);
 
-    // Label text placed next to the icon
+    // Label text: 'name' type is centered + italic with no icon offset;
+    // all other types sit to the right of the icon.
     if (note.text) {
       const textOffsetX = note.textOffsetX || 0;
       const textOffsetY = note.textOffsetY || 0;
+      const isName = note.iconType === 'name';
       const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', cx + size * 0.65 + textOffsetX);
+      text.setAttribute('x', isName ? cx + textOffsetX : cx + size * 0.65 + textOffsetX);
       text.setAttribute('y', cy + 5 + textOffsetY);
       text.setAttribute('font-size', '12');
       text.setAttribute('font-family', 'Arial, sans-serif');
       text.setAttribute('fill', '#333');
+      if (isName) {
+        text.setAttribute('font-style', 'italic');
+        text.setAttribute('text-anchor', 'middle');
+      }
       text.setAttribute('class', 'note-text');
       text.textContent = note.text;
       group.appendChild(text);
@@ -917,7 +960,7 @@ TopoRenderer.FEATURE_SCHEMA = {
   },
   note: {
     fields: new Set(['type', 'id', 'x', 'y', 'size', 'iconType', 'text', 'textOffsetX', 'textOffsetY']),
-    subtypes: { iconType: ['info', 'warning', 'swim', 'hydraulic', 'rockfall'] },
+    subtypes: { iconType: ['info', 'warning', 'swim', 'hydraulic', 'rockfall', 'name'] },
   },
   access: {
     fields: new Set(['type', 'id', 'x', 'y', 'length', 'accessType']),

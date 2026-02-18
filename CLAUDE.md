@@ -88,6 +88,8 @@ const group = TopoRenderer.prototype.renderLine.call(this, line);
 
 ```yaml
 version: '1.0'
+title: 'Davis Creek Canyon'   # optional; rendered bold at top-left of SVG
+grade: 'IV A3 III'            # optional; rendered below title
 width: 800
 height: 600
 gridSize: 10
@@ -175,4 +177,5 @@ Fields not in the schema for a given feature type are deleted on load. The autho
 - Important: all schema changes need to be recorded in TopoRenderer.FEATURE_SCHEMA - it is the source of truth
 - `isDirty` flag: set to `true` by `saveState()`, reset to `false` after the initial load in `init()`, after `loadFromYAML()`, and after a successful `saveToWiki()`. A `beforeunload` listener in `editor.js` shows the browser's native "Leave site?" dialog when `isDirty` is true.
 - Traverse lines render in `#666` (same grey as rappel lines) to visually distinguish them from regular terrain lines (`#000`).
+- **Canyon metadata** (`title`, `grade`): stored as top-level YAML fields; rendered by `renderMetadata()` into a dedicated `metadataLayer` (sits between `gridLayer` and `featureLayer`) at fixed SVG coordinates (title at `x=10,y=20`; grade at `x=10,y=38`). Edited via two text inputs in the controls bar. Updating either input calls `renderMetadata()` directly (no full re-render needed). Both appear in SVG/PNG exports. The viewer also shows them automatically.
 - **Box select / group move**: toolbar "Select" button (dashed-rect icon) toggles `selectMode`. In select mode, dragging empty canvas draws a selection box; features whose primary point falls inside are added to `selectedFeatures` (a `Set` of IDs). Dragging any selected feature moves all of them together (grid-snapped; undo-able). Shift+click toggles a single feature in/out of the selection. ESC clears selection; second ESC exits select mode. Selection highlights (blue dashed rects) are drawn in the cursor layer by `renderSelectionHighlights()`, which is called from `render()` so they survive full redraws. `applySnapshotWithOffset()` offsets both `x`/`y` and `connectionX`/`connectionY` (present on anchors) to keep the snap point aligned.
