@@ -122,7 +122,10 @@
   border-radius: 5px;
   padding: 10px;
   min-height: 200px;
+  max-height: 50vh;
   margin-bottom: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 #properties-panel {
