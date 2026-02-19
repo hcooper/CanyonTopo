@@ -4,6 +4,9 @@
 Object.assign(TopoEditor.prototype, {
 
   saveState() {
+    // Update last modified timestamp
+    this.lastModified = new Date().toISOString();
+
     // Create a deep copy of the current state
     const state = {
       features: JSON.parse(JSON.stringify(this.features)),
@@ -196,8 +199,19 @@ Object.assign(TopoEditor.prototype, {
       features: this.features,
       nextId: this.nextId
     };
-    if (this.title) exportObject.title = this.title;
-    if (this.grade) exportObject.grade = this.grade;
+    if (this.title) {
+      exportObject.title = this.title;
+      if (this.titleX !== null) exportObject.titleX = this.titleX;
+      if (this.titleY !== null) exportObject.titleY = this.titleY;
+    }
+    if (this.grade) {
+      exportObject.grade = this.grade;
+      if (this.gradeX !== null) exportObject.gradeX = this.gradeX;
+      if (this.gradeY !== null) exportObject.gradeY = this.gradeY;
+    }
+    if (this.lastModified) {
+      exportObject.lastModified = this.lastModified;
+    }
     return jsyaml.dump(exportObject);
   },
 
@@ -283,7 +297,7 @@ Object.assign(TopoEditor.prototype, {
     }
 
     // Warn on unrecognized top-level keys
-    const knownTopLevel = new Set(['version', 'width', 'height', 'gridSize', 'nextId', 'features', 'title', 'grade']);
+    const knownTopLevel = new Set(['version', 'width', 'height', 'gridSize', 'nextId', 'features', 'title', 'grade', 'titleX', 'titleY', 'gradeX', 'gradeY', 'lastModified']);
     Object.keys(importObject).forEach(key => {
       if (!knownTopLevel.has(key)) {
         console.warn(`[topo] Unknown top-level YAML key "${key}" — ignored`);
@@ -299,6 +313,13 @@ Object.assign(TopoEditor.prototype, {
         for (const [key, value] of Object.entries(migration.defaults)) {
           if (!(key in f)) f[key] = value;
         }
+      }
+
+      // Migrate old pool format (depth) to new format (leftDepth/rightDepth)
+      if (f.type === 'pool' && 'depth' in f && !('leftDepth' in f) && !('rightDepth' in f)) {
+        f.leftDepth = f.depth;
+        f.rightDepth = f.depth;
+        console.warn(`[topo] Migrating pool (id=${f.id}) from depth=${f.depth} to leftDepth/rightDepth`);
       }
     });
 
@@ -323,6 +344,11 @@ Object.assign(TopoEditor.prototype, {
 
     this.title = importObject.title || '';
     this.grade = importObject.grade || '';
+    this.titleX = importObject.titleX !== undefined ? importObject.titleX : null;
+    this.titleY = importObject.titleY !== undefined ? importObject.titleY : null;
+    this.gradeX = importObject.gradeX !== undefined ? importObject.gradeX : null;
+    this.gradeY = importObject.gradeY !== undefined ? importObject.gradeY : null;
+    this.lastModified = importObject.lastModified || null;
 
     this.svg.setAttribute('width', this.width);
     this.svg.setAttribute('height', this.height);

@@ -144,6 +144,28 @@ class TopoRenderer {
       t.textContent = this.grade;
       this.metadataLayer.appendChild(t);
     }
+    if (this.lastModified) {
+      // Format timestamp as '2026-02-18 9:59 PM'
+      const date = new Date(this.lastModified);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      let hours = date.getHours();
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12; // Convert to 12-hour format
+      const formatted = `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
+
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', this.width - 10);
+      t.setAttribute('y', this.height - 10);
+      t.setAttribute('text-anchor', 'end');
+      t.setAttribute('font-size', '10');
+      t.setAttribute('font-family', 'Arial, sans-serif');
+      t.setAttribute('fill', '#666');
+      t.textContent = `Last modified: ${formatted}`;
+      this.metadataLayer.appendChild(t);
+    }
   }
 
   render() {
@@ -283,15 +305,19 @@ class TopoRenderer {
     const cx = pool.x;
     const cy = pool.y;
     const width = pool.width;
-    const depth = pool.depth;
+
+    // Support both old (depth) and new (leftDepth/rightDepth) formats
+    const leftDepth = pool.leftDepth !== undefined ? pool.leftDepth : (pool.depth || 30);
+    const rightDepth = pool.rightDepth !== undefined ? pool.rightDepth : (pool.depth || 30);
 
     const startX = cx - width / 2;
     const endX = cx + width / 2;
-    const controlOffset = depth * 0.552;
+    const leftControlOffset = leftDepth * 0.552;
+    const rightControlOffset = rightDepth * 0.552;
 
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d',
-      `M ${startX},${cy} C ${startX},${cy + controlOffset} ${endX},${cy + controlOffset} ${endX},${cy}`
+      `M ${startX},${cy} C ${startX},${cy + leftControlOffset} ${endX},${cy + rightControlOffset} ${endX},${cy}`
     );
     path.setAttribute('fill', '#4a90e2');
     path.setAttribute('stroke', '#000000');
@@ -342,11 +368,13 @@ class TopoRenderer {
       group.appendChild(line2);
     }
 
-    // Name label (displayed to the right of the last X mark)
+    // Name label (displayed to the right of the last X mark, draggable)
     if (anchor.name) {
+      const nameOffsetX = anchor.nameOffsetX || 0;
+      const nameOffsetY = anchor.nameOffsetY || 0;
       const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', cx + visualOffsetX + (count - 1) * spacing + size);
-      text.setAttribute('y', cy + visualOffsetY);
+      text.setAttribute('x', cx + visualOffsetX + (count - 1) * spacing + size + nameOffsetX);
+      text.setAttribute('y', cy + visualOffsetY + nameOffsetY);
       text.setAttribute('font-size', '12');
       text.setAttribute('font-family', 'Arial, sans-serif');
       text.setAttribute('fill', '#333');
@@ -435,7 +463,7 @@ class TopoRenderer {
     arrowhead.setAttribute('class', 'rappel-arrowhead');
     group.appendChild(arrowhead);
 
-    // Description text if present
+    // Description text if present (supports multiline with \n)
     if (rappel.description) {
       const textOffsetX = rappel.textOffsetX || 0;
       const textOffsetY = rappel.textOffsetY || 0;
@@ -446,7 +474,18 @@ class TopoRenderer {
       text.setAttribute('font-family', 'Arial, sans-serif');
       text.setAttribute('fill', '#666');
       text.setAttribute('class', 'rappel-description');
-      text.textContent = rappel.description;
+
+      // Split on newlines and create a tspan for each line
+      const lines = rappel.description.split('\n');
+      const lineHeight = 16;
+      lines.forEach((line, i) => {
+        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspan.setAttribute('x', controlX + perpX * 15 + textOffsetX);
+        tspan.setAttribute('dy', i === 0 ? '0' : lineHeight);
+        tspan.textContent = line;
+        text.appendChild(tspan);
+      });
+
       group.appendChild(text);
     }
 
@@ -680,6 +719,27 @@ class TopoRenderer {
     }
 
     this.featureLayer.appendChild(group);
+
+    // For 'name' type, add a rectangle box around the text (after DOM insertion for getBBox)
+    if (note.text && note.iconType === 'name') {
+      const textEl = group.querySelector('.note-text');
+      if (textEl) {
+        const bbox = textEl.getBBox();
+        const padding = 4;
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', bbox.x - padding);
+        rect.setAttribute('y', bbox.y - padding);
+        rect.setAttribute('width', bbox.width + padding * 2);
+        rect.setAttribute('height', bbox.height + padding * 2);
+        rect.setAttribute('fill', 'none');
+        rect.setAttribute('stroke', '#000');
+        rect.setAttribute('stroke-width', '1');
+        rect.setAttribute('class', 'note-icon');
+        // Insert before the text so the text renders on top
+        group.insertBefore(rect, textEl);
+      }
+    }
+
     return group;
   }
 
@@ -952,10 +1012,10 @@ TopoRenderer.FEATURE_SCHEMA = {
     fields: new Set(['type', 'id', 'x', 'y', 'length', 'slope', 'curveOffset', 'curvePosition', 'description', 'textOffsetX', 'textOffsetY']),
   },
   pool: {
-    fields: new Set(['type', 'id', 'x', 'y', 'width', 'depth']),
+    fields: new Set(['type', 'id', 'x', 'y', 'width', 'depth', 'leftDepth', 'rightDepth']),
   },
   anchor: {
-    fields: new Set(['type', 'id', 'x', 'y', 'size', 'connectionX', 'connectionY', 'anchorType', 'count', 'name']),
+    fields: new Set(['type', 'id', 'x', 'y', 'size', 'connectionX', 'connectionY', 'anchorType', 'count', 'name', 'nameOffsetX', 'nameOffsetY']),
     subtypes: { anchorType: ['bolt', 'natural', 'piton', 'tree', 'rock'] },
   },
   note: {

@@ -188,6 +188,21 @@ class TopoEditor extends TopoRenderer {
         e.preventDefault();
         this.redo();
       }
+      // Delete or Backspace to delete selected feature(s)
+      else if (e.key === 'Delete' || e.key === 'Backspace') {
+        // Don't delete if user is typing in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        if (this.selectMode && this.selectedFeatures.size > 0) {
+          // Delete multiple selected features
+          e.preventDefault();
+          this.deleteSelectedFeatures();
+        } else if (this.selectedFeature !== null) {
+          // Delete single selected feature
+          e.preventDefault();
+          this.deleteFeature(this.selectedFeature);
+        }
+      }
       // Escape to cancel active drawing or clear/exit selection
       else if (e.key === 'Escape') {
         if (this.selectMode) {
@@ -698,11 +713,70 @@ class TopoEditor extends TopoRenderer {
     }
   }
 
+  deleteSelectedFeatures() {
+    if (this.selectedFeatures.size === 0) return;
+
+    // Create array of IDs to delete (avoid modifying Set while iterating)
+    const idsToDelete = Array.from(this.selectedFeatures);
+
+    // Remove each feature from the features array
+    this.features = this.features.filter(f => !this.selectedFeatures.has(f.id));
+
+    // Clear selection
+    this.selectedFeatures.clear();
+
+    // Update UI
+    this.render();
+    this.updatePropertiesPanel(null);
+    this.saveState();
+
+    console.log('Deleted features:', idsToDelete);
+  }
+
   render() {
-    super.render(); // clears featureLayer, calls each renderXxx
+    super.render(); // clears featureLayer, calls renderMetadata, calls each renderXxx
     this.renderSelectionHighlights();
+    // Attach drag handlers to metadata labels (recreated on every render)
+    const titleEl = document.getElementById('topo-title-text');
+    if (titleEl) {
+      this.makeMetadataDraggable(titleEl, 'titleX', 'titleY',
+        this.width - 10, 20);
+    }
+    const gradeEl = document.getElementById('topo-grade-text');
+    if (gradeEl) {
+      this.makeMetadataDraggable(gradeEl, 'gradeX', 'gradeY',
+        this.width - 10, (this.titleY ?? 20) + 18);
+    }
     // Update feature list in sidebar
     this.renderFeatureList();
+  }
+
+  makeMetadataDraggable(el, xProp, yProp, defaultX, defaultY) {
+    el.style.cursor = 'move';
+    el.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      e.stopPropagation(); // don't trigger select-mode or drawing handlers
+      // Materialise default position on first drag
+      if (this[xProp] === null) this[xProp] = defaultX;
+      if (this[yProp] === null) this[yProp] = defaultY;
+      const startSVG = this.screenToSVGCoords(e);
+      const startX = this[xProp];
+      const startY = this[yProp];
+      const onMove = (e) => {
+        const coords = this.screenToSVGCoords(e);
+        this[xProp] = startX + (coords.x - startSVG.x);
+        this[yProp] = startY + (coords.y - startSVG.y);
+        el.setAttribute('x', this[xProp]);
+        el.setAttribute('y', this[yProp]);
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        this.isDirty = true;
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
   }
 
   // ── Select mode ────────────────────────────────────────────────────────────
