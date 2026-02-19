@@ -11,7 +11,8 @@ Object.assign(TopoEditor.prototype, {
       x: x + width / 2,  // Offset center so left connection point is at click location
       y: y,
       width: width,
-      depth: 30
+      leftDepth: 30,
+      rightDepth: 30
     };
 
     this.features.push(pool);
@@ -248,6 +249,15 @@ Object.assign(TopoEditor.prototype, {
     );
     group.appendChild(connectionPoint);
 
+    // Make the name text independently draggable
+    if (anchor.name) {
+      const nameText = group.querySelector('.anchor-name');
+      if (nameText) {
+        nameText.style.cursor = 'move';
+        this.makeAnchorNameDraggable(nameText, anchor);
+      }
+    }
+
     // Add interactivity
     group.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -258,14 +268,48 @@ Object.assign(TopoEditor.prototype, {
     this.makeAnchorDraggable(group, anchor);
   },
 
+  makeAnchorNameDraggable(textEl, anchor) {
+    let isDragging = false;
+    let startX, startY, startOffsetX, startOffsetY;
+
+    textEl.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+      isDragging = true;
+      const coords = this.screenToSVGCoords(e);
+      startX = coords.x;
+      startY = coords.y;
+      startOffsetX = anchor.nameOffsetX || 0;
+      startOffsetY = anchor.nameOffsetY || 0;
+      textEl.style.cursor = 'grabbing';
+    });
+
+    this.svg.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const coords = this.screenToSVGCoords(e);
+      anchor.nameOffsetX = startOffsetX + (coords.x - startX);
+      anchor.nameOffsetY = startOffsetY + (coords.y - startY);
+      this.updateAnchor(anchor);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        textEl.style.cursor = 'move';
+        this.saveState();
+      }
+    });
+  },
+
   makeAnchorDraggable(element, anchor) {
     let isDragging = false;
     let startX, startY;
 
     element.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return; // Only left click
-      // Don't drag if clicking on a connection point
+      // Don't drag if clicking on a connection point or name text
       if (e.target.classList.contains('connection-point')) return;
+      if (e.target.classList.contains('anchor-name')) return;
 
       isDragging = true;
       const coords = this.screenToSVGCoords(e);
@@ -374,21 +418,28 @@ Object.assign(TopoEditor.prototype, {
     // Update name text (rendered by base class renderAnchor)
     let nameText = element.querySelector('.anchor-name');
     if (anchor.name) {
+      const nameOffsetX = anchor.nameOffsetX || 0;
+      const nameOffsetY = anchor.nameOffsetY || 0;
+      const textX = cx + visualOffsetX + (count - 1) * spacing + size + nameOffsetX;
+      const textY = cy + visualOffsetY + nameOffsetY;
+
       if (nameText) {
-        nameText.setAttribute('x', cx + visualOffsetX + (count - 1) * spacing + size);
-        nameText.setAttribute('y', cy + visualOffsetY);
+        nameText.setAttribute('x', textX);
+        nameText.setAttribute('y', textY);
         nameText.textContent = anchor.name;
       } else {
-        // Create new text element if it didn't exist before
+        // Create new text element if it didn't exist before and make it draggable
         nameText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        nameText.setAttribute('x', cx + visualOffsetX + (count - 1) * spacing + size);
-        nameText.setAttribute('y', cy + visualOffsetY);
+        nameText.setAttribute('x', textX);
+        nameText.setAttribute('y', textY);
         nameText.setAttribute('font-size', '12');
         nameText.setAttribute('font-family', 'Arial, sans-serif');
         nameText.setAttribute('fill', '#333');
         nameText.setAttribute('class', 'anchor-name');
+        nameText.style.cursor = 'move';
         nameText.textContent = anchor.name;
         element.appendChild(nameText);
+        this.makeAnchorNameDraggable(nameText, anchor);
       }
     } else if (nameText) {
       nameText.remove();
@@ -403,19 +454,27 @@ Object.assign(TopoEditor.prototype, {
     const cy = pool.y;
     const width = pool.width;
 
+    // Support both old (depth) and new (leftDepth/rightDepth) formats
+    const leftDepth = pool.leftDepth !== undefined ? pool.leftDepth : (pool.depth || 30);
+    const rightDepth = pool.rightDepth !== undefined ? pool.rightDepth : (pool.depth || 30);
+
     // Add connection points
     const leftPoint = this.createConnectionPoint(cx - width / 2, cy, pool.id, 'start');
     const rightPoint = this.createConnectionPoint(cx + width / 2, cy, pool.id, 'end');
     group.appendChild(leftPoint);
     group.appendChild(rightPoint);
 
-    // Add curve midpoint handle at the deepest point of the arc
-    const controlOffset = pool.depth * 0.552;
-    const midX = cx;
-    const midY = cy + controlOffset * 0.75;
+    // Add single curve control handle
+    // Position it at the average depth, horizontally offset based on asymmetry
+    const avgDepth = (leftDepth + rightDepth) / 2;
+    const depthDiff = rightDepth - leftDepth;
+    // Horizontal position: center + offset proportional to depth difference
+    const handleX = cx + (depthDiff / avgDepth) * (width / 4);
+    const handleY = cy + avgDepth * 0.552 * 0.75;
+
     const curveMid = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    curveMid.setAttribute('cx', midX);
-    curveMid.setAttribute('cy', midY);
+    curveMid.setAttribute('cx', handleX);
+    curveMid.setAttribute('cy', handleY);
     curveMid.setAttribute('r', '5');
     curveMid.setAttribute('fill', '#e67e22');
     curveMid.setAttribute('stroke', 'white');
@@ -501,9 +560,31 @@ Object.assign(TopoEditor.prototype, {
       if (!pool || pool.type !== 'pool') return;
 
       const coords = this.screenToSVGCoords(e);
-      // Midpoint Y = pool.y + depth * 0.552 * 0.75, so:
-      const newDepth = (coords.y - pool.y) / (0.552 * 0.75);
-      pool.depth = Math.max(5, newDepth);
+      const cx = pool.x;
+      const cy = pool.y;
+      const width = pool.width;
+
+      // Vertical position determines depth at handle location
+      const handleDepth = Math.max(5, (coords.y - cy) / (0.552 * 0.75));
+
+      // Horizontal position determines asymmetry
+      // Offset from center as fraction of half-width (-1 to +1)
+      const offsetX = coords.x - cx;
+      const normalizedOffset = Math.max(-1, Math.min(1, offsetX / (width / 2)));
+
+      // Calculate left and right depths based on handle position
+      // When handle is centered: both equal to handleDepth
+      // When handle is to the right: right is deeper, left is shallower
+      // When handle is to the left: left is deeper, right is shallower
+      if (normalizedOffset >= 0) {
+        // Handle is at center or right
+        pool.rightDepth = handleDepth;
+        pool.leftDepth = handleDepth * (1 - normalizedOffset);
+      } else {
+        // Handle is left of center
+        pool.leftDepth = handleDepth;
+        pool.rightDepth = handleDepth * (1 + normalizedOffset);
+      }
 
       this.updatePool(pool);
     });
@@ -524,22 +605,22 @@ Object.assign(TopoEditor.prototype, {
     const path = element.querySelector('.pool-shape');
 
     const width = pool.width;
-    const depth = pool.depth;
     const cx = pool.x;
     const cy = pool.y;
+
+    // Support both old (depth) and new (leftDepth/rightDepth) formats
+    const leftDepth = pool.leftDepth !== undefined ? pool.leftDepth : (pool.depth || 30);
+    const rightDepth = pool.rightDepth !== undefined ? pool.rightDepth : (pool.depth || 30);
 
     const startX = cx - width / 2;
     const startY = cy;
     const endX = cx + width / 2;
     const endY = cy;
 
-    const controlOffset = depth * 0.552;
-    const cp1X = startX;
-    const cp1Y = cy + controlOffset;
-    const cp2X = endX;
-    const cp2Y = cy + controlOffset;
+    const leftControlOffset = leftDepth * 0.552;
+    const rightControlOffset = rightDepth * 0.552;
 
-    const pathData = `M ${startX},${startY} C ${cp1X},${cp1Y} ${cp2X},${cp2Y} ${endX},${endY}`;
+    const pathData = `M ${startX},${startY} C ${startX},${cy + leftControlOffset} ${endX},${cy + rightControlOffset} ${endX},${endY}`;
     path.setAttribute('d', pathData);
 
     // Update connection points
@@ -555,11 +636,15 @@ Object.assign(TopoEditor.prototype, {
       }
     });
 
-    // Update curve midpoint handle
+    // Update single curve midpoint handle
     const curveMid = element.querySelector('.curve-midpoint');
     if (curveMid) {
-      curveMid.setAttribute('cx', cx);
-      curveMid.setAttribute('cy', cy + controlOffset * 0.75);
+      const avgDepth = (leftDepth + rightDepth) / 2;
+      const depthDiff = rightDepth - leftDepth;
+      const handleX = cx + (depthDiff / avgDepth) * (width / 4);
+      const handleY = cy + avgDepth * 0.552 * 0.75;
+      curveMid.setAttribute('cx', handleX);
+      curveMid.setAttribute('cy', handleY);
     }
   },
 
@@ -806,7 +891,7 @@ Object.assign(TopoEditor.prototype, {
       }
     });
 
-    // Update description text
+    // Update description text (supports multiline with \n)
     const textOffsetX = rappel.textOffsetX || 0;
     const textOffsetY = rappel.textOffsetY || 0;
     const textX = controlX + perpX * 15 + textOffsetX;
@@ -818,7 +903,17 @@ Object.assign(TopoEditor.prototype, {
         // Update existing text
         descText.setAttribute('x', textX);
         descText.setAttribute('y', textY);
-        descText.textContent = rappel.description;
+        // Clear existing tspans and rebuild
+        descText.innerHTML = '';
+        const lines = rappel.description.split('\n');
+        const lineHeight = 16;
+        lines.forEach((line, i) => {
+          const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+          tspan.setAttribute('x', textX);
+          tspan.setAttribute('dy', i === 0 ? '0' : lineHeight);
+          tspan.textContent = line;
+          descText.appendChild(tspan);
+        });
       } else {
         // Create new text element and make it draggable
         descText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -829,7 +924,18 @@ Object.assign(TopoEditor.prototype, {
         descText.setAttribute('fill', '#666');
         descText.setAttribute('class', 'rappel-description');
         descText.style.cursor = 'move';
-        descText.textContent = rappel.description;
+
+        // Split on newlines and create a tspan for each line
+        const lines = rappel.description.split('\n');
+        const lineHeight = 16;
+        lines.forEach((line, i) => {
+          const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+          tspan.setAttribute('x', textX);
+          tspan.setAttribute('dy', i === 0 ? '0' : lineHeight);
+          tspan.textContent = line;
+          descText.appendChild(tspan);
+        });
+
         element.appendChild(descText);
         this.makeRappelTextDraggable(descText, rappel);
       }
@@ -950,10 +1056,11 @@ Object.assign(TopoEditor.prototype, {
     // Redraw icon shapes (clears old ones internally)
     this.drawNoteIconElements(element, cx, cy, size, note.iconType);
 
-    // Update label text (outside the icon)
+    // Update label text
     const textOffsetX = note.textOffsetX || 0;
     const textOffsetY = note.textOffsetY || 0;
-    const textX = cx + size * 0.65 + textOffsetX;
+    const isName = note.iconType === 'name';
+    const textX = isName ? cx + textOffsetX : cx + size * 0.65 + textOffsetX;
     const textY = cy + 5 + textOffsetY;
 
     let textEl = element.querySelector('.note-text');
@@ -962,6 +1069,13 @@ Object.assign(TopoEditor.prototype, {
         textEl.setAttribute('x', textX);
         textEl.setAttribute('y', textY);
         textEl.textContent = note.text;
+        if (isName) {
+          textEl.setAttribute('font-style', 'italic');
+          textEl.setAttribute('text-anchor', 'middle');
+        } else {
+          textEl.removeAttribute('font-style');
+          textEl.removeAttribute('text-anchor');
+        }
       } else {
         textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         textEl.setAttribute('x', textX);
@@ -969,14 +1083,44 @@ Object.assign(TopoEditor.prototype, {
         textEl.setAttribute('font-size', '12');
         textEl.setAttribute('font-family', 'Arial, sans-serif');
         textEl.setAttribute('fill', '#333');
+        if (isName) {
+          textEl.setAttribute('font-style', 'italic');
+          textEl.setAttribute('text-anchor', 'middle');
+        }
         textEl.setAttribute('class', 'note-text');
         textEl.style.cursor = 'move';
         textEl.textContent = note.text;
         element.appendChild(textEl);
         this.makeNoteTextDraggable(textEl, note);
       }
+
+      // For 'name' type, add/update the rectangle box around the text
+      if (isName) {
+        // Ensure element is in DOM before measuring (it should be, since we're updating)
+        const bbox = textEl.getBBox();
+        const padding = 4;
+        let rect = element.querySelector('rect.note-icon');
+        if (!rect) {
+          rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('fill', 'none');
+          rect.setAttribute('stroke', '#000');
+          rect.setAttribute('stroke-width', '1');
+          rect.setAttribute('class', 'note-icon');
+          element.insertBefore(rect, textEl);
+        }
+        rect.setAttribute('x', bbox.x - padding);
+        rect.setAttribute('y', bbox.y - padding);
+        rect.setAttribute('width', bbox.width + padding * 2);
+        rect.setAttribute('height', bbox.height + padding * 2);
+      } else {
+        // Remove box if switching away from 'name' type
+        const rect = element.querySelector('rect.note-icon');
+        if (rect) rect.remove();
+      }
     } else if (textEl) {
       textEl.remove();
+      const rect = element.querySelector('rect.note-icon');
+      if (rect) rect.remove();
     }
   },
 
@@ -1388,15 +1532,25 @@ Object.assign(TopoEditor.prototype, {
             // Update visual
             this.updateLine(feature);
           } else if (feature.type === 'pool') {
-            // For pools, we need to move the entire pool
-            // Calculate offset from pool center
-            const offsetX = x - (point.pointType === 'start' ?
-              (feature.x - feature.width / 2) :
-              (feature.x + feature.width / 2));
-            const offsetY = y - feature.y;
+            // For pools, dragging connection points adjusts width
+            const oldLeftX = feature.x - feature.width / 2;
+            const oldRightX = feature.x + feature.width / 2;
 
-            feature.x += offsetX;
-            feature.y += offsetY;
+            let newLeftX, newRightX;
+            if (point.pointType === 'start') {
+              // Dragging left point: adjust left edge, keep right edge fixed
+              newLeftX = x;
+              newRightX = oldRightX;
+            } else {
+              // Dragging right point: adjust right edge, keep left edge fixed
+              newLeftX = oldLeftX;
+              newRightX = x;
+            }
+
+            // Recalculate center and width
+            feature.width = Math.max(10, newRightX - newLeftX); // Minimum width of 10
+            feature.x = newLeftX + feature.width / 2;
+            feature.y = y; // Allow vertical movement
 
             // Update visual
             this.updatePool(feature);

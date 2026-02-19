@@ -623,8 +623,8 @@ Object.assign(TopoEditor.prototype, {
           </div>
           <div>
             <label for="rappel-description" style="display: block; margin-bottom: 4px; font-weight: 500;">Description:</label>
-            <input type="text" id="rappel-description" value="${feature.description || ''}" placeholder="e.g., 150', DBL"
-                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+            <textarea id="rappel-description" placeholder="e.g., 150', DBL" rows="3"
+                      style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; resize: vertical; font-family: inherit; font-size: inherit;">${feature.description || ''}</textarea>
           </div>
           <button id="delete-rappel" style="background-color: #e74c3c; margin-top: 8px;">Delete Rappel</button>
         </div>
