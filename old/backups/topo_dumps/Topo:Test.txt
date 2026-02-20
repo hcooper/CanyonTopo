@@ -1,0 +1,94 @@
+canyon_name: Test
+start_x: -68
+start_y: 16
+features:
+- type: anchor
+  style: bolt
+  count: 1
+  
+- type: line
+  slope: 0
+  length: 30
+  shorten: false
+  traverse: false
+  
+- type: rap
+  slope: 90
+  length: 100
+  label: RR
+  
+- type: pool
+  width: 50
+  depth: 20
+  
+- type: rap
+  sections:
+    - length: 100
+      slope: 10
+    - length: 30
+      slope: 45
+  label: RR
+  labelOffsetX: -5
+  labelOffsetY: -37
+  
+- type: pool
+  width: 50
+  depth: 20
+  
+- type: anchor
+  style: bolt
+  count: 1
+  
+- type: rap
+  label: R2
+  sections:
+    - length: 100
+      slope: 45
+    - length: 30
+      slope: 90
+    - length: 60
+      slope: 45
+    - length: 30
+      slope: 90
+    - length: 30
+      slope: 45
+  labelOffsetX: 29
+  labelOffsetY: -28
+  
+- type: pool
+  width: 50
+  depth: 20
+  
+- type: anchor
+  style: bolt
+  count: 1
+  
+- type: rap
+  label: R2
+  sections:
+    - length: 100
+      slope: 45
+    - length: 30
+      slope: 90
+    - length: 60
+      slope: 45
+    - length: 30
+      slope: 90
+    - length: 30
+      slope: 45
+  
+- type: pool
+  width: 50
+  depth: 20
+  
+- type: line
+  shorten: false
+  traverse: false
+  sections:
+    - length: 30
+      slope: 45
+    - length: 30
+      slope: 90
+    - length: 30
+      slope: 45
+  label: D1
