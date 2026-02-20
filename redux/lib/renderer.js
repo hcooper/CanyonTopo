@@ -22,10 +22,6 @@ class TopoRenderer {
     this.gridSize = 10;
     this.features = [];
 
-    // Topo metadata
-    this.title = '';
-    this.grade = '';
-
     // Zoom and pan state
     this.zoomLevel = 1;
     this.panX = 0;
@@ -59,14 +55,10 @@ class TopoRenderer {
     this.gridLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     this.gridLayer.id = 'grid-layer';
 
-    this.metadataLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    this.metadataLayer.id = 'metadata-layer';
-
     this.featureLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     this.featureLayer.id = 'feature-layer';
 
     this.svg.appendChild(this.gridLayer);
-    this.svg.appendChild(this.metadataLayer);
     this.svg.appendChild(this.featureLayer);
 
     this.container.appendChild(this.svg);
@@ -121,56 +113,8 @@ class TopoRenderer {
   // Render dispatch
   // ---------------------------------------------------------------------------
 
-  renderMetadata() {
-    this.metadataLayer.innerHTML = '';
-    if (this.title) {
-      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      t.setAttribute('x', 10);
-      t.setAttribute('y', 20);
-      t.setAttribute('font-size', '16');
-      t.setAttribute('font-weight', 'bold');
-      t.setAttribute('font-family', 'Arial, sans-serif');
-      t.setAttribute('fill', '#222');
-      t.textContent = this.title;
-      this.metadataLayer.appendChild(t);
-    }
-    if (this.grade) {
-      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      t.setAttribute('x', 10);
-      t.setAttribute('y', this.title ? 38 : 20);
-      t.setAttribute('font-size', '13');
-      t.setAttribute('font-family', 'Arial, sans-serif');
-      t.setAttribute('fill', '#444');
-      t.textContent = this.grade;
-      this.metadataLayer.appendChild(t);
-    }
-    if (this.lastModified) {
-      // Format timestamp as '2026-02-18 9:59 PM'
-      const date = new Date(this.lastModified);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      let hours = date.getHours();
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12; // Convert to 12-hour format
-      const formatted = `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
-
-      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      t.setAttribute('x', this.width - 10);
-      t.setAttribute('y', this.height - 10);
-      t.setAttribute('text-anchor', 'end');
-      t.setAttribute('font-size', '10');
-      t.setAttribute('font-family', 'Arial, sans-serif');
-      t.setAttribute('fill', '#666');
-      t.textContent = `Last modified: ${formatted}`;
-      this.metadataLayer.appendChild(t);
-    }
-  }
-
   render() {
     this.featureLayer.innerHTML = '';
-    this.renderMetadata();
     this.features.forEach(feature => {
       switch (feature.type) {
         case 'line':    this.renderLine(feature);    break;
@@ -179,6 +123,7 @@ class TopoRenderer {
         case 'rappel':  this.renderRappel(feature);  break;
         case 'note':    this.renderNote(feature);    break;
         case 'access':  this.renderAccess(feature);  break;
+        case 'metadata': this.renderMetadata(feature); break;
         default:
           if (!(feature.type in TopoRenderer.FEATURE_SCHEMA)) {
             console.warn(`[topo] Unrecognized feature type "${feature.type}" (id=${feature.id}) — skipped`);
@@ -236,31 +181,32 @@ class TopoRenderer {
       const midX = (x1 + x2) / 2;
       const midY = (y1 + y2) / 2;
 
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const length = Math.sqrt(dx * dx + dy * dy);
-      const perpX = -dy / length;
-      const perpY = dx / length;
+      // Two parallel diagonal slashes (rotated 15° from vertical)
+      const slashLength = 15;
+      const slashSpacing = 6;  // Horizontal spacing between the two parallel slashes
+      const angle = Math.PI / 2 + 15 * Math.PI / 180;  // 90° + 15° = 105°
 
-      const slashLength = 8;
-      const slashSpacing = 4;
+      const dx = Math.cos(angle) * slashLength / 2;
+      const dy = Math.sin(angle) * slashLength / 2;
 
+      // First slash (left of midpoint)
       const slash1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      slash1.setAttribute('x1', midX - slashSpacing - perpX * slashLength);
-      slash1.setAttribute('y1', midY - slashSpacing - perpY * slashLength);
-      slash1.setAttribute('x2', midX - slashSpacing + perpX * slashLength);
-      slash1.setAttribute('y2', midY - slashSpacing + perpY * slashLength);
+      slash1.setAttribute('x1', midX - slashSpacing / 2 - dx);
+      slash1.setAttribute('y1', midY - dy);
+      slash1.setAttribute('x2', midX - slashSpacing / 2 + dx);
+      slash1.setAttribute('y2', midY + dy);
       slash1.setAttribute('stroke', '#000');
       slash1.setAttribute('stroke-width', '3');
       slash1.setAttribute('stroke-linecap', 'round');
       slash1.setAttribute('class', 'shorten-slash');
       group.appendChild(slash1);
 
+      // Second slash (right of midpoint)
       const slash2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      slash2.setAttribute('x1', midX + slashSpacing - perpX * slashLength);
-      slash2.setAttribute('y1', midY + slashSpacing - perpY * slashLength);
-      slash2.setAttribute('x2', midX + slashSpacing + perpX * slashLength);
-      slash2.setAttribute('y2', midY + slashSpacing + perpY * slashLength);
+      slash2.setAttribute('x1', midX + slashSpacing / 2 - dx);
+      slash2.setAttribute('y1', midY - dy);
+      slash2.setAttribute('x2', midX + slashSpacing / 2 + dx);
+      slash2.setAttribute('y2', midY + dy);
       slash2.setAttribute('stroke', '#000');
       slash2.setAttribute('stroke-width', '3');
       slash2.setAttribute('stroke-linecap', 'round');
@@ -680,6 +626,45 @@ class TopoRenderer {
       case 'name':
         // No icon — text-only label rendered in italic by renderNote()
         break;
+      case 'bridge': {
+        // Circle background (white fill with black stroke)
+        const circ = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circ.setAttribute('cx', cx);
+        circ.setAttribute('cy', cy);
+        circ.setAttribute('r', size / 2);
+        circ.setAttribute('fill', '#fff');
+        circ.setAttribute('stroke', '#000');
+        circ.setAttribute('stroke-width', '2');
+        circ.setAttribute('class', 'note-icon');
+        group.appendChild(circ);
+
+        // Bridge design from bridge.svg
+        // SVG center is at (42.017296, 197.19461) with radius 36.175068
+        const svgCenterX = 42.017296;
+        const svgCenterY = 197.19461;
+        const svgRadius = 36.175068;
+        const scale = (size * 0.9) / (2 * svgRadius);  // scale to 90% - bigger bridge
+
+        // New bridge path from SVG
+        // d="m 13.794594,199.47549 v -5.91031 h 3.869593 c 4.859659,0 5.90865,-0.36654 10.843989,-3.78918..."
+        const bridgePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+        // Transform the path data to our coordinate system
+        // The path is complex, so we'll translate and scale it
+        const pathData = `m 13.794594,199.47549 v -5.91031 h 3.869593 c 4.859659,0 5.90865,-0.36654 10.843989,-3.78918 2.201143,-1.5265 5.349008,-3.41338 6.99525,-4.19306 2.650536,-1.25534 3.421357,-1.41753 6.733705,-1.41682 3.435138,8.8e-4 4.006249,0.13286 6.99525,1.61905 1.790102,0.89004 4.631921,2.63055 6.315145,3.86782 4.730621,3.47725 5.880525,3.89147 10.83348,3.90259 l 4.275428,0.009 -0.121949,5.79296 -0.121948,5.79294 -10.164993,0.11732 -10.164976,0.11733 v -3.64935 c 0,-3.3119 -0.119636,-3.82987 -1.293434,-5.60206 -0.721811,-1.08972 -1.984295,-2.28218 -2.856658,-2.69817 -2.236355,-1.06644 -5.729114,-0.95699 -7.831905,0.24545 -2.882997,1.64859 -3.508819,2.89019 -3.757327,7.4545 l -0.218599,4.01489 -10.164976,0.11733 -10.164992,0.11732 v -5.91031 z`;
+
+        // Scale and translate the path
+        const offsetX = cx - svgCenterX * scale;
+        const offsetY = cy - svgCenterY * scale;
+
+        bridgePath.setAttribute('d', pathData);
+        bridgePath.setAttribute('transform', `translate(${offsetX}, ${offsetY}) scale(${scale})`);
+        bridgePath.setAttribute('fill', '#000');
+        bridgePath.setAttribute('class', 'note-icon');
+        group.appendChild(bridgePath);
+
+        break;
+      }
       default:
         console.warn(`[topo] Unknown note iconType "${iconType}" — rendering as warning`);
         this.drawNoteIconElements(group, cx, cy, size, 'warning');
@@ -807,6 +792,93 @@ class TopoRenderer {
     arrowhead.setAttribute('stroke-width', '1');
     arrowhead.setAttribute('class', 'access-arrowhead');
     group.appendChild(arrowhead);
+
+    // Text label (draggable, similar to rappel descriptions)
+    if (access.text) {
+      const textOffsetX = access.textOffsetX || 0;
+      const textOffsetY = access.textOffsetY || 0;
+
+      // Position text to the side of the access line
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', midX + textOffsetX);
+      text.setAttribute('y', midY + textOffsetY);
+      text.setAttribute('font-size', '12');
+      text.setAttribute('font-family', 'Arial, sans-serif');
+      text.setAttribute('fill', color);
+      text.setAttribute('class', 'access-text');
+      text.textContent = access.text;
+      group.appendChild(text);
+    }
+
+    this.featureLayer.appendChild(group);
+    return group;
+  }
+
+  renderMetadata(metadata) {
+    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    group.setAttribute('data-id', metadata.id);
+    group.setAttribute('data-type', 'metadata');
+
+    const x = metadata.x;
+    let y = metadata.y;
+
+    // Title (if present)
+    if (metadata.title) {
+      const titleText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      titleText.setAttribute('x', x);
+      titleText.setAttribute('y', y);
+      titleText.setAttribute('text-anchor', 'end');
+      titleText.setAttribute('font-size', '20');
+      titleText.setAttribute('font-weight', 'bold');
+      titleText.setAttribute('font-family', 'Arial, sans-serif');
+      titleText.setAttribute('fill', '#222');
+      titleText.setAttribute('class', 'metadata-title');
+      titleText.textContent = metadata.title;
+      group.appendChild(titleText);
+      y += 22; // Move down for next line
+    }
+
+    // Grade (if present)
+    if (metadata.grade) {
+      const gradeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      gradeText.setAttribute('x', x);
+      gradeText.setAttribute('y', y);
+      gradeText.setAttribute('text-anchor', 'end');
+      gradeText.setAttribute('font-size', '16');
+      gradeText.setAttribute('font-family', 'Arial, sans-serif');
+      gradeText.setAttribute('fill', '#444');
+      gradeText.setAttribute('class', 'metadata-grade');
+      gradeText.textContent = metadata.grade;
+      group.appendChild(gradeText);
+      y += 18; // Move down for next line
+    }
+
+    // Date (if timestamp present)
+    if (metadata.timestamp) {
+      const dateText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      dateText.setAttribute('x', x);
+      dateText.setAttribute('y', y);
+      dateText.setAttribute('text-anchor', 'end');
+      dateText.setAttribute('font-size', '10');
+      dateText.setAttribute('font-family', 'Arial, sans-serif');
+      dateText.setAttribute('fill', '#666');
+      dateText.setAttribute('class', 'metadata-date');
+
+      // Format timestamp in UTC (24-hour clock)
+      const d = new Date(metadata.timestamp);
+      const year = d.getUTCFullYear();
+      const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      const hours = String(d.getUTCHours()).padStart(2, '0');
+      const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+      const displayText = `${year}-${month}-${day} ${hours}:${minutes} UTC`;
+
+      dateText.textContent = displayText;
+      group.appendChild(dateText);
+    }
 
     this.featureLayer.appendChild(group);
     return group;
@@ -948,6 +1020,11 @@ class TopoRenderer {
           expand(f.x + f.length * Math.cos(angle), f.y + f.length * Math.sin(angle));
           break;
         }
+        case 'metadata':
+          // Text box - expand based on position (approximate bounds for right-aligned text)
+          expand(f.x - 200, f.y - 10);  // Left side (for long titles)
+          expand(f.x + 20, f.y + 50);   // Right side + height for 3 lines
+          break;
       }
     });
 
@@ -1020,11 +1097,14 @@ TopoRenderer.FEATURE_SCHEMA = {
   },
   note: {
     fields: new Set(['type', 'id', 'x', 'y', 'size', 'iconType', 'text', 'textOffsetX', 'textOffsetY']),
-    subtypes: { iconType: ['info', 'warning', 'swim', 'hydraulic', 'rockfall', 'name'] },
+    subtypes: { iconType: ['info', 'warning', 'swim', 'hydraulic', 'rockfall', 'name', 'bridge'] },
   },
   access: {
-    fields: new Set(['type', 'id', 'x', 'y', 'length', 'accessType']),
+    fields: new Set(['type', 'id', 'x', 'y', 'length', 'accessType', 'text', 'textOffsetX', 'textOffsetY']),
     subtypes: { accessType: ['exit', 'entrance'] },
+  },
+  metadata: {
+    fields: new Set(['type', 'id', 'x', 'y', 'title', 'grade', 'timestamp']),
   },
 };
 

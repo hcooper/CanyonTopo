@@ -111,6 +111,31 @@ Object.assign(TopoEditor.prototype, {
     this.saveState();
   },
 
+  addMetadata(x, y) {
+    // Get canyon name from MediaWiki page name if available, otherwise use placeholder
+    let defaultTitle = '<name>';
+    if (typeof mw !== 'undefined' && mw.config) {
+      const pageName = mw.config.get('wgPageName');
+      if (pageName) {
+        defaultTitle = pageName.replace(/_/g, ' ').replace(/^Topo:/, '');
+      }
+    }
+
+    const metadata = {
+      id: this.nextId++,
+      type: 'metadata',
+      x: x,
+      y: y,
+      title: defaultTitle,
+      grade: '<grade>',
+      timestamp: new Date().toISOString()
+    };
+
+    this.features.push(metadata);
+    this.renderMetadata(metadata);
+    this.saveState();
+  },
+
   renderAccess(access) {
     const group = TopoRenderer.prototype.renderAccess.call(this, access); // creates visual elements, appends to featureLayer
     group.style.cursor = 'move';
@@ -118,6 +143,15 @@ Object.assign(TopoEditor.prototype, {
     // Add connection point at the origin (x,y)
     const startPoint = this.createConnectionPoint(access.x, access.y, access.id, 'start');
     group.appendChild(startPoint);
+
+    // Make the text independently draggable
+    if (access.text) {
+      const textEl = group.querySelector('.access-text');
+      if (textEl) {
+        textEl.style.cursor = 'move';
+        this.makeAccessTextDraggable(textEl, access);
+      }
+    }
 
     // Add interactivity
     group.addEventListener('click', (e) => {
@@ -127,6 +161,39 @@ Object.assign(TopoEditor.prototype, {
 
     // Make draggable
     this.makeAccessDraggable(group, access);
+  },
+
+  makeAccessTextDraggable(textEl, access) {
+    let isDragging = false;
+    let startX, startY, startOffsetX, startOffsetY;
+
+    textEl.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+      isDragging = true;
+      const coords = this.screenToSVGCoords(e);
+      startX = coords.x;
+      startY = coords.y;
+      startOffsetX = access.textOffsetX || 0;
+      startOffsetY = access.textOffsetY || 0;
+      textEl.style.cursor = 'grabbing';
+    });
+
+    this.svg.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const coords = this.screenToSVGCoords(e);
+      access.textOffsetX = startOffsetX + (coords.x - startX);
+      access.textOffsetY = startOffsetY + (coords.y - startY);
+      this.updateAccess(access);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        textEl.style.cursor = 'move';
+        this.saveState();
+      }
+    });
   },
 
   makeAccessDraggable(element, access) {
@@ -233,6 +300,154 @@ Object.assign(TopoEditor.prototype, {
     if (connectionPoint) {
       connectionPoint.setAttribute('cx', x1);
       connectionPoint.setAttribute('cy', y1);
+    }
+
+    // Update text label if present
+    const textOffsetX = access.textOffsetX || 0;
+    const textOffsetY = access.textOffsetY || 0;
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+
+    let textEl = element.querySelector('.access-text');
+    if (access.text) {
+      if (textEl) {
+        textEl.setAttribute('x', midX + textOffsetX);
+        textEl.setAttribute('y', midY + textOffsetY);
+        textEl.setAttribute('fill', color);
+        textEl.textContent = access.text;
+      } else {
+        // Create new text element if it didn't exist before and make it draggable
+        textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textEl.setAttribute('x', midX + textOffsetX);
+        textEl.setAttribute('y', midY + textOffsetY);
+        textEl.setAttribute('font-size', '12');
+        textEl.setAttribute('font-family', 'Arial, sans-serif');
+        textEl.setAttribute('fill', color);
+        textEl.setAttribute('class', 'access-text');
+        textEl.style.cursor = 'move';
+        textEl.textContent = access.text;
+        element.appendChild(textEl);
+        this.makeAccessTextDraggable(textEl, access);
+      }
+    } else if (textEl) {
+      textEl.remove();
+    }
+  },
+
+  renderMetadata(metadata) {
+    const group = TopoRenderer.prototype.renderMetadata.call(this, metadata);
+    group.style.cursor = 'move';
+
+    group.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.selectFeature(metadata.id);
+    });
+
+    this.makeMetadataDraggable(group, metadata);
+  },
+
+  makeMetadataDraggable(element, metadata) {
+    let isDragging = false;
+    let startX, startY;
+
+    element.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isDragging = true;
+      const coords = this.screenToSVGCoords(e);
+      startX = coords.x - metadata.x;
+      startY = coords.y - metadata.y;
+      element.style.cursor = 'grabbing';
+      e.stopPropagation();
+    });
+
+    this.svg.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const coords = this.screenToSVGCoords(e);
+      let newX = coords.x - startX;
+      let newY = coords.y - startY;
+
+      if (this.snapToGrid) {
+        newX = Math.round(newX / this.gridSize) * this.gridSize;
+        newY = Math.round(newY / this.gridSize) * this.gridSize;
+      }
+
+      metadata.x = newX;
+      metadata.y = newY;
+      this.updateMetadata(metadata);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        element.style.cursor = 'move';
+        this.saveState();
+      }
+    });
+  },
+
+  updateMetadata(metadata) {
+    const element = this.featureLayer.querySelector(`[data-id="${metadata.id}"]`);
+    if (!element) return;
+
+    // Remove all existing text elements
+    element.innerHTML = '';
+
+    const x = metadata.x;
+    let y = metadata.y;
+
+    // Re-render title if present
+    if (metadata.title) {
+      const titleText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      titleText.setAttribute('x', x);
+      titleText.setAttribute('y', y);
+      titleText.setAttribute('text-anchor', 'end');
+      titleText.setAttribute('font-size', '20');
+      titleText.setAttribute('font-weight', 'bold');
+      titleText.setAttribute('font-family', 'Arial, sans-serif');
+      titleText.setAttribute('fill', '#222');
+      titleText.setAttribute('class', 'metadata-title');
+      titleText.textContent = metadata.title;
+      element.appendChild(titleText);
+      y += 22;
+    }
+
+    // Re-render grade if present
+    if (metadata.grade) {
+      const gradeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      gradeText.setAttribute('x', x);
+      gradeText.setAttribute('y', y);
+      gradeText.setAttribute('text-anchor', 'end');
+      gradeText.setAttribute('font-size', '16');
+      gradeText.setAttribute('font-family', 'Arial, sans-serif');
+      gradeText.setAttribute('fill', '#444');
+      gradeText.setAttribute('class', 'metadata-grade');
+      gradeText.textContent = metadata.grade;
+      element.appendChild(gradeText);
+      y += 18;
+    }
+
+    // Re-render date if timestamp present
+    if (metadata.timestamp) {
+      const dateText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      dateText.setAttribute('x', x);
+      dateText.setAttribute('y', y);
+      dateText.setAttribute('text-anchor', 'end');
+      dateText.setAttribute('font-size', '10');
+      dateText.setAttribute('font-family', 'Arial, sans-serif');
+      dateText.setAttribute('fill', '#666');
+      dateText.setAttribute('class', 'metadata-date');
+
+      // Format timestamp in UTC (24-hour clock)
+      const d = new Date(metadata.timestamp);
+      const year = d.getUTCFullYear();
+      const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      const hours = String(d.getUTCHours()).padStart(2, '0');
+      const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+      const displayText = `${year}-${month}-${day} ${hours}:${minutes} UTC`;
+
+      dateText.textContent = displayText;
+      element.appendChild(dateText);
     }
   },
 
@@ -1713,35 +1928,31 @@ Object.assign(TopoEditor.prototype, {
       const midX = (x1 + x2) / 2;
       const midY = (y1 + y2) / 2;
 
-      // Calculate perpendicular direction
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const length = Math.sqrt(dx * dx + dy * dy);
+      // Two parallel diagonal slashes (rotated 15° from vertical)
+      const slashLength = 15;
+      const slashSpacing = 6;  // Horizontal spacing between the two parallel slashes
+      const angle = Math.PI / 2 + 15 * Math.PI / 180;  // 90° + 15° = 105°
 
-      // Perpendicular unit vector
-      const perpX = -dy / length;
-      const perpY = dx / length;
+      const dx = Math.cos(angle) * slashLength / 2;
+      const dy = Math.sin(angle) * slashLength / 2;
 
-      const slashLength = 8;
-      const slashSpacing = 4;
-
-      // First slash
+      // First slash (left of midpoint)
       const slash1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      slash1.setAttribute('x1', midX - slashSpacing - perpX * slashLength);
-      slash1.setAttribute('y1', midY - slashSpacing - perpY * slashLength);
-      slash1.setAttribute('x2', midX - slashSpacing + perpX * slashLength);
-      slash1.setAttribute('y2', midY - slashSpacing + perpY * slashLength);
+      slash1.setAttribute('x1', midX - slashSpacing / 2 - dx);
+      slash1.setAttribute('y1', midY - dy);
+      slash1.setAttribute('x2', midX - slashSpacing / 2 + dx);
+      slash1.setAttribute('y2', midY + dy);
       slash1.setAttribute('stroke', '#000');
       slash1.setAttribute('stroke-width', '3');
       slash1.setAttribute('stroke-linecap', 'round');
       slash1.setAttribute('class', 'shorten-slash');
 
-      // Second slash
+      // Second slash (right of midpoint)
       const slash2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      slash2.setAttribute('x1', midX + slashSpacing - perpX * slashLength);
-      slash2.setAttribute('y1', midY + slashSpacing - perpY * slashLength);
-      slash2.setAttribute('x2', midX + slashSpacing + perpX * slashLength);
-      slash2.setAttribute('y2', midY + slashSpacing + perpY * slashLength);
+      slash2.setAttribute('x1', midX + slashSpacing / 2 - dx);
+      slash2.setAttribute('y1', midY - dy);
+      slash2.setAttribute('x2', midX + slashSpacing / 2 + dx);
+      slash2.setAttribute('y2', midY + dy);
       slash2.setAttribute('stroke', '#000');
       slash2.setAttribute('stroke-width', '3');
       slash2.setAttribute('stroke-linecap', 'round');

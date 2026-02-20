@@ -22,56 +22,6 @@ Object.assign(TopoEditor.prototype, {
     controlsDiv.style.gap = '15px';
     controlsDiv.style.alignItems = 'center';
 
-    // Canyon title input
-    const titleLabel = document.createElement('label');
-    titleLabel.style.display = 'flex';
-    titleLabel.style.alignItems = 'center';
-    titleLabel.style.gap = '5px';
-
-    const titleText = document.createElement('span');
-    titleText.textContent = 'Title:';
-
-    const titleInput = document.createElement('input');
-    titleInput.type = 'text';
-    titleInput.id = 'topo-title';
-    titleInput.placeholder = 'Canyon name';
-    titleInput.value = this.title || '';
-    titleInput.style.width = '160px';
-    titleInput.style.padding = '3px 6px';
-    titleInput.addEventListener('input', (e) => {
-      this.title = e.target.value;
-      this.renderMetadata();
-      this.isDirty = true;
-    });
-
-    titleLabel.appendChild(titleText);
-    titleLabel.appendChild(titleInput);
-
-    // Grade input
-    const gradeLabel = document.createElement('label');
-    gradeLabel.style.display = 'flex';
-    gradeLabel.style.alignItems = 'center';
-    gradeLabel.style.gap = '5px';
-
-    const gradeText = document.createElement('span');
-    gradeText.textContent = 'Grade:';
-
-    const gradeInput = document.createElement('input');
-    gradeInput.type = 'text';
-    gradeInput.id = 'topo-grade';
-    gradeInput.placeholder = 'e.g. IV A3';
-    gradeInput.value = this.grade || '';
-    gradeInput.style.width = '90px';
-    gradeInput.style.padding = '3px 6px';
-    gradeInput.addEventListener('input', (e) => {
-      this.grade = e.target.value;
-      this.renderMetadata();
-      this.isDirty = true;
-    });
-
-    gradeLabel.appendChild(gradeText);
-    gradeLabel.appendChild(gradeInput);
-
     // Snap to grid checkbox
     const snapLabel = document.createElement('label');
     snapLabel.style.display = 'flex';
@@ -189,8 +139,6 @@ Object.assign(TopoEditor.prototype, {
     saveWikiBtn.textContent = 'Save to Wiki';
     saveWikiBtn.addEventListener('click', () => this.saveToWiki());
 
-    controlsDiv.appendChild(titleLabel);
-    controlsDiv.appendChild(gradeLabel);
     controlsDiv.appendChild(snapLabel);
     controlsDiv.appendChild(gridSizeLabel);
     controlsDiv.appendChild(undoBtn);
@@ -274,6 +222,15 @@ Object.assign(TopoEditor.prototype, {
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <line x1="5" y1="19" x2="19" y2="5" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
           <polygon points="19,5 13,5 19,11" fill="white"/>
+        </svg>`
+      },
+      {
+        name: 'Info',
+        action: () => { const c = this.viewCenter(); this.addMetadata(c.x, c.y); },
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+          <line x1="4" y1="6" x2="20" y2="6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="6" y1="12" x2="20" y2="12" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="8" y1="18" x2="20" y2="18" stroke="white" stroke-width="1" stroke-linecap="round"/>
         </svg>`
       }
     ];
@@ -672,6 +629,7 @@ Object.assign(TopoEditor.prototype, {
         { value: 'swim',      label: 'Water' },
         { value: 'hydraulic', label: 'Hydraulic' },
         { value: 'rockfall',  label: 'Rockfall' },
+        { value: 'bridge',    label: 'Bridge' },
         { value: 'name',      label: 'Name (italic text)' },
       ];
       const iconOptions = icons.map(ic =>
@@ -748,12 +706,18 @@ Object.assign(TopoEditor.prototype, {
             <input type="number" id="access-length" value="${feature.length}" min="10" max="200"
                    style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
           </div>
+          <div>
+            <label for="access-text" style="display: block; margin-bottom: 4px; font-weight: 500;">Label:</label>
+            <input type="text" id="access-text" value="${feature.text || ''}" maxlength="40" placeholder="Optional label (draggable)"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
           <button id="delete-access" style="background-color: #e74c3c; margin-top: 8px;">Delete Access</button>
         </div>
       `;
 
       const typeSelect = document.getElementById('access-type');
       const lengthInput = document.getElementById('access-length');
+      const textInput = document.getElementById('access-text');
       const deleteBtn = document.getElementById('delete-access');
 
       typeSelect.addEventListener('change', (e) => {
@@ -766,6 +730,59 @@ Object.assign(TopoEditor.prototype, {
       lengthInput.addEventListener('input', (e) => {
         feature.length = parseInt(e.target.value) || 60;
         this.updateAccess(feature);
+        this.saveState();
+      });
+
+      textInput.addEventListener('input', (e) => {
+        feature.text = e.target.value;
+        this.updateAccess(feature);
+        this.renderFeatureList();
+      });
+
+      textInput.addEventListener('blur', () => {
+        this.saveState();
+      });
+
+      deleteBtn.addEventListener('click', () => {
+        this.deleteFeature(feature.id);
+      });
+    } else if (feature.type === 'metadata') {
+      panel.innerHTML = `
+        <h3>Info Box</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label for="metadata-title" style="display: block; margin-bottom: 4px; font-weight: 500;">Title:</label>
+            <input type="text" id="metadata-title" value="${feature.title || ''}" placeholder="&lt;name&gt;"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <div>
+            <label for="metadata-grade" style="display: block; margin-bottom: 4px; font-weight: 500;">Grade:</label>
+            <input type="text" id="metadata-grade" value="${feature.grade || ''}" placeholder="&lt;grade&gt;"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <button id="delete-metadata" style="background-color: #e74c3c; margin-top: 8px;">Delete Info Box</button>
+        </div>
+      `;
+
+      const titleInput = document.getElementById('metadata-title');
+      const gradeInput = document.getElementById('metadata-grade');
+      const deleteBtn = document.getElementById('delete-metadata');
+
+      titleInput.addEventListener('input', (e) => {
+        feature.title = e.target.value;
+        this.updateMetadata(feature);
+      });
+
+      titleInput.addEventListener('blur', () => {
+        this.saveState();
+      });
+
+      gradeInput.addEventListener('input', (e) => {
+        feature.grade = e.target.value;
+        this.updateMetadata(feature);
+      });
+
+      gradeInput.addEventListener('blur', () => {
         this.saveState();
       });
 
