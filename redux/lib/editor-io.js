@@ -112,8 +112,65 @@ Object.assign(TopoEditor.prototype, {
   },
 
   exportPNG() {
+    // Calculate content bounds (same logic as fitToContent)
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+    const expand = (x, y) => {
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    };
+
+    this.features.forEach(f => {
+      switch (f.type) {
+        case 'line':
+          expand(f.x1, f.y1);
+          expand(f.x2, f.y2);
+          break;
+        case 'pool':
+          expand(f.x - f.width / 2, f.y);
+          expand(f.x + f.width / 2, f.y + Math.max(f.leftDepth || f.depth || 30, f.rightDepth || f.depth || 30));
+          break;
+        case 'anchor':
+          expand(f.x, f.y);
+          break;
+        case 'rappel': {
+          const rad = (f.slope * Math.PI) / 180;
+          expand(f.x, f.y);
+          expand(f.x + f.length * Math.cos(rad), f.y + f.length * Math.sin(rad));
+          break;
+        }
+        case 'note':
+          expand(f.x - f.size, f.y - f.size);
+          expand(f.x + f.size, f.y + f.size);
+          break;
+        case 'access': {
+          const angle = (f.accessType === 'entrance') ? -3 * Math.PI / 4 : -Math.PI / 4;
+          expand(f.x, f.y);
+          expand(f.x + f.length * Math.cos(angle), f.y + f.length * Math.sin(angle));
+          break;
+        }
+      }
+    });
+
+    // Add padding
+    const padding = 50;
+    minX -= padding;
+    minY -= padding;
+    maxX += padding;
+    maxY += padding;
+
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+
     // Clone the SVG to avoid modifying the original
     const svgClone = this.svg.cloneNode(true);
+
+    // Set viewBox to content area (fit to content)
+    svgClone.setAttribute('viewBox', `${minX} ${minY} ${contentWidth} ${contentHeight}`);
+    svgClone.setAttribute('width', contentWidth);
+    svgClone.setAttribute('height', contentHeight);
 
     // Remove the cursor layer
     const cursorLayer = svgClone.querySelector('#cursor-layer');

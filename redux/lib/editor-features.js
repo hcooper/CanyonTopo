@@ -92,6 +92,7 @@ Object.assign(TopoEditor.prototype, {
 
     this.features.push(note);
     this.renderNote(note);
+    this.selectFeature(note.id);
     this.saveState();
     console.log('Added note:', note);
   },
