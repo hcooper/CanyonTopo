@@ -624,26 +624,21 @@ Object.assign(TopoEditor.prototype, {
       });
     } else if (feature.type === 'note') {
       const icons = [
-        { value: 'info',      label: 'Info Label' },
+        { value: 'info',      label: 'Info' },
         { value: 'warning',   label: 'Warning' },
-        { value: 'swim',      label: 'Water' },
+        { value: 'swim',      label: 'Swim' },
         { value: 'hydraulic', label: 'Hydraulic' },
         { value: 'rockfall',  label: 'Rockfall' },
         { value: 'bridge',    label: 'Bridge' },
-        { value: 'name',      label: 'Name (italic text)' },
+        { value: 'name',      label: 'Name' },
       ];
-      const iconOptions = icons.map(ic =>
-        `<option value="${ic.value}" ${(feature.iconType || 'warning') === ic.value ? 'selected' : ''}>${ic.label}</option>`
-      ).join('');
 
       panel.innerHTML = `
         <h3>Note</h3>
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div>
-            <label for="note-icon" style="display: block; margin-bottom: 4px; font-weight: 500;">Icon:</label>
-            <select id="note-icon" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
-              ${iconOptions}
-            </select>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Icon Type:</label>
+            <div id="note-icon-picker" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;"></div>
           </div>
           <div>
             <label for="note-text" style="display: block; margin-bottom: 4px; font-weight: 500;">Label:</label>
@@ -659,17 +654,66 @@ Object.assign(TopoEditor.prototype, {
         </div>
       `;
 
+      // Create visual icon picker
+      const iconPicker = document.getElementById('note-icon-picker');
+      icons.forEach(icon => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.style.padding = '8px';
+        btn.style.border = '2px solid #ddd';
+        btn.style.borderRadius = '4px';
+        btn.style.cursor = 'pointer';
+        btn.style.backgroundColor = 'white';
+        btn.style.display = 'flex';
+        btn.style.flexDirection = 'column';
+        btn.style.alignItems = 'center';
+        btn.style.gap = '4px';
+        btn.title = icon.label;
+
+        // Highlight selected icon
+        if ((feature.iconType || 'warning') === icon.value) {
+          btn.style.borderColor = '#52ab98';
+          btn.style.backgroundColor = '#f0f9f8';
+        }
+
+        // Create SVG container for icon preview
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '30');
+        svg.setAttribute('height', '30');
+        svg.setAttribute('viewBox', '0 0 60 60');
+
+        // Create temporary group to render icon
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('data-id', 'preview');
+        g.setAttribute('data-type', 'note');
+        svg.appendChild(g);
+
+        // Use the renderer's drawNoteIconElements method to draw the icon
+        this.drawNoteIconElements(g, 30, 30, 25, icon.value);
+
+        btn.appendChild(svg);
+
+        const label = document.createElement('div');
+        label.textContent = icon.label;
+        label.style.fontSize = '10px';
+        label.style.color = '#666';
+        btn.appendChild(label);
+
+        btn.addEventListener('click', () => {
+          feature.iconType = icon.value;
+          this.updateNote(feature);
+          this.saveState();
+          // Update UI to show selected state
+          this.updatePropertiesPanel(feature);
+        });
+
+        iconPicker.appendChild(btn);
+      });
+
       // Add event listeners
-      const iconSelect = document.getElementById('note-icon');
       const textInput = document.getElementById('note-text');
       const sizeInput = document.getElementById('note-size');
       const deleteBtn = document.getElementById('delete-note');
-
-      iconSelect.addEventListener('change', (e) => {
-        feature.iconType = e.target.value;
-        this.updateNote(feature);
-        this.saveState();
-      });
 
       textInput.addEventListener('input', (e) => {
         feature.text = e.target.value;

@@ -491,63 +491,26 @@ class TopoRenderer {
         break;
       }
       case 'hydraulic': {
-        // Two half-circle arrows forming a recirculating loop (blue).
-        // Each arc starts 15° past the previous arrowhead tip to leave a gap.
-        const r   = size * 0.40;
-        const sw  = Math.max(1.5, size * 0.09);
-        const aw  = size * 0.14;   // arrowhead half-width
-        const al  = size * 0.18;   // arrowhead length back from tip
-        const gap = Math.PI / 12;  // 15° gap at each junction
-        const gC  = Math.cos(gap);
-        const gS  = Math.sin(gap);
+        // Two curved arrows forming a recirculation/repeat loop
+        // Direct copy from new.svg, scaled and positioned
+        const scale = size / 512;  // new.svg is 512x512 viewBox
 
-        // Top arc: 195° → 345°, clockwise = over the top (150° arc)
-        // start (195°): (cx - r·gC, cy - r·gS)   end (345°): (cx + r·gC, cy - r·gS)
-        const s1x = cx - r * gC,  s1y = cy - r * gS;
-        const e1x = cx + r * gC,  e1y = cy - r * gS;
-        const arc1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        arc1.setAttribute('d', `M ${s1x},${s1y} A ${r},${r} 0 0 1 ${e1x},${e1y}`);
-        arc1.setAttribute('stroke', '#2980b9');
-        arc1.setAttribute('stroke-width', sw);
-        arc1.setAttribute('fill', 'none');
-        arc1.setAttribute('stroke-linecap', 'round');
-        arc1.setAttribute('class', 'note-icon');
-        group.appendChild(arc1);
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
-        // Arrowhead at 345°: clockwise tangent = (gS, gC); perp = (-gC, gS)
-        const arr1 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        arr1.setAttribute('points',
-          `${e1x},${e1y} ` +
-          `${e1x - gS*al - gC*aw},${e1y - gC*al + gS*aw} ` +
-          `${e1x - gS*al + gC*aw},${e1y - gC*al - gS*aw}`
-        );
-        arr1.setAttribute('fill', '#2980b9');
-        arr1.setAttribute('class', 'note-icon');
-        group.appendChild(arr1);
+        // Exact path from new.svg
+        const d = "M69.816,256H0l93.096,93.096L186.2,256h-69.816c0.224-77.016,62.6-139.4,139.616-139.632 c22.672,0.432,44.952,6,65.16,16.296l34.896-34.896C325.6,80.144,291.176,70.528,256,69.832 C153.296,70.112,70.104,153.296,69.816,256z M395.616,256c-0.224,77.016-62.6,139.4-139.616,139.632 c-22.672-0.432-44.952-6-65.16-16.296l-34.896,34.896c30.456,17.624,64.88,27.24,100.056,27.936 C358.696,441.872,441.88,358.696,442.184,256H512l-93.096-93.096L325.8,256H395.616z";
 
-        // Bottom arc: 15° → 165°, clockwise = under the bottom (150° arc)
-        // start (15°): (cx + r·gC, cy + r·gS)   end (165°): (cx - r·gC, cy + r·gS)
-        const s2x = cx + r * gC,  s2y = cy + r * gS;
-        const e2x = cx - r * gC,  e2y = cy + r * gS;
-        const arc2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        arc2.setAttribute('d', `M ${s2x},${s2y} A ${r},${r} 0 0 1 ${e2x},${e2y}`);
-        arc2.setAttribute('stroke', '#2980b9');
-        arc2.setAttribute('stroke-width', sw);
-        arc2.setAttribute('fill', 'none');
-        arc2.setAttribute('stroke-linecap', 'round');
-        arc2.setAttribute('class', 'note-icon');
-        group.appendChild(arc2);
+        path.setAttribute('d', d);
+        path.setAttribute('fill', '#2980b9');
+        path.setAttribute('class', 'note-icon');
 
-        // Arrowhead at 165°: clockwise tangent = (-gS, -gC); perp = (gC, -gS)
-        const arr2 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        arr2.setAttribute('points',
-          `${e2x},${e2y} ` +
-          `${e2x + gS*al + gC*aw},${e2y + gC*al - gS*aw} ` +
-          `${e2x + gS*al - gC*aw},${e2y + gC*al + gS*aw}`
-        );
-        arr2.setAttribute('fill', '#2980b9');
-        arr2.setAttribute('class', 'note-icon');
-        group.appendChild(arr2);
+        // Transform to scale and center at (cx, cy)
+        // Original is centered at 256,256 in a 512x512 viewBox
+        const translateX = cx - 256 * scale;
+        const translateY = cy - 256 * scale;
+        path.setAttribute('transform', `translate(${translateX}, ${translateY}) scale(${scale})`);
+
+        group.appendChild(path);
 
         break;
       }

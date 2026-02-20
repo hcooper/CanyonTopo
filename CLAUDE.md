@@ -32,6 +32,7 @@ Plain JavaScript classes, no build step. The editor is split across multiple fil
 
 - `redux/index.html` — Editor entry point
 - `redux/viewer.html` — Viewer entry point
+- `redux/key.html` — Visual legend showing all feature types with live-rendered examples using TopoRenderer
 - `redux/style.css` — Shared stylesheet
 - `redux/deps/js-yaml.min.js` — YAML parsing (jsyaml)
 - `old/` — Previous implementation (kept for reference)
@@ -181,7 +182,9 @@ Fields not in the schema for a given feature type are deleted on load. The autho
 - Rappel `length` and `slope` are stored as floats (not rounded integers). Rounding them causes the rendered endpoint (`x2 = x + length*cos(slope)`) to drift from the snapped grid position.
 - Rappel description text has an independent drag handle. `textOffsetX`/`textOffsetY` store the pixel offset from the natural position (`controlX + perpX*15`, `controlY + perpY*15 - 20`). Both fields default to 0 when absent. The viewer also respects them. Rappel descriptions support multiline text via `\n` characters; rendered using `<tspan>` elements with 16px line height.
 - Anchor `connectionX`/`connectionY` is the snap/connection point (the green dot). It differs from `x`/`y` because the X mark symbol is rendered with a visual offset. Dragging the X symbol moves `x`/`y` only; dragging the connection point moves everything together. Anchor name text has an independent drag handle via `nameOffsetX`/`nameOffsetY` (similar to rappel descriptions and note text).
-- Note text has an independent drag handle via `textOffsetX`/`textOffsetY`. For `iconType: 'name'`, the text is centered and italic, with a box drawn around it after DOM insertion (required for `getBBox()`).
+- Note text has an independent drag handle via `textOffsetX`/`textOffsetY`. For `iconType: 'name'`, the text is centered and italic, with a box drawn around it after DOM insertion (required for `getBBox()`). When adding a note, it is auto-selected so the properties panel is immediately ready for editing.
+- Note icon types: the properties panel uses a visual icon picker (grid of buttons showing actual rendered icons) instead of a text dropdown, making it easy to see what each icon type looks like before selecting it. The picker uses `drawNoteIconElements()` to render live previews that exactly match the canvas appearance.
+- Hydraulic icon: uses exact SVG path data copied from new.svg (two curved arrows forming a recirculation loop), scaled and positioned via transform attribute rather than recreating the geometry with arcs.
 - Access features have optional draggable text labels via `text`, `textOffsetX`, `textOffsetY` fields. Text is positioned at the midpoint of the access line and can be moved independently. Text color matches the access type (green for entrance, black for exit).
 - Line shorten marks: when `shorten: true`, two parallel diagonal slashes are rendered at the midpoint, rotated 105° (15° past vertical), each 15px long and separated by 6px. This indicates the section is compressed/not to scale.
 - Important: all schema changes need to be recorded in TopoRenderer.FEATURE_SCHEMA - it is the source of truth
