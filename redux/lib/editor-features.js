@@ -1990,13 +1990,87 @@ Object.assign(TopoEditor.prototype, {
     const x2 = line.x2;
     const y2 = line.y2;
 
-    // Update the base straight line
+    // Calculate line direction and length for dashed segments
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const ux = dx / length;  // Unit vector x
+    const uy = dy / length;  // Unit vector y
+
+    // Dashed segment length
+    const dashedLength = 30;
+
+    // Calculate adjusted endpoints for solid middle segment
+    let startX = x1;
+    let startY = y1;
+    let endX = x2;
+    let endY = y2;
+
+    if (line.dashedStart) {
+      startX = x1 + ux * dashedLength;
+      startY = y1 + uy * dashedLength;
+    }
+
+    if (line.dashedEnd) {
+      endX = x2 - ux * dashedLength;
+      endY = y2 - uy * dashedLength;
+    }
+
+    // Remove old dashed segments
+    const oldDashedSegments = element.querySelectorAll('.dashed-segment-start, .dashed-segment-end');
+    oldDashedSegments.forEach(seg => seg.remove());
+
+    // Create dashed segment at start if enabled
+    if (line.dashedStart) {
+      const dashedStart = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      dashedStart.setAttribute('x1', x1);
+      dashedStart.setAttribute('y1', y1);
+      dashedStart.setAttribute('x2', startX);
+      dashedStart.setAttribute('y2', startY);
+      dashedStart.setAttribute('stroke', '#000');
+      dashedStart.setAttribute('stroke-width', '3');
+      dashedStart.setAttribute('stroke-dasharray', '5,5');
+      dashedStart.setAttribute('stroke-linecap', 'butt');
+      dashedStart.setAttribute('class', 'dashed-segment-start');
+
+      // Insert at beginning
+      const firstChild = element.querySelector('.line-shape');
+      if (firstChild) {
+        element.insertBefore(dashedStart, firstChild);
+      } else {
+        element.appendChild(dashedStart);
+      }
+    }
+
+    // Update the solid middle segment
     const lineElem = element.querySelector('.line-shape');
     if (lineElem) {
-      lineElem.setAttribute('x1', x1);
-      lineElem.setAttribute('y1', y1);
-      lineElem.setAttribute('x2', x2);
-      lineElem.setAttribute('y2', y2);
+      lineElem.setAttribute('x1', startX);
+      lineElem.setAttribute('y1', startY);
+      lineElem.setAttribute('x2', endX);
+      lineElem.setAttribute('y2', endY);
+    }
+
+    // Create dashed segment at end if enabled
+    if (line.dashedEnd) {
+      const dashedEnd = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      dashedEnd.setAttribute('x1', endX);
+      dashedEnd.setAttribute('y1', endY);
+      dashedEnd.setAttribute('x2', x2);
+      dashedEnd.setAttribute('y2', y2);
+      dashedEnd.setAttribute('stroke', '#000');
+      dashedEnd.setAttribute('stroke-width', '3');
+      dashedEnd.setAttribute('stroke-dasharray', '5,5');
+      dashedEnd.setAttribute('stroke-linecap', 'butt');
+      dashedEnd.setAttribute('class', 'dashed-segment-end');
+
+      // Insert after line-shape
+      const middleSegment = element.querySelector('.line-shape');
+      if (middleSegment && middleSegment.nextSibling) {
+        element.insertBefore(dashedEnd, middleSegment.nextSibling);
+      } else {
+        element.appendChild(dashedEnd);
+      }
     }
 
     // Remove old traverse path if exists
