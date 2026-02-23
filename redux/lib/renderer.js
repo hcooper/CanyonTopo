@@ -36,7 +36,7 @@ class TopoRenderer {
   // Called by each subclass after it has finished setting up its own state.
   init() {
     this.createCanvas();
-    this.drawGrid();
+    this.applyViewTransform();  // Set initial viewBox and draw grid
     this.attachEventListeners();
   }
 
