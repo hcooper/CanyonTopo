@@ -89,21 +89,21 @@ Object.assign(TopoEditor.prototype, {
     // Zoom In button
     const zoomInBtn = document.createElement('button');
     zoomInBtn.textContent = '+';
-    zoomInBtn.title = 'Zoom In';
+    zoomInBtn.title = 'Zoom In (+)';
     zoomInBtn.style.fontSize = '20px';
     zoomInBtn.addEventListener('click', () => this.zoomIn());
 
     // Zoom Out button
     const zoomOutBtn = document.createElement('button');
     zoomOutBtn.textContent = '−';
-    zoomOutBtn.title = 'Zoom Out';
+    zoomOutBtn.title = 'Zoom Out (-)';
     zoomOutBtn.style.fontSize = '20px';
     zoomOutBtn.addEventListener('click', () => this.zoomOut());
 
     // Zoom Reset button
     const zoomResetBtn = document.createElement('button');
     zoomResetBtn.textContent = '1:1';
-    zoomResetBtn.title = 'Reset Zoom & Pan';
+    zoomResetBtn.title = 'Reset Zoom & Pan (0)';
     zoomResetBtn.addEventListener('click', () => this.resetView());
 
     // Zoom level display
@@ -170,7 +170,7 @@ Object.assign(TopoEditor.prototype, {
 
     const tools = [
       {
-        name: 'Cursor',
+        name: 'Cursor (V)',
         id: 'cursor-mode-btn',
         action: () => {
           this.pendingTool = null;
@@ -183,7 +183,7 @@ Object.assign(TopoEditor.prototype, {
         </svg>`
       },
       {
-        name: 'Select',
+        name: 'Select (S)',
         id: 'select-mode-btn',
         action: () => {
           this.toggleSelectMode();
@@ -194,7 +194,7 @@ Object.assign(TopoEditor.prototype, {
         </svg>`
       },
       {
-        name: 'Line',
+        name: 'Line (L)',
         id: 'line-tool-btn',
         action: () => {
           if (this.selectMode) this.toggleSelectMode();
@@ -206,7 +206,7 @@ Object.assign(TopoEditor.prototype, {
         </svg>`
       },
       {
-        name: 'Rappel',
+        name: 'Rappel (R)',
         id: 'rappel-tool-btn',
         action: () => {
           if (this.selectMode) this.toggleSelectMode();
@@ -219,7 +219,7 @@ Object.assign(TopoEditor.prototype, {
         </svg>`
       },
       {
-        name: 'Pool',
+        name: 'Pool (P)',
         id: 'pool-tool-btn',
         action: () => {
           if (this.selectMode) this.toggleSelectMode();
@@ -231,7 +231,7 @@ Object.assign(TopoEditor.prototype, {
         </svg>`
       },
       {
-        name: 'Anchor',
+        name: 'Anchor (A)',
         action: () => { const c = this.viewCenter(); this.addAnchor(c.x, c.y); },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <line x1="5" y1="8" x2="11" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/>
@@ -241,7 +241,7 @@ Object.assign(TopoEditor.prototype, {
         </svg>`
       },
       {
-        name: 'Note',
+        name: 'Note (N)',
         action: () => { const c = this.viewCenter(); this.addNote(c.x, c.y); },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <polygon points="12,3 22,21 2,21" stroke="white" stroke-width="2" fill="#FFD700"/>
@@ -249,7 +249,7 @@ Object.assign(TopoEditor.prototype, {
         </svg>`
       },
       {
-        name: 'Access',
+        name: 'Access (X)',
         action: () => { const c = this.viewCenter(); this.addAccess(c.x, c.y); },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <line x1="5" y1="19" x2="19" y2="5" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
@@ -257,7 +257,7 @@ Object.assign(TopoEditor.prototype, {
         </svg>`
       },
       {
-        name: 'Info',
+        name: 'Info (I)',
         action: () => { const c = this.viewCenter(); this.addMetadata(c.x, c.y); },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <line x1="4" y1="6" x2="20" y2="6" stroke="white" stroke-width="2" stroke-linecap="round"/>
