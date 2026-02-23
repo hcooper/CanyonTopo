@@ -148,17 +148,73 @@ class TopoRenderer {
     const x2 = line.x2;
     const y2 = line.y2;
 
-    // Base straight line
+    // Calculate line direction and length
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const ux = dx / length;  // Unit vector x
+    const uy = dy / length;  // Unit vector y
+
+    // Dashed segment length
+    const dashedLength = 30;
+
+    // Calculate adjusted endpoints if we have dashed start/end
+    let startX = x1;
+    let startY = y1;
+    let endX = x2;
+    let endY = y2;
+
+    if (line.dashedStart) {
+      startX = x1 + ux * dashedLength;
+      startY = y1 + uy * dashedLength;
+    }
+
+    if (line.dashedEnd) {
+      endX = x2 - ux * dashedLength;
+      endY = y2 - uy * dashedLength;
+    }
+
+    // Dashed segment at start
+    if (line.dashedStart) {
+      const dashedStart = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      dashedStart.setAttribute('x1', x1);
+      dashedStart.setAttribute('y1', y1);
+      dashedStart.setAttribute('x2', startX);
+      dashedStart.setAttribute('y2', startY);
+      dashedStart.setAttribute('stroke', '#000');
+      dashedStart.setAttribute('stroke-width', '3');
+      dashedStart.setAttribute('stroke-dasharray', '5,5');
+      dashedStart.setAttribute('stroke-linecap', 'butt');
+      dashedStart.setAttribute('class', 'line-shape');
+      group.appendChild(dashedStart);
+    }
+
+    // Solid middle segment (or full line if no dashes)
     const lineElem = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    lineElem.setAttribute('x1', x1);
-    lineElem.setAttribute('y1', y1);
-    lineElem.setAttribute('x2', x2);
-    lineElem.setAttribute('y2', y2);
+    lineElem.setAttribute('x1', startX);
+    lineElem.setAttribute('y1', startY);
+    lineElem.setAttribute('x2', endX);
+    lineElem.setAttribute('y2', endY);
     lineElem.setAttribute('stroke', '#000');
     lineElem.setAttribute('stroke-width', '3');
     lineElem.setAttribute('stroke-linecap', 'round');
     lineElem.setAttribute('class', 'line-shape');
     group.appendChild(lineElem);
+
+    // Dashed segment at end
+    if (line.dashedEnd) {
+      const dashedEnd = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      dashedEnd.setAttribute('x1', endX);
+      dashedEnd.setAttribute('y1', endY);
+      dashedEnd.setAttribute('x2', x2);
+      dashedEnd.setAttribute('y2', y2);
+      dashedEnd.setAttribute('stroke', '#000');
+      dashedEnd.setAttribute('stroke-width', '3');
+      dashedEnd.setAttribute('stroke-dasharray', '5,5');
+      dashedEnd.setAttribute('stroke-linecap', 'butt');
+      dashedEnd.setAttribute('class', 'line-shape');
+      group.appendChild(dashedEnd);
+    }
 
     // Traverse curve on top if enabled
     if (line.traverse) {
@@ -1061,7 +1117,7 @@ class TopoRenderer {
 
 TopoRenderer.FEATURE_SCHEMA = {
   line: {
-    fields: new Set(['type', 'id', 'x1', 'y1', 'x2', 'y2', 'slope', 'length', 'arrow', 'shorten', 'traverse']),
+    fields: new Set(['type', 'id', 'x1', 'y1', 'x2', 'y2', 'slope', 'length', 'arrow', 'shorten', 'traverse', 'dashedStart', 'dashedEnd']),
   },
   rappel: {
     fields: new Set(['type', 'id', 'x', 'y', 'length', 'slope', 'curveOffset', 'curvePosition', 'description', 'textOffsetX', 'textOffsetY']),
