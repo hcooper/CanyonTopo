@@ -137,6 +137,7 @@ Object.assign(TopoEditor.prototype, {
     const saveWikiBtn = document.createElement('button');
     saveWikiBtn.id = 'save-wiki-btn';
     saveWikiBtn.textContent = 'Save to Wiki';
+    saveWikiBtn.style.minWidth = '110px'; // Prevent layout shift during save
     saveWikiBtn.addEventListener('click', () => this.saveToWiki());
 
     controlsDiv.appendChild(snapLabel);
