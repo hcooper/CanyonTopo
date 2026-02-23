@@ -175,8 +175,11 @@ class TopoEditor extends TopoRenderer {
       }
     });
 
-    // Keyboard shortcuts for undo/redo
+    // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+      // Don't trigger shortcuts if user is typing in an input field
+      const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+
       // Ctrl+Z or Cmd+Z for undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -188,11 +191,15 @@ class TopoEditor extends TopoRenderer {
         e.preventDefault();
         this.redo();
       }
+      // Ctrl+S or Cmd+S for save
+      else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (this.isEditMode()) {
+          this.saveToWiki();
+        }
+      }
       // Delete or Backspace to delete selected feature(s)
-      else if (e.key === 'Delete' || e.key === 'Backspace') {
-        // Don't delete if user is typing in an input field
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
+      else if ((e.key === 'Delete' || e.key === 'Backspace') && !isTyping) {
         if (this.selectMode && this.selectedFeatures.size > 0) {
           // Delete multiple selected features
           e.preventDefault();
@@ -214,6 +221,74 @@ class TopoEditor extends TopoRenderer {
           }
         } else {
           this.cancelDrawing();
+        }
+      }
+      // Tool shortcuts (only when not typing)
+      else if (!isTyping && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        switch (e.key.toLowerCase()) {
+          case 'v': // Cursor mode
+            e.preventDefault();
+            this.pendingTool = null;
+            this.cancelDrawing();
+            if (this.selectMode) this.toggleSelectMode();
+            this.updateToolbarStates();
+            break;
+          case 's': // Select mode
+            e.preventDefault();
+            this.toggleSelectMode();
+            this.updateToolbarStates();
+            break;
+          case 'l': // Line tool
+            e.preventDefault();
+            if (this.selectMode) this.toggleSelectMode();
+            this.pendingTool = 'line';
+            this.updateToolbarStates();
+            break;
+          case 'r': // Rappel tool
+            e.preventDefault();
+            if (this.selectMode) this.toggleSelectMode();
+            this.pendingTool = 'rappel';
+            this.updateToolbarStates();
+            break;
+          case 'p': // Pool tool
+            e.preventDefault();
+            if (this.selectMode) this.toggleSelectMode();
+            this.pendingTool = 'pool';
+            this.updateToolbarStates();
+            break;
+          case 'a': // Anchor
+            e.preventDefault();
+            const anchorCenter = this.viewCenter();
+            this.addAnchor(anchorCenter.x, anchorCenter.y);
+            break;
+          case 'n': // Note
+            e.preventDefault();
+            const noteCenter = this.viewCenter();
+            this.addNote(noteCenter.x, noteCenter.y);
+            break;
+          case 'x': // Access
+            e.preventDefault();
+            const accessCenter = this.viewCenter();
+            this.addAccess(accessCenter.x, accessCenter.y);
+            break;
+          case 'i': // Info box
+            e.preventDefault();
+            const infoCenter = this.viewCenter();
+            this.addMetadata(infoCenter.x, infoCenter.y);
+            break;
+          case '=':
+          case '+': // Zoom in
+            e.preventDefault();
+            this.zoomIn();
+            break;
+          case '-': // Zoom out
+            e.preventDefault();
+            this.zoomOut();
+            break;
+          case '0': // Reset zoom
+            e.preventDefault();
+            this.resetView();
+            break;
         }
       }
     });

@@ -67,6 +67,33 @@ Visual regression tests are located in `tests/` and use Playwright for headless 
 
 Run tests with `npm test`. Update references after intentional visual changes with `npm run test:update-refs`. See `tests/README.md` for details.
 
+## Keyboard Shortcuts
+
+All shortcuts are disabled when typing in input fields or textareas.
+
+### Tools
+- **V** — Cursor mode (exit drawing/select modes)
+- **S** — Select mode (box select and group move)
+- **L** — Line tool (click-drag to draw)
+- **R** — Rappel tool (click-drag to draw)
+- **P** — Pool tool (click-drag to draw)
+- **A** — Add anchor at viewport center
+- **N** — Add note at viewport center
+- **X** — Add access point at viewport center
+- **I** — Add info box (title/grade) at viewport center
+
+### Editing
+- **Ctrl+Z** / **Cmd+Z** — Undo
+- **Ctrl+Shift+Z** / **Cmd+Shift+Z** / **Ctrl+Y** — Redo
+- **Ctrl+S** / **Cmd+S** — Save to wiki (if in edit mode)
+- **Delete** / **Backspace** — Delete selected feature(s)
+- **Escape** — Cancel active drawing, or clear selection (first press), or exit select mode (second press)
+
+### View
+- **+** / **=** — Zoom in
+- **-** — Zoom out
+- **0** — Reset zoom and pan to 1:1
+
 ## Prototype Extension Pattern
 
 `editor-features.js`, `editor-ui.js`, `editor-feature-list.js`, and `editor-io.js` each use:
