@@ -582,6 +582,7 @@ Object.assign(TopoEditor.prototype, {
     const spacing = size + 3; // Horizontal spacing between X marks (size + small gap)
     const visualOffsetX = 10;  // Visual shift right to avoid overlap with connection point
     const visualOffsetY = -10; // Visual shift up to avoid overlap with connection point
+    const anchorType = anchor.anchorType || 'bolt';
 
     // Connection point position is stored in anchor.connectionX/Y and doesn't change
     // (it was set when the anchor was created)
@@ -593,41 +594,58 @@ Object.assign(TopoEditor.prototype, {
     const strokeColor = isSelected ? '#ff4444' : '#000';
     const strokeWidth = isSelected ? '3' : '2';
 
-    // Remove old lines
+    // Remove old marks
     lines.forEach(line => line.remove());
 
-    // Create new X marks based on current count (left-to-right, not centered)
+    // Create new marks based on current count and type (left-to-right, not centered)
     for (let i = 0; i < count; i++) {
-      // Calculate offset for this X mark (left-to-right from anchor.x)
+      // Calculate offset for this mark (left-to-right from anchor.x)
       const offsetX = i * spacing;
 
-      // Create X shape with two diagonal lines (with visual offset applied)
-      // Line from top-left to bottom-right
-      const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line1.setAttribute('x1', cx + offsetX - size / 2 + visualOffsetX);
-      line1.setAttribute('y1', cy - size / 2 + visualOffsetY);
-      line1.setAttribute('x2', cx + offsetX + size / 2 + visualOffsetX);
-      line1.setAttribute('y2', cy + size / 2 + visualOffsetY);
-      line1.setAttribute('stroke', strokeColor);
-      line1.setAttribute('stroke-width', strokeWidth);
-      line1.setAttribute('stroke-linecap', 'round');
-      line1.setAttribute('class', 'anchor-line');
-
-      // Line from top-right to bottom-left
-      const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line2.setAttribute('x1', cx + offsetX + size / 2 + visualOffsetX);
-      line2.setAttribute('y1', cy - size / 2 + visualOffsetY);
-      line2.setAttribute('x2', cx + offsetX - size / 2 + visualOffsetX);
-      line2.setAttribute('y2', cy + size / 2 + visualOffsetY);
-      line2.setAttribute('stroke', strokeColor);
-      line2.setAttribute('stroke-width', strokeWidth);
-      line2.setAttribute('stroke-linecap', 'round');
-      line2.setAttribute('class', 'anchor-line');
-
-      // Insert before connection point
       const connectionPoint = element.querySelector('.connection-point');
-      element.insertBefore(line1, connectionPoint);
-      element.insertBefore(line2, connectionPoint);
+
+      if (anchorType === 'natural') {
+        // Render "N" for natural anchors
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', cx + offsetX + visualOffsetX);
+        text.setAttribute('y', cy + visualOffsetY + size * 0.3);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-size', size * 1.8);
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('font-family', 'Arial, sans-serif');
+        text.setAttribute('fill', strokeColor);
+        text.setAttribute('class', 'anchor-line');
+        text.textContent = 'N';
+        element.insertBefore(text, connectionPoint);
+      } else {
+        // Render X for bolt anchors
+        // Create X shape with two diagonal lines (with visual offset applied)
+        // Line from top-left to bottom-right
+        const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line1.setAttribute('x1', cx + offsetX - size / 2 + visualOffsetX);
+        line1.setAttribute('y1', cy - size / 2 + visualOffsetY);
+        line1.setAttribute('x2', cx + offsetX + size / 2 + visualOffsetX);
+        line1.setAttribute('y2', cy + size / 2 + visualOffsetY);
+        line1.setAttribute('stroke', strokeColor);
+        line1.setAttribute('stroke-width', strokeWidth);
+        line1.setAttribute('stroke-linecap', 'round');
+        line1.setAttribute('class', 'anchor-line');
+
+        // Line from top-right to bottom-left
+        const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line2.setAttribute('x1', cx + offsetX + size / 2 + visualOffsetX);
+        line2.setAttribute('y1', cy - size / 2 + visualOffsetY);
+        line2.setAttribute('x2', cx + offsetX - size / 2 + visualOffsetX);
+        line2.setAttribute('y2', cy + size / 2 + visualOffsetY);
+        line2.setAttribute('stroke', strokeColor);
+        line2.setAttribute('stroke-width', strokeWidth);
+        line2.setAttribute('stroke-linecap', 'round');
+        line2.setAttribute('class', 'anchor-line');
+
+        // Insert before connection point
+        element.insertBefore(line1, connectionPoint);
+        element.insertBefore(line2, connectionPoint);
+      }
     }
 
     // Update connection point
@@ -1175,6 +1193,12 @@ Object.assign(TopoEditor.prototype, {
     const group = TopoRenderer.prototype.renderNote.call(this, note); // creates icon + text, appends to featureLayer
     group.style.cursor = 'move';
 
+    // Add connection point for info notes (which have no icon)
+    if (note.iconType === 'info') {
+      const connectionPoint = this.createConnectionPoint(note.x, note.y, note.id, 'center');
+      group.appendChild(connectionPoint);
+    }
+
     // Make the label text independently draggable
     if (note.text) {
       const textEl = group.querySelector('.note-text');
@@ -1236,6 +1260,7 @@ Object.assign(TopoEditor.prototype, {
     element.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return; // Only left click
       if (e.target.classList.contains('note-text')) return;
+      if (e.target.classList.contains('connection-point')) return;
 
       isDragging = true;
       const coords = this.screenToSVGCoords(e);
@@ -1284,11 +1309,29 @@ Object.assign(TopoEditor.prototype, {
     // Redraw icon shapes (clears old ones internally)
     this.drawNoteIconElements(element, cx, cy, size, note.iconType);
 
+    // Update connection point for info notes
+    const connectionPoint = element.querySelector('.connection-point');
+    if (note.iconType === 'info') {
+      if (connectionPoint) {
+        connectionPoint.setAttribute('cx', cx);
+        connectionPoint.setAttribute('cy', cy);
+      } else {
+        // Add connection point if switching to info type
+        const newConnectionPoint = this.createConnectionPoint(cx, cy, note.id, 'center');
+        element.appendChild(newConnectionPoint);
+      }
+    } else if (connectionPoint) {
+      // Remove connection point if switching away from info type
+      connectionPoint.remove();
+    }
+
     // Update label text
     const textOffsetX = note.textOffsetX || 0;
     const textOffsetY = note.textOffsetY || 0;
     const isName = note.iconType === 'name';
-    const textX = isName ? cx + textOffsetX : cx + size * 0.65 + textOffsetX;
+    const isInfo = note.iconType === 'info';
+    const hasNoIcon = isName || isInfo;
+    const textX = hasNoIcon ? cx + textOffsetX : cx + size * 0.65 + textOffsetX;
     const textY = cy + 5 + textOffsetY;
 
     let textEl = element.querySelector('.note-text');
@@ -1296,9 +1339,22 @@ Object.assign(TopoEditor.prototype, {
       if (textEl) {
         textEl.setAttribute('x', textX);
         textEl.setAttribute('y', textY);
-        textEl.textContent = note.text;
+        // Clear existing tspans and rebuild for multiline support
+        textEl.innerHTML = '';
+        const lines = note.text.split('\n');
+        const lineHeight = 14;
+        lines.forEach((line, i) => {
+          const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+          tspan.setAttribute('x', textX);
+          tspan.setAttribute('dy', i === 0 ? '0' : lineHeight);
+          tspan.textContent = line;
+          textEl.appendChild(tspan);
+        });
         if (isName) {
           textEl.setAttribute('font-style', 'italic');
+          textEl.setAttribute('text-anchor', 'middle');
+        } else if (isInfo) {
+          textEl.removeAttribute('font-style');
           textEl.setAttribute('text-anchor', 'middle');
         } else {
           textEl.removeAttribute('font-style');
@@ -1314,10 +1370,23 @@ Object.assign(TopoEditor.prototype, {
         if (isName) {
           textEl.setAttribute('font-style', 'italic');
           textEl.setAttribute('text-anchor', 'middle');
+        } else if (isInfo) {
+          textEl.setAttribute('text-anchor', 'middle');
         }
         textEl.setAttribute('class', 'note-text');
         textEl.style.cursor = 'move';
-        textEl.textContent = note.text;
+
+        // Split on newlines and create a tspan for each line
+        const lines = note.text.split('\n');
+        const lineHeight = 14;
+        lines.forEach((line, i) => {
+          const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+          tspan.setAttribute('x', textX);
+          tspan.setAttribute('dy', i === 0 ? '0' : lineHeight);
+          tspan.textContent = line;
+          textEl.appendChild(tspan);
+        });
+
         element.appendChild(textEl);
         this.makeNoteTextDraggable(textEl, note);
       }
@@ -1725,6 +1794,16 @@ Object.assign(TopoEditor.prototype, {
           if (Math.abs(x2 - cx) < 0.1 && Math.abs(y2 - cy) < 0.1) {
             connectedPoints.push({ featureId: feature.id, pointType: 'end' });
           }
+        } else if (feature.type === 'note' && feature.iconType === 'info') {
+          // Info notes have a connection point at their center
+          if (feature.x === cx && feature.y === cy) {
+            connectedPoints.push({ featureId: feature.id, pointType: 'center' });
+          }
+        } else if (feature.type === 'access') {
+          // Access features have a connection point at their start
+          if (feature.x === cx && feature.y === cy) {
+            connectedPoints.push({ featureId: feature.id, pointType: 'start' });
+          }
         }
       });
     });
@@ -1813,6 +1892,20 @@ Object.assign(TopoEditor.prototype, {
 
             // Update visual
             this.updateRappel(feature);
+          } else if (feature.type === 'note' && feature.iconType === 'info') {
+            // For info notes, move the entire note
+            feature.x = x;
+            feature.y = y;
+
+            // Update visual
+            this.updateNote(feature);
+          } else if (feature.type === 'access') {
+            // For access features, move the entire feature
+            feature.x = x;
+            feature.y = y;
+
+            // Update visual
+            this.updateAccess(feature);
           }
         }
       });

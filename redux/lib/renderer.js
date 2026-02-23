@@ -287,31 +287,48 @@ class TopoRenderer {
     const spacing = size + 3;
     const visualOffsetX = 10;
     const visualOffsetY = -10;
+    const anchorType = anchor.anchorType || 'bolt';
 
     for (let i = 0; i < count; i++) {
       const offsetX = i * spacing;
 
-      const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line1.setAttribute('x1', cx + offsetX - size / 2 + visualOffsetX);
-      line1.setAttribute('y1', cy - size / 2 + visualOffsetY);
-      line1.setAttribute('x2', cx + offsetX + size / 2 + visualOffsetX);
-      line1.setAttribute('y2', cy + size / 2 + visualOffsetY);
-      line1.setAttribute('stroke', '#000');
-      line1.setAttribute('stroke-width', '2');
-      line1.setAttribute('stroke-linecap', 'round');
-      line1.setAttribute('class', 'anchor-line');
-      group.appendChild(line1);
+      if (anchorType === 'natural') {
+        // Render "N" for natural anchors
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', cx + offsetX + visualOffsetX);
+        text.setAttribute('y', cy + visualOffsetY + size * 0.3);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-size', size * 1.8);
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('font-family', 'Arial, sans-serif');
+        text.setAttribute('fill', '#000');
+        text.setAttribute('class', 'anchor-line');
+        text.textContent = 'N';
+        group.appendChild(text);
+      } else {
+        // Render X for bolt anchors
+        const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line1.setAttribute('x1', cx + offsetX - size / 2 + visualOffsetX);
+        line1.setAttribute('y1', cy - size / 2 + visualOffsetY);
+        line1.setAttribute('x2', cx + offsetX + size / 2 + visualOffsetX);
+        line1.setAttribute('y2', cy + size / 2 + visualOffsetY);
+        line1.setAttribute('stroke', '#000');
+        line1.setAttribute('stroke-width', '2');
+        line1.setAttribute('stroke-linecap', 'round');
+        line1.setAttribute('class', 'anchor-line');
+        group.appendChild(line1);
 
-      const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line2.setAttribute('x1', cx + offsetX + size / 2 + visualOffsetX);
-      line2.setAttribute('y1', cy - size / 2 + visualOffsetY);
-      line2.setAttribute('x2', cx + offsetX - size / 2 + visualOffsetX);
-      line2.setAttribute('y2', cy + size / 2 + visualOffsetY);
-      line2.setAttribute('stroke', '#000');
-      line2.setAttribute('stroke-width', '2');
-      line2.setAttribute('stroke-linecap', 'round');
-      line2.setAttribute('class', 'anchor-line');
-      group.appendChild(line2);
+        const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line2.setAttribute('x1', cx + offsetX + size / 2 + visualOffsetX);
+        line2.setAttribute('y1', cy - size / 2 + visualOffsetY);
+        line2.setAttribute('x2', cx + offsetX - size / 2 + visualOffsetX);
+        line2.setAttribute('y2', cy + size / 2 + visualOffsetY);
+        line2.setAttribute('stroke', '#000');
+        line2.setAttribute('stroke-width', '2');
+        line2.setAttribute('stroke-linecap', 'round');
+        line2.setAttribute('class', 'anchor-line');
+        group.appendChild(line2);
+      }
     }
 
     // Name label (displayed to the right of the last X mark, draggable)
@@ -562,30 +579,9 @@ class TopoRenderer {
         group.appendChild(arr);
         break;
       }
-      case 'info': {
-        // Light-blue circle outline with bold lowercase "i"
-        const circ = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circ.setAttribute('cx', cx);
-        circ.setAttribute('cy', cy);
-        circ.setAttribute('r', size / 2);
-        circ.setAttribute('fill', '#eaf4fb');
-        circ.setAttribute('stroke', '#2980b9');
-        circ.setAttribute('stroke-width', '2');
-        circ.setAttribute('class', 'note-icon');
-        group.appendChild(circ);
-        const letter = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        letter.setAttribute('x', cx);
-        letter.setAttribute('y', cy + size * 0.18);
-        letter.setAttribute('text-anchor', 'middle');
-        letter.setAttribute('font-size', size * 0.55);
-        letter.setAttribute('font-weight', 'bold');
-        letter.setAttribute('font-family', 'serif');
-        letter.setAttribute('fill', '#2980b9');
-        letter.setAttribute('class', 'note-icon');
-        letter.textContent = 'i';
-        group.appendChild(letter);
+      case 'info':
+        // No icon — text-only label (icon remains visible in UI picker)
         break;
-      }
       case 'name':
         // No icon — text-only label rendered in italic by renderNote()
         break;
@@ -645,14 +641,16 @@ class TopoRenderer {
 
     this.drawNoteIconElements(group, cx, cy, size, note.iconType);
 
-    // Label text: 'name' type is centered + italic with no icon offset;
+    // Label text: 'name' and 'info' types have no icon so text is centered;
     // all other types sit to the right of the icon.
     if (note.text) {
       const textOffsetX = note.textOffsetX || 0;
       const textOffsetY = note.textOffsetY || 0;
       const isName = note.iconType === 'name';
+      const isInfo = note.iconType === 'info';
+      const hasNoIcon = isName || isInfo;
       const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', isName ? cx + textOffsetX : cx + size * 0.65 + textOffsetX);
+      text.setAttribute('x', hasNoIcon ? cx + textOffsetX : cx + size * 0.65 + textOffsetX);
       text.setAttribute('y', cy + 5 + textOffsetY);
       text.setAttribute('font-size', '12');
       text.setAttribute('font-family', 'Arial, sans-serif');
@@ -660,9 +658,26 @@ class TopoRenderer {
       if (isName) {
         text.setAttribute('font-style', 'italic');
         text.setAttribute('text-anchor', 'middle');
+      } else if (isInfo) {
+        text.setAttribute('text-anchor', 'middle');
       }
       text.setAttribute('class', 'note-text');
-      text.textContent = note.text;
+
+      // Support multiline text with \n
+      const lines = note.text.split('\n');
+      if (lines.length > 1) {
+        const lineHeight = 14;
+        lines.forEach((line, i) => {
+          const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+          tspan.setAttribute('x', hasNoIcon ? cx + textOffsetX : cx + size * 0.65 + textOffsetX);
+          tspan.setAttribute('dy', i === 0 ? '0' : lineHeight);
+          tspan.textContent = line;
+          text.appendChild(tspan);
+        });
+      } else {
+        text.textContent = note.text;
+      }
+
       group.appendChild(text);
     }
 
