@@ -928,8 +928,8 @@ Object.assign(TopoEditor.prototype, {
           </div>
           <div>
             <label for="access-text" style="display: block; margin-bottom: 4px; font-weight: 500;">Label:</label>
-            <input type="text" id="access-text" value="${feature.text || ''}" maxlength="40" placeholder="Optional label (draggable)"
-                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+            <textarea id="access-text" placeholder="Optional label (draggable)" rows="3"
+                      style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; resize: vertical; font-family: inherit; font-size: inherit;">${feature.text || ''}</textarea>
           </div>
           <button id="delete-access" style="background-color: #e74c3c; margin-top: 8px;">Delete Access</button>
         </div>
