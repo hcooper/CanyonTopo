@@ -487,7 +487,7 @@ class TopoRenderer {
         group.appendChild(excl);
         break;
       }
-      case 'swim': {
+      case 'water': {
         // Three horizontal blue wavy lines
         const ww = size * 0.8;
         const wh = size * 0.14;
@@ -1075,7 +1075,7 @@ TopoRenderer.FEATURE_SCHEMA = {
   },
   note: {
     fields: new Set(['type', 'id', 'x', 'y', 'size', 'iconType', 'text', 'textOffsetX', 'textOffsetY']),
-    subtypes: { iconType: ['info', 'warning', 'swim', 'hydraulic', 'rockfall', 'name', 'bridge'] },
+    subtypes: { iconType: ['info', 'warning', 'water', 'hydraulic', 'rockfall', 'name', 'bridge'] },
   },
   access: {
     fields: new Set(['type', 'id', 'x', 'y', 'length', 'accessType', 'text', 'textOffsetX', 'textOffsetY']),

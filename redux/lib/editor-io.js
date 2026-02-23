@@ -378,6 +378,12 @@ Object.assign(TopoEditor.prototype, {
         f.rightDepth = f.depth;
         console.warn(`[topo] Migrating pool (id=${f.id}) from depth=${f.depth} to leftDepth/rightDepth`);
       }
+
+      // Migrate legacy note iconType 'swim' to 'water'
+      if (f.type === 'note' && f.iconType === 'swim') {
+        f.iconType = 'water';
+        console.warn(`[topo] Migrating note (id=${f.id}) iconType from "swim" to "water"`);
+      }
     });
 
     // Strip unrecognized/deprecated fields per feature

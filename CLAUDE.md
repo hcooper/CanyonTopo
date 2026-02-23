@@ -53,6 +53,20 @@ The viewer page loads:
 2. `lib/renderer.js`
 3. `lib/viewer.js`
 
+## Testing
+
+Visual regression tests are located in `tests/` and use Playwright for headless browser automation and pixelmatch for pixel-by-pixel comparison.
+
+- **`tests/visual-regression.js`** — Main test runner. Loads YAML fixtures, renders them in a headless browser using `test-viewer.html`, captures screenshots, and compares against reference images. Tests pass if pixel difference is below 1% threshold.
+- **`tests/update-references.js`** — Helper script to copy output images to reference directory (run after intentional visual changes).
+- **`tests/test-viewer.html`** — Test-specific viewer with relative paths (required for headless browser environment).
+- **`tests/fixtures/`** — YAML test fixtures (davis.yaml, basic-features.yaml, edge-cases.yaml, all-note-types.yaml).
+- **`tests/reference/`** — "Golden" reference images for comparison.
+- **`tests/output/`** — Generated screenshots (gitignored).
+- **`tests/diffs/`** — Diff images showing pixel differences for failed tests (gitignored).
+
+Run tests with `npm test`. Update references after intentional visual changes with `npm run test:update-refs`. See `tests/README.md` for details.
+
 ## Prototype Extension Pattern
 
 `editor-features.js`, `editor-ui.js`, `editor-feature-list.js`, and `editor-io.js` each use:
@@ -143,7 +157,7 @@ features:
     x: 300
     y: 200
     size: 20
-    iconType: warning   # info | warning | swim | hydraulic | rockfall | name
+    iconType: warning   # info | warning | water | hydraulic | rockfall | name | bridge
     text: 'Hydraulic hazard'
     textOffsetX: 0      # optional; drag the text independently
     textOffsetY: 0      # optional
@@ -167,9 +181,10 @@ features:
 | `type: hazard` | `type: note` | `iconType` defaults to `'warning'` |
 | `type: exit` | `type: access` | `accessType` defaults to `'exit'` |
 | `type: keeper` | `type: note` | `iconType` defaults to `'hydraulic'` |
+| `iconType: swim` | `iconType: water` | Legacy name for water icon (blue wavy lines) |
 | Any unrecognized field | *(deleted)* | Logged as a console warning |
 
-Fields not in the schema for a given feature type are deleted on load. The authoritative list of valid types, valid fields per type, and subtype values is `TopoRenderer.FEATURE_SCHEMA` (defined at the bottom of `renderer.js`). Migrations are in `TopoRenderer.FEATURE_MIGRATIONS`. `loadFromYAML()` in `editor-io.js` reads both statics — adding a new migration or field only requires editing `renderer.js`.
+Fields not in the schema for a given feature type are deleted on load. The authoritative list of valid types, valid fields per type, and subtype values is `TopoRenderer.FEATURE_SCHEMA` (defined at the bottom of `renderer.js`). Migrations are in `TopoRenderer.FEATURE_MIGRATIONS` (for feature type migrations) and inline in `loadFromYAML()` (for field-level migrations like note iconType). Adding a new migration requires editing either `renderer.js` (for type-level) or `editor-io.js` (for field-level).
 
 ## Design Notes
 
