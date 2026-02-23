@@ -466,6 +466,7 @@ class TopoEditor extends TopoRenderer {
     }
 
     this.saveState();
+    this.updateToolbarStates();
     console.log('Added line:', line);
   }
 
@@ -499,6 +500,8 @@ class TopoEditor extends TopoRenderer {
     if (instructions) {
       instructions.textContent = 'Right-click on the canvas to add features';
     }
+
+    this.updateToolbarStates();
   }
 
   startRappel(x, y) {
@@ -562,6 +565,7 @@ class TopoEditor extends TopoRenderer {
     }
 
     this.saveState();
+    this.updateToolbarStates();
     console.log('Added rappel:', rappel);
   }
 
@@ -617,6 +621,7 @@ class TopoEditor extends TopoRenderer {
     this.features.push(pool);
     this.renderPool(pool);
     this.saveState();
+    this.updateToolbarStates();
 
     const instructions = document.querySelector('.instructions');
     if (instructions) {

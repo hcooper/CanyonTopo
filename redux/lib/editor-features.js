@@ -156,6 +156,8 @@ Object.assign(TopoEditor.prototype, {
 
     // Add interactivity
     group.addEventListener('click', (e) => {
+      // Let click bubble up to canvas handler if drawing
+      if (this.pendingTool || this.drawingLine || this.drawingRappel || this.drawingPool) return;
       e.stopPropagation();
       this.selectFeature(access.id);
     });
@@ -340,6 +342,8 @@ Object.assign(TopoEditor.prototype, {
     group.style.cursor = 'move';
 
     group.addEventListener('click', (e) => {
+      // Let click bubble up to canvas handler if drawing
+      if (this.pendingTool || this.drawingLine || this.drawingRappel || this.drawingPool) return;
       e.stopPropagation();
       this.selectFeature(metadata.id);
     });
@@ -476,6 +480,8 @@ Object.assign(TopoEditor.prototype, {
 
     // Add interactivity
     group.addEventListener('click', (e) => {
+      // Let click bubble up to canvas handler if drawing
+      if (this.pendingTool || this.drawingLine || this.drawingRappel || this.drawingPool) return;
       e.stopPropagation();
       this.selectFeature(anchor.id);
     });
@@ -704,6 +710,8 @@ Object.assign(TopoEditor.prototype, {
 
     // Add interactivity
     group.addEventListener('click', (e) => {
+      // Let click bubble up to canvas handler if drawing
+      if (this.pendingTool || this.drawingLine || this.drawingRappel || this.drawingPool) return;
       e.stopPropagation();
       this.selectFeature(pool.id);
     });
@@ -914,6 +922,8 @@ Object.assign(TopoEditor.prototype, {
 
     // Add interactivity
     group.addEventListener('click', (e) => {
+      // Let click bubble up to canvas handler if drawing
+      if (this.pendingTool || this.drawingLine || this.drawingRappel || this.drawingPool) return;
       e.stopPropagation();
       this.selectFeature(rappel.id);
     });
@@ -1176,6 +1186,8 @@ Object.assign(TopoEditor.prototype, {
 
     // Add interactivity
     group.addEventListener('click', (e) => {
+      // Let click bubble up to canvas handler if drawing
+      if (this.pendingTool || this.drawingLine || this.drawingRappel || this.drawingPool) return;
       e.stopPropagation();
       this.selectFeature(note.id);
     });
@@ -1358,6 +1370,8 @@ Object.assign(TopoEditor.prototype, {
 
     // Add interactivity
     group.addEventListener('click', (e) => {
+      // Let click bubble up to canvas handler if drawing
+      if (this.pendingTool || this.drawingLine || this.drawingRappel || this.drawingPool) return;
       e.stopPropagation();
       this.selectFeature(line.id);
     });
@@ -1664,6 +1678,8 @@ Object.assign(TopoEditor.prototype, {
 
     circle.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return; // Only left click
+      // Don't intercept if we're starting or finishing a drawing operation
+      if (this.pendingTool || this.drawingLine || this.drawingRappel || this.drawingPool) return;
       e.stopPropagation();
       isDragging = true;
       circle.style.cursor = 'grabbing';

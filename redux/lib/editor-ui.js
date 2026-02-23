@@ -169,23 +169,49 @@ Object.assign(TopoEditor.prototype, {
 
     const tools = [
       {
+        name: 'Cursor',
+        id: 'cursor-mode-btn',
+        action: () => {
+          this.pendingTool = null;
+          this.cancelDrawing();
+          if (this.selectMode) this.toggleSelectMode();
+          this.updateToolbarStates();
+        },
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+          <path d="M 5,3 L 5,17 L 10,13 L 13,19 L 15,18 L 12,12 L 17,12 Z" fill="white" stroke="white" stroke-width="1" stroke-linejoin="round"/>
+        </svg>`
+      },
+      {
         name: 'Select',
         id: 'select-mode-btn',
-        action: () => { this.toggleSelectMode(); },
+        action: () => {
+          this.toggleSelectMode();
+          this.updateToolbarStates();
+        },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <rect x="3" y="3" width="18" height="18" rx="2" fill="rgba(255,255,255,0.12)" stroke="white" stroke-width="2" stroke-dasharray="4,3"/>
         </svg>`
       },
       {
         name: 'Line',
-        action: () => { this.pendingTool = 'line'; },
+        id: 'line-tool-btn',
+        action: () => {
+          if (this.selectMode) this.toggleSelectMode();
+          this.pendingTool = 'line';
+          this.updateToolbarStates();
+        },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <line x1="4" y1="4" x2="20" y2="20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
         </svg>`
       },
       {
         name: 'Rappel',
-        action: () => { this.pendingTool = 'rappel'; },
+        id: 'rappel-tool-btn',
+        action: () => {
+          if (this.selectMode) this.toggleSelectMode();
+          this.pendingTool = 'rappel';
+          this.updateToolbarStates();
+        },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <path d="M 6,4 Q 18,12 6,20" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
           <polygon points="6,20 2,13 10,13" fill="white"/>
@@ -193,7 +219,12 @@ Object.assign(TopoEditor.prototype, {
       },
       {
         name: 'Pool',
-        action: () => { this.pendingTool = 'pool'; },
+        id: 'pool-tool-btn',
+        action: () => {
+          if (this.selectMode) this.toggleSelectMode();
+          this.pendingTool = 'pool';
+          this.updateToolbarStates();
+        },
         icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <path d="M 4,12 C 4,20 20,20 20,12" stroke="white" stroke-width="2.5" fill="#4a90e2"/>
         </svg>`
@@ -246,6 +277,55 @@ Object.assign(TopoEditor.prototype, {
 
     // Insert into canvas-row before canvas-container so it appears to the left
     this.container.parentElement.insertBefore(toolbar, this.container);
+
+    // Set initial state
+    this.updateToolbarStates();
+  },
+
+  updateToolbarStates() {
+    // Update cursor button
+    const cursorBtn = document.getElementById('cursor-mode-btn');
+    if (cursorBtn) {
+      if (!this.pendingTool && !this.selectMode) {
+        cursorBtn.style.backgroundColor = '#3a7ca5';
+        cursorBtn.style.outline = '2px solid #52ab98';
+      } else {
+        cursorBtn.style.backgroundColor = '';
+        cursorBtn.style.outline = '';
+      }
+    }
+
+    // Update select button
+    const selectBtn = document.getElementById('select-mode-btn');
+    if (selectBtn) {
+      if (this.selectMode) {
+        selectBtn.style.backgroundColor = '#3a7ca5';
+        selectBtn.style.outline = '2px solid #52ab98';
+      } else {
+        selectBtn.style.backgroundColor = '';
+        selectBtn.style.outline = '';
+      }
+    }
+
+    // Update drawing tool buttons
+    const toolMap = {
+      'line': 'line-tool-btn',
+      'rappel': 'rappel-tool-btn',
+      'pool': 'pool-tool-btn'
+    };
+
+    for (const [tool, btnId] of Object.entries(toolMap)) {
+      const btn = document.getElementById(btnId);
+      if (btn) {
+        if (this.pendingTool === tool) {
+          btn.style.backgroundColor = '#3a7ca5';
+          btn.style.outline = '2px solid #52ab98';
+        } else {
+          btn.style.backgroundColor = '';
+          btn.style.outline = '';
+        }
+      }
+    }
   },
 
   showContextMenu(e) {
@@ -411,6 +491,7 @@ Object.assign(TopoEditor.prototype, {
     }
 
     if (feature.type === 'anchor') {
+      const isBolt = (feature.anchorType === 'bolt');
       panel.innerHTML = `
         <h3>Anchor</h3>
         <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -419,19 +500,23 @@ Object.assign(TopoEditor.prototype, {
             <select id="anchor-type" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
               <option value="bolt" ${feature.anchorType === 'bolt' ? 'selected' : ''}>Bolt</option>
               <option value="natural" ${feature.anchorType === 'natural' ? 'selected' : ''}>Natural</option>
-              <option value="piton" ${feature.anchorType === 'piton' ? 'selected' : ''}>Piton</option>
-              <option value="tree" ${feature.anchorType === 'tree' ? 'selected' : ''}>Tree</option>
-              <option value="rock" ${feature.anchorType === 'rock' ? 'selected' : ''}>Rock</option>
             </select>
           </div>
+          ${isBolt ? `
           <div>
             <label for="anchor-count" style="display: block; margin-bottom: 4px; font-weight: 500;">Count:</label>
             <input type="number" id="anchor-count" value="${feature.count}" min="1" max="10"
                    style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
           </div>
+          ` : ''}
           <div>
             <label for="anchor-name" style="display: block; margin-bottom: 4px; font-weight: 500;">Name:</label>
-            <input type="text" id="anchor-name" value="${feature.name}" placeholder="Optional label"
+            <input type="text" id="anchor-name" value="${feature.name || ''}" placeholder="Optional label"
+                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+          </div>
+          <div>
+            <label for="anchor-location" style="display: block; margin-bottom: 4px; font-weight: 500;">Location:</label>
+            <input type="text" id="anchor-location" value="${feature.location || ''}" placeholder="e.g., LDC, RDC, climber's left"
                    style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
           </div>
           <button id="delete-anchor" style="background-color: #e74c3c; margin-top: 8px;">Delete Anchor</button>
@@ -446,25 +531,47 @@ Object.assign(TopoEditor.prototype, {
 
       typeSelect.addEventListener('change', (e) => {
         feature.anchorType = e.target.value;
+        // Set count to 1 when switching away from bolt
+        if (e.target.value !== 'bolt') {
+          feature.count = 1;
+        }
+        this.updateAnchor(feature);
         this.saveState();
+        // Refresh panel to show/hide count field
+        this.updatePropertiesPanel(feature);
         console.log('Updated anchor type:', feature.anchorType);
       });
 
-      countInput.addEventListener('input', (e) => {
-        feature.count = parseInt(e.target.value) || 1;
-        this.updateAnchor(feature);
-        this.saveState();
-        console.log('Updated anchor count:', feature.count);
-      });
+      if (countInput) {
+        countInput.addEventListener('input', (e) => {
+          feature.count = parseInt(e.target.value) || 1;
+          this.updateAnchor(feature);
+          this.saveState();
+          console.log('Updated anchor count:', feature.count);
+        });
+      }
 
       nameInput.addEventListener('input', (e) => {
         feature.name = e.target.value;
+        this.updateAnchor(feature);
         this.renderFeatureList();
         console.log('Updated anchor name:', feature.name);
       });
 
       nameInput.addEventListener('blur', (e) => {
         // Save state when user finishes editing name
+        this.saveState();
+      });
+
+      const locationInput = document.getElementById('anchor-location');
+      locationInput.addEventListener('input', (e) => {
+        feature.location = e.target.value;
+        this.updateAnchor(feature);
+        console.log('Updated anchor location:', feature.location);
+      });
+
+      locationInput.addEventListener('blur', (e) => {
+        // Save state when user finishes editing location
         this.saveState();
       });
 
@@ -626,12 +733,15 @@ Object.assign(TopoEditor.prototype, {
       const icons = [
         { value: 'info',      label: 'Info' },
         { value: 'warning',   label: 'Warning' },
-        { value: 'swim',      label: 'Swim' },
+        { value: 'water',     label: 'Water' },
         { value: 'hydraulic', label: 'Hydraulic' },
         { value: 'rockfall',  label: 'Rockfall' },
         { value: 'bridge',    label: 'Bridge' },
-        { value: 'name',      label: 'Name' },
+        { value: 'name',      label: 'Section Name' },
       ];
+
+      const placeholder = (feature.iconType === 'info') ? 'Text' : 'Optional label (draggable)';
+      const showSize = (feature.iconType !== 'info');
 
       panel.innerHTML = `
         <h3>Note</h3>
@@ -642,14 +752,16 @@ Object.assign(TopoEditor.prototype, {
           </div>
           <div>
             <label for="note-text" style="display: block; margin-bottom: 4px; font-weight: 500;">Label:</label>
-            <input type="text" id="note-text" value="${feature.text || ''}" maxlength="40" placeholder="Optional label (draggable)"
-                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
+            <textarea id="note-text" placeholder="${placeholder}" rows="3"
+                      style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; resize: vertical; font-family: inherit; font-size: inherit;">${feature.text || ''}</textarea>
           </div>
+          ${showSize ? `
           <div>
-            <label for="note-size" style="display: block; margin-bottom: 4px; font-weight: 500;">Size:</label>
+            <label for="note-size" style="display: block; margin-bottom: 4px; font-weight: 500;">Icon Size:</label>
             <input type="number" id="note-size" value="${feature.size}" min="15" max="60"
                    style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px;">
           </div>
+          ` : ''}
           <button id="delete-note" style="background-color: #e74c3c; margin-top: 8px;">Delete Note</button>
         </div>
       `;
@@ -682,14 +794,51 @@ Object.assign(TopoEditor.prototype, {
         svg.setAttribute('height', '30');
         svg.setAttribute('viewBox', '0 0 60 60');
 
-        // Create temporary group to render icon
-        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        g.setAttribute('data-id', 'preview');
-        g.setAttribute('data-type', 'note');
-        svg.appendChild(g);
+        // Special case for 'info': show bold "T"
+        if (icon.value === 'info') {
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('x', '30');
+          text.setAttribute('y', '40');
+          text.setAttribute('text-anchor', 'middle');
+          text.setAttribute('font-size', '24');
+          text.setAttribute('font-weight', 'bold');
+          text.setAttribute('font-family', 'Arial, sans-serif');
+          text.setAttribute('fill', '#333');
+          text.textContent = 'T';
+          svg.appendChild(text);
+        } else if (icon.value === 'name') {
+          // Special case for 'name': show "Lower" in a box
+          // Box around text
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('x', '8');
+          rect.setAttribute('y', '22');
+          rect.setAttribute('width', '44');
+          rect.setAttribute('height', '16');
+          rect.setAttribute('fill', 'none');
+          rect.setAttribute('stroke', '#333');
+          rect.setAttribute('stroke-width', '1');
+          svg.appendChild(rect);
 
-        // Use the renderer's drawNoteIconElements method to draw the icon
-        this.drawNoteIconElements(g, 30, 30, 25, icon.value);
+          // Text "Lower"
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('x', '30');
+          text.setAttribute('y', '35');
+          text.setAttribute('text-anchor', 'middle');
+          text.setAttribute('font-size', '12');
+          text.setAttribute('font-family', 'Arial, sans-serif');
+          text.setAttribute('fill', '#333');
+          text.textContent = 'Lower';
+          svg.appendChild(text);
+        } else {
+          // Create temporary group to render icon
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          g.setAttribute('data-id', 'preview');
+          g.setAttribute('data-type', 'note');
+          svg.appendChild(g);
+
+          // Use the renderer's drawNoteIconElements method to draw the icon
+          this.drawNoteIconElements(g, 30, 30, 25, icon.value);
+        }
 
         btn.appendChild(svg);
 
