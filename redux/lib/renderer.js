@@ -185,7 +185,7 @@ class TopoRenderer {
       dashedStart.setAttribute('stroke-width', '3');
       dashedStart.setAttribute('stroke-dasharray', '5,5');
       dashedStart.setAttribute('stroke-linecap', 'butt');
-      dashedStart.setAttribute('class', 'line-shape');
+      dashedStart.setAttribute('class', 'dashed-segment-start');
       group.appendChild(dashedStart);
     }
 
@@ -212,7 +212,7 @@ class TopoRenderer {
       dashedEnd.setAttribute('stroke-width', '3');
       dashedEnd.setAttribute('stroke-dasharray', '5,5');
       dashedEnd.setAttribute('stroke-linecap', 'butt');
-      dashedEnd.setAttribute('class', 'line-shape');
+      dashedEnd.setAttribute('class', 'dashed-segment-end');
       group.appendChild(dashedEnd);
     }
 
