@@ -1,0 +1,14 @@
+{
+  "name": "canyon-topo-editor",
+  "version": "1.0.0",
+  "description": "Canyon topo editor and viewer",
+  "scripts": {
+    "test": "node tests/visual-regression.js",
+    "test:update-refs": "node tests/update-references.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.1",
+    "pixelmatch": "^6.0.0",
+    "pngjs": "^7.0.0"
+  }
+}

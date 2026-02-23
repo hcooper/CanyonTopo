@@ -1,2 +1,6 @@
 node_modules/
 .aider*
+
+# Visual regression test generated files
+tests/output/
+tests/diffs/
