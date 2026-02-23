@@ -827,7 +827,7 @@ class TopoRenderer {
     arrowhead.setAttribute('class', 'access-arrowhead');
     group.appendChild(arrowhead);
 
-    // Text label (draggable, similar to rappel descriptions)
+    // Text label (draggable, similar to rappel descriptions, supports multiline with \n)
     if (access.text) {
       const textOffsetX = access.textOffsetX || 0;
       const textOffsetY = access.textOffsetY || 0;
@@ -843,7 +843,18 @@ class TopoRenderer {
       text.setAttribute('font-family', 'Arial, sans-serif');
       text.setAttribute('fill', color);
       text.setAttribute('class', 'access-text');
-      text.textContent = access.text;
+
+      // Split on newlines and create a tspan for each line
+      const lines = access.text.split('\n');
+      const lineHeight = 14;
+      lines.forEach((line, i) => {
+        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspan.setAttribute('x', midX + textOffsetX);
+        tspan.setAttribute('dy', i === 0 ? '0' : lineHeight);
+        tspan.textContent = line;
+        text.appendChild(tspan);
+      });
+
       group.appendChild(text);
     }
 
