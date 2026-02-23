@@ -598,6 +598,16 @@ Object.assign(TopoEditor.prototype, {
                    style="width: 18px; height: 18px; cursor: pointer;">
             <label for="line-arrow" style="cursor: pointer; font-weight: 500;">Arrow</label>
           </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="line-dashed-start" ${feature.dashedStart ? 'checked' : ''}
+                   style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="line-dashed-start" style="cursor: pointer; font-weight: 500;">Dashed Start</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="line-dashed-end" ${feature.dashedEnd ? 'checked' : ''}
+                   style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="line-dashed-end" style="cursor: pointer; font-weight: 500;">Dashed End</label>
+          </div>
           <button id="delete-line" style="background-color: #e74c3c; margin-top: 8px;">Delete Line</button>
         </div>
       `;
@@ -606,6 +616,8 @@ Object.assign(TopoEditor.prototype, {
       const shortenCheckbox = document.getElementById('line-shorten');
       const traverseCheckbox = document.getElementById('line-traverse');
       const arrowCheckbox = document.getElementById('line-arrow');
+      const dashedStartCheckbox = document.getElementById('line-dashed-start');
+      const dashedEndCheckbox = document.getElementById('line-dashed-end');
       const deleteBtn = document.getElementById('delete-line');
 
       shortenCheckbox.addEventListener('change', (e) => {
@@ -627,6 +639,20 @@ Object.assign(TopoEditor.prototype, {
         this.updateLine(feature);
         this.saveState();
         console.log('Updated line arrow:', feature.arrow);
+      });
+
+      dashedStartCheckbox.addEventListener('change', (e) => {
+        feature.dashedStart = e.target.checked;
+        this.updateLine(feature);
+        this.saveState();
+        console.log('Updated line dashedStart:', feature.dashedStart);
+      });
+
+      dashedEndCheckbox.addEventListener('change', (e) => {
+        feature.dashedEnd = e.target.checked;
+        this.updateLine(feature);
+        this.saveState();
+        console.log('Updated line dashedEnd:', feature.dashedEnd);
       });
 
       deleteBtn.addEventListener('click', () => {
