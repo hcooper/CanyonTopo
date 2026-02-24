@@ -32,6 +32,7 @@ class TopoEditor extends TopoRenderer {
     this.isBoxSelecting = false;
     this.boxSelectStart = null;
     this.boxSelectRect = null;
+    this.boxSelectShiftHeld = false; // Track if shift was held during box select
     this.groupDragState = null;
     this._selectDragStart = null;
 
@@ -340,7 +341,7 @@ class TopoEditor extends TopoRenderer {
           this.updateGroupDrag(coords.x, coords.y);
         } else {
           this.cursorLayer.style.display = 'block';
-          this.startBoxSelect(this._selectDragStart.x, this._selectDragStart.y);
+          this.startBoxSelect(this._selectDragStart.x, this._selectDragStart.y, e.shiftKey);
           this.updateBoxSelect(coords.x, coords.y);
         }
       }
@@ -906,9 +907,10 @@ class TopoEditor extends TopoRenderer {
 
   // ── Box select ─────────────────────────────────────────────────────────────
 
-  startBoxSelect(x, y) {
+  startBoxSelect(x, y, shiftHeld = false) {
     this.isBoxSelecting = true;
     this.boxSelectStart = { x, y };
+    this.boxSelectShiftHeld = shiftHeld;
     this.boxSelectRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     this.boxSelectRect.setAttribute('x', x);
     this.boxSelectRect.setAttribute('y', y);
@@ -933,18 +935,23 @@ class TopoEditor extends TopoRenderer {
 
   endBoxSelect(x, y) {
     if (!this.isBoxSelecting) return;
+    const shiftHeld = this.boxSelectShiftHeld;
     this.isBoxSelecting = false;
+    this.boxSelectShiftHeld = false;
     if (this.boxSelectRect) { this.boxSelectRect.remove(); this.boxSelectRect = null; }
     const x1 = Math.min(this.boxSelectStart.x, x);
     const y1 = Math.min(this.boxSelectStart.y, y);
     const x2 = Math.max(this.boxSelectStart.x, x);
     const y2 = Math.max(this.boxSelectStart.y, y);
     this.boxSelectStart = null;
-    this.selectFeaturesInBox(x1, y1, x2, y2);
+    this.selectFeaturesInBox(x1, y1, x2, y2, shiftHeld);
   }
 
-  selectFeaturesInBox(x1, y1, x2, y2) {
-    this.selectedFeatures.clear();
+  selectFeaturesInBox(x1, y1, x2, y2, additive = false) {
+    // Only clear selection if not adding to existing selection
+    if (!additive) {
+      this.selectedFeatures.clear();
+    }
     for (const f of this.features) {
       const pt = this.featurePrimaryPoint(f);
       if (pt.x >= x1 && pt.x <= x2 && pt.y >= y1 && pt.y <= y2) {
