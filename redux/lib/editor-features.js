@@ -317,7 +317,17 @@ Object.assign(TopoEditor.prototype, {
         textEl.setAttribute('x', midX + textOffsetX);
         textEl.setAttribute('y', midY + textOffsetY);
         textEl.setAttribute('fill', color);
-        textEl.textContent = access.text;
+        // Clear existing tspans and rebuild for multiline support
+        textEl.innerHTML = '';
+        const lines = access.text.split('\n');
+        const lineHeight = 14;
+        lines.forEach((line, i) => {
+          const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+          tspan.setAttribute('x', midX + textOffsetX);
+          tspan.setAttribute('dy', i === 0 ? '0' : lineHeight);
+          tspan.textContent = line;
+          textEl.appendChild(tspan);
+        });
       } else {
         // Create new text element if it didn't exist before and make it draggable
         textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -328,7 +338,18 @@ Object.assign(TopoEditor.prototype, {
         textEl.setAttribute('fill', color);
         textEl.setAttribute('class', 'access-text');
         textEl.style.cursor = 'move';
-        textEl.textContent = access.text;
+
+        // Split on newlines and create a tspan for each line
+        const lines = access.text.split('\n');
+        const lineHeight = 14;
+        lines.forEach((line, i) => {
+          const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+          tspan.setAttribute('x', midX + textOffsetX);
+          tspan.setAttribute('dy', i === 0 ? '0' : lineHeight);
+          tspan.textContent = line;
+          textEl.appendChild(tspan);
+        });
+
         element.appendChild(textEl);
         this.makeAccessTextDraggable(textEl, access);
       }
