@@ -1,0 +1,1004 @@
+version: '1.0'
+width: 800
+height: 600
+gridSize: 10
+features:
+  - id: 0
+    type: line
+    x1: 160
+    y1: 150
+    x2: 200
+    y2: 150
+    length: 40
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 1
+    type: line
+    x1: 200
+    y1: 150
+    x2: 210
+    y2: 180
+    length: 32
+    slope: 72
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 2
+    type: pool
+    x: 240
+    'y': 180
+    width: 60
+    depth: 40.78801474282551
+    leftDepth: 50.959951820087994
+    rightDepth: 0
+  - id: 3
+    type: line
+    x1: 270
+    y1: 180
+    x2: 360
+    y2: 180
+    length: 90
+    slope: 0
+    shorten: true
+    traverse: false
+    arrow: false
+  - id: 4
+    type: line
+    x1: 350
+    y1: 230
+    x2: 360
+    y2: 180
+    length: 51
+    slope: -79
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 5
+    type: pool
+    x: 380
+    'y': 230
+    width: 60
+    depth: 42.50583257716575
+    leftDepth: 51.600636904215456
+    rightDepth: 0
+  - id: 6
+    type: line
+    x1: 410
+    y1: 230
+    x2: 530
+    y2: 240
+    length: 120
+    slope: 5
+    shorten: true
+    traverse: false
+    arrow: false
+  - id: 7
+    type: line
+    x1: 530
+    y1: 240
+    x2: 530
+    y2: 270
+    length: 30
+    slope: 90
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 8
+    type: pool
+    x: 550
+    'y': 270
+    width: 40
+    depth: 45.890862411137334
+    leftDepth: 39.954386986535006
+    rightDepth: 25.538707517340825
+  - id: 10
+    type: line
+    x1: 630
+    y1: 270
+    x2: 630
+    y2: 420
+    length: 150
+    slope: 90
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 11
+    type: pool
+    x: 655
+    'y': 420
+    width: 50
+    depth: 44.90537684674923
+    leftDepth: 44.90537684674923
+    rightDepth: 44.90537684674923
+  - id: 12
+    type: pool
+    x: 750
+    'y': 440
+    width: 80
+    depth: 82.39247038556093
+    leftDepth: 110.88231362134688
+    rightDepth: 34.11451608891101
+  - id: 13
+    type: line
+    x1: 680
+    y1: 420
+    x2: 710
+    y2: 440
+    length: 36
+    slope: 34
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 14
+    type: anchor
+    x: 170
+    'y': 150
+    size: 10
+    connectionX: 200
+    connectionY: 150
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 15
+    type: rappel
+    x: 200
+    'y': 150
+    length: 36.05551275463989
+    slope: 56.309932474020215
+    curveOffset: -10.380163815047453
+    curvePosition: 0.4384698058707843
+    description: |-
+      R1 R 8'
+      (or DCL)
+    textOffsetX: 13.962483130898192
+    textOffsetY: -14.875606284524125
+  - id: 16
+    type: anchor
+    x: 340
+    'y': 180
+    size: 10
+    connectionX: 360
+    connectionY: 180
+    anchorType: natural
+    count: 1
+    name: Log
+    nameOffsetX: 6.238526707668427
+    nameOffsetY: 0.4451038368737841
+  - id: 17
+    type: rappel
+    x: 360
+    'y': 180
+    length: 50
+    slope: 90
+    curveOffset: -10.148024599110045
+    curvePosition: 0.5293903531868468
+    description: R2 L 15'
+    textOffsetX: 24.310638566292084
+    textOffsetY: 8.11143244128516
+  - id: 18
+    type: anchor
+    x: 510
+    'y': 240
+    size: 10
+    connectionX: 530
+    connectionY: 240
+    anchorType: natural
+    count: 1
+    name: ''
+  - id: 19
+    type: rappel
+    x: 530
+    'y': 240
+    length: 30
+    slope: 90
+    curveOffset: -10.678263932841446
+    curvePosition: 0.33289197967600004
+    description: |-
+      R3 R 10'
+      (or DCR)
+    textOffsetX: 3.0339432142787928
+    textOffsetY: -38.428698707800976
+  - id: 21
+    type: line
+    x1: 600
+    y1: 270
+    x2: 630
+    y2: 270
+    length: 30
+    slope: 0
+    shorten: false
+    traverse: true
+    arrow: false
+  - id: 22
+    type: anchor
+    x: 620
+    'y': 260
+    size: 10
+    connectionX: 630
+    connectionY: 270
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 23
+    type: anchor
+    x: 580
+    'y': 260
+    size: 10
+    connectionX: 600
+    connectionY: 270
+    anchorType: bolt
+    count: 2
+    name: T R - 15'
+    nameOffsetX: -7.308186762729065
+    nameOffsetY: -11.909705444737796
+  - id: 24
+    type: rappel
+    x: 630
+    'y': 270
+    length: 202.48456731316588
+    slope: 57.094757077012105
+    curveOffset: -82.8401067374341
+    curvePosition: 0.6287799573876885
+    description: R4 R 120' Dry
+    textOffsetX: 5.266104211852621
+    textOffsetY: 47.34120342646605
+  - id: 25
+    type: rappel
+    x: 630
+    'y': 270
+    length: 143.17821063276352
+    slope: 77.9052429229879
+    curveOffset: 10.95038805774962
+    curvePosition: 0.8178729952970921
+    description: R4a R 80'
+    textOffsetX: 22.004626079006243
+    textOffsetY: -27.813993234936845
+  - id: 26
+    type: anchor
+    x: 660
+    'y': 420
+    size: 10
+    connectionX: 680
+    connectionY: 420
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 27
+    type: rappel
+    x: 680
+    'y': 420
+    length: 44.721359549995796
+    slope: 26.56505117707799
+    curveOffset: -11.726008031011364
+    curvePosition: 0.5903103168888029
+    description: R4b R 40'
+    textOffsetX: -25.381899892695287
+    textOffsetY: -17.9925388410108
+  - id: 28
+    type: line
+    x1: 790
+    y1: 440
+    x2: 830
+    y2: 450
+    length: 41
+    slope: 14
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 29
+    type: line
+    x1: 50
+    y1: 400
+    x2: 100
+    y2: 420
+    length: 54
+    slope: 22
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 30
+    type: line
+    x1: 100
+    y1: 420
+    x2: 110
+    y2: 450
+    length: 32
+    slope: 72
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 31
+    type: pool
+    x: 155
+    'y': 450
+    width: 90
+    depth: 46.6026853156969
+    leftDepth: 79.41068300716485
+    rightDepth: 7.820785834091312
+  - id: 32
+    type: anchor
+    x: 30
+    'y': 400
+    size: 10
+    connectionX: 50
+    connectionY: 400
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 33
+    type: rappel
+    x: 50
+    'y': 400
+    length: 94.33981132056604
+    slope: 32.005383208083494
+    curveOffset: -34.02964517392222
+    curvePosition: 0.6066218236983015
+    description: R5 R 40'
+  - id: 34
+    type: note
+    x: 70
+    'y': 350
+    size: 30
+    iconType: name
+    text: The V-Slot
+    textOffsetX: 61.47266915385933
+    textOffsetY: 143.76746020813295
+  - id: 35
+    type: note
+    x: 680
+    'y': 240
+    size: 30
+    iconType: name
+    text: Upper Davis Falls
+    textOffsetX: 81.54374157149448
+    textOffsetY: 47.20091152524432
+  - id: 37
+    type: line
+    x1: 420
+    y1: 490
+    x2: 440
+    y2: 510
+    length: 28
+    slope: 45
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 38
+    type: pool
+    x: 470
+    'y': 510
+    width: 60
+    depth: 64.0389069702475
+    leftDepth: 64.0389069702475
+    rightDepth: 64.0389069702475
+  - id: 39
+    type: anchor
+    x: 410
+    'y': 490
+    size: 10
+    connectionX: 420
+    connectionY: 490
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 40
+    type: note
+    x: 480
+    'y': 490
+    size: 30
+    iconType: hydraulic
+    text: ''
+  - id: 41
+    type: line
+    x1: 500
+    y1: 510
+    x2: 510
+    y2: 550
+    length: 41
+    slope: 76
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 44
+    type: pool
+    x: 710
+    'y': 670
+    width: 120
+    depth: 67.42024554081561
+    leftDepth: 96.78076306292587
+    rightDepth: 10.932221923802699
+  - id: 45
+    type: anchor
+    x: 610
+    'y': 520
+    size: 10
+    connectionX: 620
+    connectionY: 530
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 46
+    type: line
+    x1: 510
+    y1: 550
+    x2: 570
+    y2: 550
+    length: 60
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 47
+    type: line
+    x1: 570
+    y1: 550
+    x2: 620
+    y2: 530
+    length: 54
+    slope: -22
+    shorten: false
+    traverse: true
+    arrow: false
+  - id: 48
+    type: anchor
+    x: 550
+    'y': 540
+    size: 10
+    connectionX: 570
+    connectionY: 550
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 49
+    type: rappel
+    x: 620
+    'y': 530
+    length: 143.17821063276352
+    slope: 77.9052429229879
+    curveOffset: -39.27711645054389
+    curvePosition: 0.10017340384563378
+    description: R8 R 50'
+    textOffsetX: 0.6167568177662588
+    textOffsetY: -8.231890590909188
+  - id: 50
+    type: note
+    x: 660
+    'y': 540
+    size: 30
+    iconType: name
+    text: Lower Davis Falls
+    textOffsetX: 56.701999667605605
+    textOffsetY: 24.341335026629736
+  - id: 52
+    type: pool
+    x: 175
+    'y': 710
+    width: 70
+    depth: 72.38948098401396
+    leftDepth: 78.84266656228064
+    rightDepth: 16.31402758639975
+  - id: 55
+    type: line
+    x1: 770
+    y1: 670
+    x2: 810
+    y2: 670
+    length: 40
+    slope: 0
+    shorten: true
+    traverse: false
+    arrow: false
+  - id: 56
+    type: line
+    x1: 100
+    y1: 690
+    x2: 140
+    y2: 680
+    length: 41
+    slope: -14
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 57
+    type: rappel
+    x: 140
+    'y': 680
+    length: 42.42640687119285
+    slope: 45
+    curveOffset: -15
+    curvePosition: 0.5
+    description: 'Opt: J L 6'''
+    textOffsetX: 12.97302405408368
+    textOffsetY: 0
+  - id: 59
+    type: pool
+    x: 335
+    'y': 730
+    width: 50
+    depth: 34.13169766497915
+    leftDepth: 57.110068536397975
+    rightDepth: 16.791530752693415
+  - id: 60
+    type: line
+    x1: 210
+    y1: 710
+    x2: 290
+    y2: 710
+    length: 80
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 61
+    type: line
+    x1: 290
+    y1: 710
+    x2: 310
+    y2: 730
+    length: 28
+    slope: 45
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 62
+    type: rappel
+    x: 290
+    'y': 710
+    length: 36.05551275463989
+    slope: 33.690067525979785
+    curveOffset: -15
+    curvePosition: 0.5
+    description: R9 L 15'
+    textOffsetX: 12.973024054083908
+    textOffsetY: 1.7277754346119991
+  - id: 63
+    type: line
+    x1: 460
+    y1: 730
+    x2: 360
+    y2: 730
+    length: 100
+    slope: 180
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 64
+    type: anchor
+    x: 440
+    'y': 730
+    size: 10
+    connectionX: 460
+    connectionY: 730
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 66
+    type: line
+    x1: 470
+    y1: 780
+    x2: 480
+    y2: 810
+    length: 32
+    slope: 72
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 68
+    type: access
+    accessType: exit
+    x: 730
+    'y': 830
+    length: 30
+    text: Exit DCR to road
+    textOffsetX: -28.848021782368278
+    textOffsetY: -23.051966517670166
+  - id: 69
+    type: access
+    accessType: entrance
+    x: 160
+    'y': 150
+    length: 30
+  - id: 70
+    type: rappel
+    x: 460
+    'y': 730
+    length: 50.99019513592785
+    slope: 78.69006752597979
+    curveOffset: 0.7575494160375094
+    curvePosition: 0.5780960170799505
+    description: |-
+      R10 L 25'
+      (Opt cave exit)
+    textOffsetX: 26.25868752028896
+    textOffsetY: -32.18106094469783
+  - id: 72
+    type: line
+    x1: 630
+    y1: 820
+    x2: 730
+    y2: 830
+    length: 100
+    slope: 6
+    shorten: true
+    traverse: false
+    arrow: false
+  - id: 76
+    type: line
+    x1: 570
+    y1: 810
+    x2: 580
+    y2: 820
+    length: 14
+    slope: 45
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 77
+    type: pool
+    x: 605
+    'y': 820
+    width: 50
+    depth: 46.82182934220306
+    leftDepth: 61.3471326658779
+    rightDepth: 20.560834495417946
+  - id: 78
+    type: rappel
+    x: 570
+    'y': 780
+    length: 50
+    slope: 53.13010235415598
+    curveOffset: -15
+    curvePosition: 0.5
+    description: Opt J L 8'
+    textOffsetX: 10.34641192637207
+    textOffsetY: 2.0037404297316925
+  - id: 79
+    type: note
+    x: 520
+    'y': 730
+    size: 30
+    iconType: name
+    text: Exit Cave
+    textOffsetX: -46.70296744868642
+    textOffsetY: 100.62740858024142
+  - id: 89
+    type: line
+    x1: 570
+    y1: 270
+    x2: 600
+    y2: 270
+    length: 30
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 109
+    type: pool
+    x: 280
+    'y': 470
+    width: 60
+    depth: 94.04020367400612
+    leftDepth: 94.04020367400612
+    rightDepth: 94.04020367400612
+  - id: 110
+    type: line
+    x1: 200
+    y1: 450
+    x2: 240
+    y2: 450
+    length: 40
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 111
+    type: line
+    x1: 240
+    y1: 450
+    x2: 250
+    y2: 470
+    length: 22
+    slope: 63
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 112
+    type: rappel
+    x: 420
+    'y': 490
+    length: 50
+    slope: 36.86989764584402
+    curveOffset: -15
+    curvePosition: 0.5
+    description: |-
+      R7 R 20'
+      (or J L 10')
+    textOffsetX: 15.793077056702487
+    textOffsetY: -35.16380713390555
+  - id: 113
+    type: anchor
+    x: 220
+    'y': 450
+    size: 10
+    connectionX: 240
+    connectionY: 450
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 114
+    type: line
+    x1: 340
+    y1: 470
+    x2: 350
+    y2: 490
+    length: 22
+    slope: 63
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 115
+    type: line
+    x1: 310
+    y1: 470
+    x2: 340
+    y2: 470
+    length: 30
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 116
+    type: line
+    x1: 350
+    y1: 490
+    x2: 420
+    y2: 490
+    length: 70
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 117
+    type: note
+    x: 350
+    'y': 450
+    size: 15
+    iconType: warning
+    text: |-
+      Downclimb
+      Slippery Logs
+    textOffsetX: -4.153618820894337
+    textOffsetY: -29.32713895713391
+  - id: 118
+    type: note
+    x: 290
+    'y': 450
+    size: 30
+    iconType: hydraulic
+    text: ''
+  - id: 119
+    type: rappel
+    x: 240
+    'y': 450
+    length: 36.05551275463989
+    slope: 33.690067525979785
+    curveOffset: -15
+    curvePosition: 0.5
+    description: |-
+      R6 L 30'
+      (or S/J)
+    textOffsetX: 2.4442478774944902
+    textOffsetY: -31.949899710097327
+  - id: 120
+    type: note
+    x: 220
+    'y': 390
+    size: 30
+    iconType: name
+    text: 'Swirling Pothole #1'
+    textOffsetX: 54.56638483326634
+    textOffsetY: 136.2573985242173
+  - id: 121
+    type: note
+    x: 450
+    'y': 430
+    size: 30
+    iconType: name
+    text: 'Swirling Pothole #2'
+    textOffsetX: 13.572383956231874
+    textOffsetY: 140.915775799218
+  - id: 122
+    type: note
+    x: 690
+    'y': 650
+    size: 30
+    iconType: water
+    text: Turbulent
+    textOffsetX: 4.456090505477505
+    textOffsetY: 0.44510383687372723
+  - id: 123
+    type: note
+    x: 300
+    'y': 670
+    size: 30
+    iconType: name
+    text: Ants on a log
+    textOffsetX: 26.409669945495295
+    textOffsetY: 95.92097180506357
+  - id: 125
+    type: metadata
+    x: 800
+    'y': 140
+    title: Davis Creek Canyon
+    grade: v4a4 III
+    timestamp: '2026-02-19T22:45:15.154Z'
+  - id: 126
+    type: note
+    x: 780
+    'y': 600
+    size: 30
+    iconType: bridge
+    text: ''
+  - id: 127
+    type: line
+    x1: 620
+    y1: 530
+    x2: 640
+    y2: 560
+    length: 36
+    slope: 56
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 128
+    type: line
+    x1: 640
+    y1: 560
+    x2: 650
+    y2: 670
+    length: 110
+    slope: 85
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 129
+    type: line
+    x1: 480
+    y1: 810
+    x2: 570
+    y2: 810
+    length: 90
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 131
+    type: line
+    x1: 140
+    y1: 710
+    x2: 70
+    y2: 700
+    length: 71
+    slope: -172
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 134
+    type: line
+    x1: 140
+    y1: 680
+    x2: 150
+    y2: 700
+    length: 22
+    slope: 63
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 136
+    type: line
+    x1: 540
+    y1: 800
+    x2: 570
+    y2: 780
+    length: 36
+    slope: -34
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 137
+    type: line
+    x1: 570
+    y1: 780
+    x2: 580
+    y2: 800
+    length: 22
+    slope: 63
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 139
+    type: line
+    x1: 490
+    y1: 760
+    x2: 510
+    y2: 770
+    length: 22
+    slope: 27
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 140
+    type: line
+    x1: 510
+    y1: 770
+    x2: 510
+    y2: 800
+    length: 30
+    slope: 90
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 141
+    type: line
+    x1: 460
+    y1: 730
+    x2: 450
+    y2: 780
+    length: 51
+    slope: 101
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 142
+    type: line
+    x1: 450
+    y1: 780
+    x2: 470
+    y2: 780
+    length: 20
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 145
+    type: line
+    x1: 480
+    y1: 810
+    x2: 490
+    y2: 760
+    length: 51
+    slope: -79
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 148
+    type: line
+    x1: 510
+    y1: 800
+    x2: 480
+    y2: 810
+    length: 32
+    slope: 162
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 149
+    type: anchor
+    x: 110
+    'y': 680
+    size: 10
+    connectionX: 140
+    connectionY: 680
+    anchorType: bolt
+    count: 2
+    name: ''
+nextId: 154
+title: Davis Creek Canyon
+titleX: 798.1231182498657
+titleY: 102.04538782439988
+grade: v4a4 III
+gradeX: 795.4154121665772
+gradeY: 118.24219248759988
+lastModified: '2026-02-23T05:08:52.882Z'
