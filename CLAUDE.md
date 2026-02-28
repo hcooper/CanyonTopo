@@ -6,35 +6,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Canyon Topo editor — a web-based tool for creating and editing topographic diagrams of canyoneering routes. The application renders SVG-based canyon topos from YAML data describing features like rappels, pools, anchors, and terrain lines. It is designed to be embedded in RopeWiki (a MediaWiki installation).
 
-The old implementation lives in `old/` for reference. Active development is in `redux/`.
-
-## Architecture (`redux/`)
+The old implementation lives in `old/` for reference.
 
 Plain JavaScript classes, no build step. The editor is split across multiple files that extend the class via `Object.assign(TopoEditor.prototype, { ... })`.
 
 ### Base class
 
-- **`redux/lib/renderer.js`** — `TopoRenderer` base class. Owns: SVG canvas creation, grid drawing, all feature render methods (visual only), zoom/pan state and methods, `screenToSVGCoords()`, `fitToContent()`, middle-mouse pan and mouse-wheel zoom event listeners. Also defines the static `TopoRenderer.FEATURE_SCHEMA` and `TopoRenderer.FEATURE_MIGRATIONS` objects (see below).
+- **`lib/renderer.js`** — `TopoRenderer` base class. Owns: SVG canvas creation, grid drawing, all feature render methods (visual only), zoom/pan state and methods, `screenToSVGCoords()`, `fitToContent()`, middle-mouse pan and mouse-wheel zoom event listeners. Also defines the static `TopoRenderer.FEATURE_SCHEMA` and `TopoRenderer.FEATURE_MIGRATIONS` objects (see below).
 
 ### Editor (5 files, loaded in order)
 
-- **`redux/lib/editor.js`** — `TopoEditor extends TopoRenderer`. Core class declaration + constructor, canvas/cursor, event listeners, drawing state machine (`startLine/finishLine/startRappel/finishRappel/startPool/finishPool/cancelDrawing`), cursor snap logic, `selectFeature`, `deleteFeature`, `render`, page bootstrap (`loadPage`, `DOMContentLoaded`). Also owns the box-selection / group-move subsystem: `toggleSelectMode`, `startBoxSelect/updateBoxSelect/endBoxSelect`, `selectFeaturesInBox`, `featurePrimaryPoint`, `featureBounds`, `renderSelectionHighlights`, `startGroupDrag/updateGroupDrag/endGroupDrag`, `applySnapshotWithOffset`.
-- **`redux/lib/editor-features.js`** — Per-feature render/drag/update/add methods: `renderLine/Rappel/Pool/Anchor/Note/Access`, `updateLine/…`, `makeLineDraggable/…`, `addPool/Anchor/Rappel/Note/Access`. Also: connection point and midpoint factories (`createConnectionPoint`, `createMidpoint`, `createCurveMidpoint`) and their drag handlers (`makeConnectionPointDraggable`, `makeMidpointDraggable`, `makeCurveMidpointDraggable`, `makePoolCurveMidpointDraggable`, `makeRappelTextDraggable`, `makeAnchorNameDraggable`, `makeNoteTextDraggable`).
-- **`redux/lib/editor-ui.js`** — Toolbar, controls bar, right-click context menu, properties panel: `createToolbar`, `createControls`, `showContextMenu/hideContextMenu`, `updatePropertiesPanel`. Also declares a stub `renderFeatureList()` (overridden by `editor-feature-list.js`).
-- **`redux/lib/editor-feature-list.js`** — Feature list sidebar: `getSortedFeatures`, `renderFeatureList`. Renders the route as a spine-flattened ASCII tree; branches (anchors, notes, mid-route access features) indent to the right.
-- **`redux/lib/editor-io.js`** — Persistence and history: `saveState`, `undo/redo`, `restoreState`, `updateUndoRedoButtons`, `toYAML`, `loadFromYAML`, `exportSVG`, `exportPNG`, `exportData`, `importData`, `isEditMode`, `wikiPageName`, `saveToWiki`.
+- **`lib/editor.js`** — `TopoEditor extends TopoRenderer`. Core class declaration + constructor, canvas/cursor, event listeners, drawing state machine (`startLine/finishLine/startRappel/finishRappel/startPool/finishPool/cancelDrawing`), cursor snap logic, `selectFeature`, `deleteFeature`, `render`, page bootstrap (`loadPage`, `DOMContentLoaded`). Also owns the box-selection / group-move subsystem: `toggleSelectMode`, `startBoxSelect/updateBoxSelect/endBoxSelect`, `selectFeaturesInBox`, `featurePrimaryPoint`, `featureBounds`, `renderSelectionHighlights`, `startGroupDrag/updateGroupDrag/endGroupDrag`, `applySnapshotWithOffset`.
+- **`lib/editor-features.js`** — Per-feature render/drag/update/add methods: `renderLine/Rappel/Pool/Anchor/Note/Access`, `updateLine/…`, `makeLineDraggable/…`, `addPool/Anchor/Rappel/Note/Access`. Also: connection point and midpoint factories (`createConnectionPoint`, `createMidpoint`, `createCurveMidpoint`) and their drag handlers (`makeConnectionPointDraggable`, `makeMidpointDraggable`, `makeCurveMidpointDraggable`, `makePoolCurveMidpointDraggable`, `makeRappelTextDraggable`, `makeAnchorNameDraggable`, `makeNoteTextDraggable`).
+- **`lib/editor-ui.js`** — Toolbar, controls bar, right-click context menu, properties panel: `createToolbar`, `createControls`, `showContextMenu/hideContextMenu`, `updatePropertiesPanel`. Also declares a stub `renderFeatureList()` (overridden by `editor-feature-list.js`).
+- **`lib/editor-feature-list.js`** — Feature list sidebar: `getSortedFeatures`, `renderFeatureList`. Renders the route as a spine-flattened ASCII tree; branches (anchors, notes, mid-route access features) indent to the right.
+- **`lib/editor-io.js`** — Persistence and history: `saveState`, `undo/redo`, `restoreState`, `updateUndoRedoButtons`, `toYAML`, `loadFromYAML`, `exportSVG`, `exportPNG`, `exportData`, `importData`, `isEditMode`, `wikiPageName`, `saveToWiki`.
 
 ### Viewer (1 file)
 
-- **`redux/lib/viewer.js`** — `TopoViewer extends TopoRenderer`. Read-only view. Overrides `drawGrid()` to a no-op. Has a file-load button and zoom controls only.
+- **`lib/viewer.js`** — `TopoViewer extends TopoRenderer`. Read-only view. Overrides `drawGrid()` to a no-op. Has a file-load button and zoom controls only.
 
 ## Key Files
 
-- `redux/index.html` — Editor entry point
-- `redux/viewer.html` — Viewer entry point
-- `redux/key.html` — Visual legend showing all feature types with live-rendered examples using TopoRenderer
-- `redux/style.css` — Shared stylesheet
-- `redux/deps/js-yaml.min.js` — YAML parsing (jsyaml)
+- `index.html` — Editor entry point
+- `viewer.html` — Viewer entry point
+- `key.html` — Visual legend showing all feature types with live-rendered examples using TopoRenderer
+- `style.css` — Shared stylesheet
+- `deps/js-yaml.min.js` — YAML parsing (jsyaml)
 - `old/` — Previous implementation (kept for reference)
 
 ## Script Load Order

@@ -62,7 +62,7 @@ topo/
 
 1. **For each YAML fixture:**
    - Launch headless browser (Playwright)
-   - Navigate to `redux/viewer.html`
+   - Navigate to `viewer.html`
    - Inject YAML data into viewer
    - Wait for render completion
    - Take screenshot (PNG)
@@ -106,7 +106,7 @@ async function runVisualTests() {
     const yaml = fs.readFileSync(yamlPath, 'utf8');
 
     // Load viewer page
-    await page.goto(`file://${process.cwd()}/redux/viewer.html`);
+    await page.goto(`file://${process.cwd()}/viewer.html`);
 
     // Inject YAML and wait for render
     await page.evaluate((yamlData) => {
