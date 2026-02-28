@@ -1,0 +1,1647 @@
+version: '1.0'
+width: 800
+height: 600
+gridSize: 10
+features:
+  - id: 1
+    type: line
+    x1: 190
+    y1: 220
+    x2: 200
+    y2: 230
+    length: 14
+    slope: 45
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 2
+    type: pool
+    x: 215
+    'y': 230
+    width: 30
+    depth: 12
+    leftDepth: 41.71688211109155
+    rightDepth: 9.39317768824854
+  - id: 3
+    type: line
+    x1: 230
+    y1: 230
+    x2: 250
+    y2: 230
+    length: 20
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 5
+    type: line
+    x1: 290
+    y1: 320
+    x2: 340
+    y2: 320
+    length: 50
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 6
+    type: line
+    x1: 330
+    y1: 310
+    x2: 380
+    y2: 290
+    length: 54
+    slope: -22
+    shorten: false
+    traverse: true
+    arrow: false
+  - id: 7
+    type: line
+    x1: 340
+    y1: 320
+    x2: 380
+    y2: 320
+    length: 40
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 8
+    type: line
+    x1: 380
+    y1: 320
+    x2: 390
+    y2: 430
+    length: 110
+    slope: 85
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 9
+    type: pool
+    x: 435
+    'y': 430
+    width: 90
+    depth: 36
+    leftDepth: 88.39525514328705
+    rightDepth: 76.06787073442807
+  - id: 10
+    type: anchor
+    x: 300
+    'y': 310
+    size: 10
+    connectionX: 330
+    connectionY: 310
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 11
+    type: anchor
+    x: 370
+    'y': 280
+    size: 10
+    connectionX: 380
+    connectionY: 290
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 12
+    type: line
+    x1: 380
+    y1: 290
+    x2: 380
+    y2: 310
+    length: 20
+    slope: 90
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 13
+    type: line
+    x1: 480
+    y1: 430
+    x2: 500
+    y2: 570
+    length: 141
+    slope: 82
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 14
+    type: pool
+    x: 540
+    'y': 570
+    width: 80
+    depth: 32
+    leftDepth: 82.15187894846338
+    rightDepth: 74.00730494956693
+  - id: 15
+    type: line
+    x1: 460
+    y1: 420
+    x2: 480
+    y2: 410
+    length: 22
+    slope: -27
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 16
+    type: anchor
+    x: 460
+    'y': 410
+    size: 10
+    connectionX: 480
+    connectionY: 410
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 17
+    type: rappel
+    x: 480
+    'y': 410
+    length: 161.24515496597098
+    slope: 82.87498365109819
+    curveOffset: -18.720394009250573
+    curvePosition: 0.4735588030750542
+    description: R3 L 100'
+    textOffsetX: 7.14961834853068
+    textOffsetY: -50.54590258688319
+  - id: 18
+    type: rappel
+    x: 380
+    'y': 290
+    length: 130.38404810405297
+    slope: 85.60129464500447
+    curveOffset: -22.21856955314633
+    curvePosition: 0.49703441682329935
+    description: R2 R 45'
+    textOffsetX: 12.947758153557686
+    textOffsetY: -38.797936527249306
+  - id: 19
+    type: rappel
+    x: 250
+    'y': 230
+    length: 85.44003745317531
+    slope: 69.44395478041653
+    curveOffset: -21.730314901267448
+    curvePosition: 0.5347058273638164
+    description: |-
+      R1 R 100'
+      to ledge
+    textOffsetX: 8.059715360616622
+    textOffsetY: -27.80383281863749
+  - id: 20
+    type: line
+    x1: 580
+    y1: 570
+    x2: 610
+    y2: 550
+    length: 36
+    slope: -34
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 21
+    type: line
+    x1: 610
+    y1: 550
+    x2: 620
+    y2: 580
+    length: 32
+    slope: 72
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 22
+    type: line
+    x1: 620
+    y1: 580
+    x2: 620
+    y2: 710
+    length: 130
+    slope: 90
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 23
+    type: pool
+    x: 685
+    'y': 710
+    width: 130
+    depth: 52
+    leftDepth: 112.9129088281856
+    rightDepth: 23.396983168685395
+  - id: 24
+    type: anchor
+    x: 590
+    'y': 550
+    size: 10
+    connectionX: 610
+    connectionY: 550
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 25
+    type: rappel
+    x: 610
+    'y': 550
+    length: 161.24515496597098
+    slope: 82.87498365109819
+    curveOffset: -25.3105787759086
+    curvePosition: 0.16968729555919268
+    description: |-
+      R4 L 50'
+      or J from ledge
+    textOffsetX: 15.6159043668182
+    textOffsetY: -12.715025899967031
+  - id: 27
+    type: line
+    x1: 750
+    y1: 710
+    x2: 810
+    y2: 720
+    length: 61
+    slope: 9
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 28
+    type: line
+    x1: 810
+    y1: 720
+    x2: 820
+    y2: 810
+    length: 91
+    slope: 84
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 29
+    type: pool
+    x: 855
+    'y': 810
+    width: 70
+    depth: 28
+    rightDepth: 38.112634870831116
+    leftDepth: 58.17427990181125
+  - id: 30
+    type: line
+    x1: 890
+    y1: 810
+    x2: 950
+    y2: 820
+    length: 61
+    slope: 9
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 31
+    type: line
+    x1: 950
+    y1: 820
+    x2: 970
+    y2: 860
+    length: 45
+    slope: 63
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 32
+    type: line
+    x1: 970
+    y1: 860
+    x2: 1150
+    y2: 880
+    length: 181
+    slope: 6
+    shorten: true
+    traverse: false
+    arrow: false
+  - id: 33
+    type: anchor
+    x: 800
+    'y': 720
+    size: 10
+    connectionX: 810
+    connectionY: 720
+    anchorType: natural
+    count: 1
+    name: (Tree)
+    nameOffsetX: 5.067560363548978
+    nameOffsetY: 1.5523800703510915
+  - id: 34
+    type: rappel
+    x: 810
+    'y': 720
+    length: 90.55385138137417
+    slope: 83.6598082540901
+    curveOffset: -14.871182522362444
+    curvePosition: 0.48957507053487975
+    description: R5 L 55'
+    textOffsetX: 18.825224525905583
+    textOffsetY: -10.054264559547278
+  - id: 35
+    type: rappel
+    x: 950
+    'y': 820
+    length: 56.568542494923804
+    slope: 45
+    curveOffset: -17.589431980741736
+    curvePosition: 0.4659511645425929
+    description: |-
+      Downclimb R
+      through veil
+      or bypass R
+    textOffsetX: 20.5555143558704
+    textOffsetY: -20.09581910979955
+  - id: 36
+    type: pool
+    x: 1195
+    'y': 880
+    width: 90
+    depth: 36
+    leftDepth: 95.56328255087723
+    rightDepth: 52.547783732031924
+  - id: 37
+    type: line
+    x1: 1110
+    y1: 860
+    x2: 1150
+    y2: 850
+    length: 41
+    slope: -14
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 38
+    type: line
+    x1: 1150
+    y1: 850
+    x2: 1160
+    y2: 870
+    length: 22
+    slope: 63
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 39
+    type: rappel
+    x: 1150
+    'y': 850
+    length: 58.309518948453004
+    slope: 30.96375653207352
+    curveOffset: -21.31523295802053
+    curvePosition: 0.5088152348562737
+    description: J L 8'
+  - id: 40
+    type: line
+    x1: 1240
+    y1: 880
+    x2: 1270
+    y2: 870
+    length: 32
+    slope: -18
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 41
+    type: line
+    x1: 1270
+    y1: 870
+    x2: 1280
+    y2: 920
+    length: 51
+    slope: 79
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 42
+    type: anchor
+    x: 1260
+    'y': 870
+    size: 10
+    connectionX: 1270
+    connectionY: 870
+    anchorType: natural
+    count: 1
+    name: (Thread)
+    nameOffsetX: 0.9400365943761244
+    nameOffsetY: 1.4084090731906826
+  - id: 43
+    type: rappel
+    x: 1270
+    'y': 870
+    length: 53.85164807134504
+    slope: 68.19859051364818
+    curveOffset: -16.51579921256741
+    curvePosition: 0.5016592910946297
+    description: Rx R 8'
+    textOffsetX: 19.385194037906558
+    textOffsetY: 4.119695235691211
+  - id: 44
+    type: line
+    x1: 1280
+    y1: 920
+    x2: 1350
+    y2: 930
+    length: 71
+    slope: 8
+    shorten: false
+    traverse: false
+    arrow: false
+    dashedEnd: true
+    dashedStart: false
+  - id: 45
+    type: line
+    x1: 50
+    y1: 640
+    x2: 100
+    y2: 660
+    length: 54
+    slope: 22
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 46
+    type: line
+    x1: 100
+    y1: 660
+    x2: 170
+    y2: 760
+    length: 122
+    slope: 55
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 47
+    type: line
+    x1: 170
+    y1: 760
+    x2: 270
+    y2: 910
+    length: 180
+    slope: 56
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 48
+    type: line
+    x1: 270
+    y1: 910
+    x2: 270
+    y2: 1030
+    length: 120
+    slope: 90
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 49
+    type: line
+    x1: 270
+    y1: 1030
+    x2: 290
+    y2: 1040
+    length: 22
+    slope: 27
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 50
+    type: line
+    x1: 290
+    y1: 1040
+    x2: 290
+    y2: 1130
+    length: 90
+    slope: 90
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 52
+    type: line
+    x1: 360
+    y1: 1140
+    x2: 420
+    y2: 1330
+    length: 199
+    slope: 72
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 53
+    type: pool
+    x: 570
+    'y': 1330
+    width: 300
+    depth: 120
+    rightDepth: 84.26533552875901
+    leftDepth: 261.2130096074166
+  - id: 54
+    type: anchor
+    x: 100
+    'y': 660
+    size: 10
+    connectionX: 100
+    connectionY: 660
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 55
+    type: anchor
+    x: 180
+    'y': 760
+    size: 10
+    connectionX: 170
+    connectionY: 760
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 56
+    type: anchor
+    x: 340
+    'y': 1130
+    size: 10
+    connectionX: 290
+    connectionY: 1130
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 57
+    type: rappel
+    x: 100
+    'y': 660
+    length: 122.06555615733703
+    slope: 55.00797980144134
+    curveOffset: -24.90656570307228
+    curvePosition: 0.48776897723525364
+    description: R6 R 60'
+    textOffsetX: -10.647480122217644
+    textOffsetY: -17.71623096490157
+  - id: 58
+    type: rappel
+    x: 170
+    'y': 760
+    length: 395.60080889704966
+    slope: 69.27444113443946
+    curveOffset: -109.36659065670614
+    curvePosition: 0.4373877435797717
+    description: |-
+      R7 R
+      170'
+    textOffsetX: -106.58972288626683
+    textOffsetY: -104.98063259332457
+  - id: 59
+    type: line
+    x1: 290
+    y1: 1130
+    x2: 310
+    y2: 1140
+    length: 22
+    slope: 27
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 60
+    type: line
+    x1: 310
+    y1: 1140
+    x2: 360
+    y2: 1140
+    length: 50
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 61
+    type: rappel
+    x: 360
+    'y': 1140
+    length: 199.24858845171275
+    slope: 72.47443162627714
+    curveOffset: -27.7655407443676
+    curvePosition: 0.35806860355375686
+    description: R8 R 80'
+    textOffsetX: -14.25870678981596
+    textOffsetY: -48.47041205518167
+  - id: 62
+    type: note
+    x: 350
+    'y': 870
+    size: 30
+    iconType: name
+    text: ''
+  - id: 63
+    type: note
+    x: 410
+    'y': 910
+    size: 30
+    iconType: name
+    text: Middle Wallace Falls
+    textOffsetX: 91.58833116652053
+    textOffsetY: 68.06964335605005
+  - id: 66
+    type: line
+    x1: 830
+    y1: 1490
+    x2: 880
+    y2: 1510
+    length: 54
+    slope: 22
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 67
+    type: pool
+    x: 1025
+    'y': 1510
+    width: 290
+    depth: 116
+    leftDepth: 226.77766646449925
+    rightDepth: 58.14008169551185
+  - id: 68
+    type: line
+    x1: 1170
+    y1: 1510
+    x2: 1220
+    y2: 1520
+    length: 51
+    slope: 11
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 70
+    type: pool
+    x: 1245
+    'y': 1540
+    width: 30
+    depth: 12
+    leftDepth: 38.50823137510314
+    rightDepth: 35.24499740497764
+  - id: 71
+    type: line
+    x1: 1270
+    y1: 1540
+    x2: 1280
+    y2: 1640
+    length: 100
+    slope: 84
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 72
+    type: pool
+    x: 1350
+    'y': 1640
+    width: 140
+    depth: 56
+    rightDepth: 61.506897286160715
+    leftDepth: 134.80636987556545
+  - id: 74
+    type: line
+    x1: 130
+    y1: 1610
+    x2: 150
+    y2: 1640
+    length: 36
+    slope: 56
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 75
+    type: pool
+    x: 170
+    'y': 1640
+    width: 40
+    depth: 16
+    rightDepth: 12.336434712375432
+    leftDepth: 54.08475027114537
+  - id: 76
+    type: line
+    x1: 190
+    y1: 1640
+    x2: 240
+    y2: 1650
+    length: 51
+    slope: 11
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 77
+    type: line
+    x1: 240
+    y1: 1650
+    x2: 270
+    y2: 1720
+    length: 76
+    slope: 67
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 78
+    type: pool
+    x: 310
+    'y': 1720
+    width: 80
+    depth: 32
+    rightDepth: 31.210964593316632
+    leftDepth: 99.94120509342049
+  - id: 79
+    type: line
+    x1: 1220
+    y1: 1520
+    x2: 1230
+    y2: 1540
+    length: 22
+    slope: 63
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 80
+    type: rappel
+    x: 1220
+    'y': 1520
+    length: 36.05551275463989
+    slope: 33.690067525979785
+    curveOffset: -15
+    curvePosition: 0.5
+    description: J!
+  - id: 81
+    type: rappel
+    x: 1270
+    'y': 1540
+    length: 101.9803902718557
+    slope: 78.69006752597979
+    curveOffset: -9.793655322399307
+    curvePosition: 0.5925905736748671
+    description: R10 R 40'
+    textOffsetX: 28.06972149071271
+    textOffsetY: 26.88465908249941
+  - id: 82
+    type: rappel
+    x: 820
+    'y': 1370
+    length: 123.69316876852982
+    slope: 75.96375653207353
+    curveOffset: -41.20092639234898
+    curvePosition: 0.008571474979471187
+    description: R9 L 70'
+    textOffsetX: 3.6609682579207856
+    textOffsetY: 11.34996635257221
+  - id: 83
+    type: access
+    accessType: exit
+    x: 190
+    'y': 1640
+    length: 50
+    text: Picnic Shelter DCR
+    textOffsetX: -26.565153450144635
+    textOffsetY: -30.66168046890357
+  - id: 84
+    type: access
+    accessType: exit
+    x: 1170
+    'y': 1510
+    length: 50
+    text: Steep Scramble R to Trail
+    textOffsetX: -50.19358087070623
+    textOffsetY: -30.080996904655876
+  - id: 85
+    type: anchor
+    x: 800
+    'y': 1370
+    size: 10
+    connectionX: 820
+    connectionY: 1370
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 86
+    type: anchor
+    x: 1250
+    'y': 1540
+    size: 10
+    connectionX: 1270
+    connectionY: 1540
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 87
+    type: rappel
+    x: 130
+    'y': 1610
+    length: 42.42640687119285
+    slope: 45
+    curveOffset: -14.953500214928923
+    curvePosition: 0.45367078935198696
+    description: J C 15'
+    textOffsetX: -27.986826938352806
+    textOffsetY: -6.675620458081767
+  - id: 88
+    type: anchor
+    x: 220
+    'y': 1670
+    size: 10
+    connectionX: 240
+    connectionY: 1650
+    anchorType: natural
+    count: 1
+    name: (Thread)
+    nameOffsetX: -46.3662356739876
+    nameOffsetY: 14.60291975205405
+  - id: 89
+    type: rappel
+    x: 240
+    'y': 1650
+    length: 76.15773105863909
+    slope: 66.80140948635182
+    curveOffset: -10.904034330247924
+    curvePosition: 0.521663943401956
+    description: |-
+      R11 L
+      40'
+    textOffsetX: 14.202270386627333
+    textOffsetY: -9.596204408492667
+  - id: 90
+    type: line
+    x1: 250
+    y1: 1640
+    x2: 280
+    y2: 1630
+    length: 32
+    slope: -18
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 91
+    type: rappel
+    x: 280
+    'y': 1630
+    length: 94.86832980505137
+    slope: 71.56505117707799
+    curveOffset: -39.06044793570527
+    curvePosition: 0
+    description: J L 40'
+    textOffsetX: 15.45541189132905
+    textOffsetY: 40.0537227484906
+  - id: 92
+    type: line
+    x1: 350
+    y1: 1720
+    x2: 370
+    y2: 1750
+    length: 36
+    slope: 56
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 93
+    type: line
+    x1: 370
+    y1: 1750
+    x2: 360
+    y2: 1810
+    length: 61
+    slope: 99
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 94
+    type: pool
+    x: 390
+    'y': 1810
+    width: 60
+    depth: 24
+    rightDepth: 20.53405148540022
+    leftDepth: 76.58162708062571
+  - id: 95
+    type: anchor
+    x: 330
+    'y': 1720
+    size: 10
+    connectionX: 350
+    connectionY: 1720
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 96
+    type: rappel
+    x: 360
+    'y': 1710
+    length: 101.9803902718557
+    slope: 78.69006752597979
+    curveOffset: -25.06515101620787
+    curvePosition: 0.4827951239353345
+    description: R12 L/R 60'
+    textOffsetX: 13.983786483389622
+    textOffsetY: -2.327910764159469
+  - id: 97
+    type: line
+    x1: 420
+    y1: 1810
+    x2: 530
+    y2: 1830
+    length: 112
+    slope: 10
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 98
+    type: line
+    x1: 530
+    y1: 1830
+    x2: 540
+    y2: 1900
+    length: 71
+    slope: 82
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 99
+    type: pool
+    x: 575
+    'y': 1900
+    width: 70
+    depth: 40
+    rightDepth: 33.01673663721599
+    leftDepth: 83.33895470942163
+  - id: 100
+    type: line
+    x1: 510
+    y1: 1800
+    x2: 550
+    y2: 1790
+    length: 41
+    slope: -14
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 103
+    type: anchor
+    x: 510
+    'y': 1820
+    size: 10
+    connectionX: 510
+    connectionY: 1800
+    anchorType: bolt
+    count: 1
+    name: ''
+  - id: 104
+    type: rappel
+    x: 510
+    'y': 1800
+    length: 111.80339887498948
+    slope: 63.43494882292201
+    curveOffset: -35.37031118110056
+    curvePosition: 0.2641434626781626
+    description: R13 R 60'
+    textOffsetX: 13.660476221396266
+    textOffsetY: 12.734896245146501
+  - id: 105
+    type: note
+    x: 600
+    'y': 1870
+    size: 20
+    iconType: warning
+    text: |-
+      Shallow!
+      Don't Jump!
+    textOffsetX: 1.148359745398409
+    textOffsetY: -13.677316050308718
+  - id: 106
+    type: line
+    x1: 610
+    y1: 1900
+    x2: 630
+    y2: 1890
+    length: 22
+    slope: -27
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 107
+    type: line
+    x1: 630
+    y1: 1890
+    x2: 680
+    y2: 2010
+    length: 130
+    slope: 67
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 108
+    type: pool
+    x: 710
+    'y': 2010
+    width: 60
+    depth: 24
+    rightDepth: 54.88013323365151
+    leftDepth: 55.012169731225256
+  - id: 109
+    type: line
+    x1: 740
+    y1: 2010
+    x2: 850
+    y2: 2020
+    length: 110
+    slope: 5
+    shorten: true
+    traverse: false
+    arrow: false
+  - id: 110
+    type: access
+    accessType: exit
+    x: 850
+    'y': 2020
+    length: 30
+    text: 'Downstream until '
+    textOffsetX: -108.72623523777554
+    textOffsetY: -28.198698828538454
+  - id: 111
+    type: metadata
+    x: 1200
+    'y': 320
+    title: Wallace River Canyon
+    grade: <grade>
+    timestamp: '2026-02-23T07:38:51.129Z'
+  - id: 112
+    type: note
+    x: 480
+    'y': 320
+    size: 30
+    iconType: name
+    text: Upper Wallace Falls
+    textOffsetX: 12.261457011274047
+    textOffsetY: 6.8424998396866386
+  - id: 113
+    type: note
+    x: 950
+    'y': 1390
+    size: 30
+    iconType: name
+    text: Lower Wallace Falls
+    textOffsetX: -186.0872277627036
+    textOffsetY: 60.85961765688262
+  - id: 116
+    type: line
+    x1: 250
+    y1: 650
+    x2: 300
+    y2: 800
+    length: 158
+    slope: 72
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 117
+    type: line
+    x1: 350
+    y1: 800
+    x2: 330
+    y2: 840
+    length: 45
+    slope: 117
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 118
+    type: line
+    x1: 330
+    y1: 840
+    x2: 370
+    y2: 1060
+    length: 224
+    slope: 80
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 119
+    type: line
+    x1: 370
+    y1: 1060
+    x2: 420
+    y2: 1070
+    length: 51
+    slope: 11
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 121
+    type: anchor
+    x: 220
+    'y': 640
+    size: 10
+    connectionX: 250
+    connectionY: 650
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 122
+    type: anchor
+    x: 310
+    'y': 800
+    size: 10
+    connectionX: 300
+    connectionY: 800
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 124
+    type: note
+    x: 380
+    'y': 780
+    size: 30
+    iconType: warning
+    text: SHARP EDGE!
+  - id: 125
+    type: rappel
+    x: 330
+    'y': 780
+    length: 288.61739379323626
+    slope: 75.96375653207353
+    curveOffset: -55.493307377956356
+    curvePosition: 0
+    description: R7 L 180'
+    textOffsetX: 6.678499235923539
+    textOffsetY: 55.7627537503605
+  - id: 126
+    type: line
+    x1: 300
+    y1: 800
+    x2: 330
+    y2: 800
+    length: 30
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 127
+    type: line
+    x1: 330
+    y1: 800
+    x2: 350
+    y2: 800
+    length: 20
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 128
+    type: line
+    x1: 420
+    y1: 1070
+    x2: 470
+    y2: 1080
+    length: 51
+    slope: 11
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 129
+    type: line
+    x1: 470
+    y1: 1080
+    x2: 550
+    y2: 1070
+    length: 81
+    slope: -7
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 130
+    type: anchor
+    x: 470
+    'y': 1080
+    size: 10
+    connectionX: 470
+    connectionY: 1080
+    anchorType: bolt
+    count: 1
+    name: ''
+  - id: 131
+    type: rappel
+    x: 470
+    'y': 1080
+    length: 240.8318915758459
+    slope: 85.23635830927383
+    curveOffset: -14.163030400463871
+    curvePosition: 0.5086039625608548
+    description: R8 L 120'
+    textOffsetX: 12.537954040176146
+    textOffsetY: -77.22713827168286
+  - id: 136
+    type: rappel
+    x: 250
+    'y': 650
+    length: 148.66068747318505
+    slope: 70.3461759419467
+    curveOffset: -25.006829097541424
+    curvePosition: 0.4111027801461393
+    description: R6 L 70'
+    textOffsetX: -20.67042263072244
+    textOffsetY: -44.90322822844723
+  - id: 137
+    type: line
+    x1: 90
+    y1: 620
+    x2: 200
+    y2: 620
+    length: 110
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 139
+    type: line
+    x1: 200
+    y1: 620
+    x2: 220
+    y2: 640
+    length: 28
+    slope: 45
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 140
+    type: line
+    x1: 220
+    y1: 640
+    x2: 250
+    y2: 650
+    length: 32
+    slope: 18
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 141
+    type: note
+    x: 100
+    'y': 600
+    size: 30
+    iconType: info
+    text: L - DRY
+    textOffsetX: 35.233116548970685
+    textOffsetY: -3.6727526134430946
+  - id: 142
+    type: note
+    x: 10
+    'y': 670
+    size: 30
+    iconType: info
+    text: R - WET
+    textOffsetX: 36.86041484162102
+    textOffsetY: -4.605936752418188
+  - id: 144
+    type: line
+    x1: 480
+    y1: 1310
+    x2: 490
+    y2: 1320
+    length: 14
+    slope: 45
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 146
+    type: line
+    x1: 490
+    y1: 1320
+    x2: 510
+    y2: 1320
+    length: 20
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 147
+    type: line
+    x1: 510
+    y1: 1320
+    x2: 520
+    y2: 1310
+    length: 14
+    slope: -45
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 148
+    type: rappel
+    x: 1270
+    'y': 1540
+    length: 70.71067811865476
+    slope: 45
+    curveOffset: -15.460932066395266
+    curvePosition: 0.6176264814152109
+    description: J!
+  - id: 149
+    type: line
+    x1: 1270
+    y1: 1540
+    x2: 1260
+    y2: 1540
+    length: 10
+    slope: 180
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 150
+    type: line
+    x1: 130
+    y1: 1610
+    x2: 30
+    y2: 1600
+    length: 100
+    slope: -174
+    shorten: true
+    traverse: false
+    arrow: false
+    dashedStart: false
+    dashedEnd: true
+  - id: 151
+    type: line
+    x1: 1420
+    y1: 1640
+    x2: 1470
+    y2: 1650
+    length: 51
+    slope: 11
+    shorten: false
+    traverse: false
+    arrow: false
+    dashedEnd: true
+    dashedStart: false
+  - id: 153
+    type: anchor
+    x: 640
+    'y': 1900
+    size: 10
+    connectionX: 630
+    connectionY: 1890
+    anchorType: bolt
+    count: 1
+    name: ''
+  - id: 154
+    type: rappel
+    x: 630
+    'y': 1890
+    length: 130
+    slope: 67.38013505195958
+    curveOffset: -16.329011446376715
+    curvePosition: 0.4980235080050555
+    description: R14 L 100'
+    textOffsetX: 8.17501692795031
+    textOffsetY: -16.049381965017346
+  - id: 155
+    type: anchor
+    x: 230
+    'y': 230
+    size: 10
+    connectionX: 250
+    connectionY: 230
+    anchorType: bolt
+    count: 2
+    name: ''
+  - id: 156
+    type: access
+    accessType: entrance
+    x: 110
+    'y': 200
+    length: 30
+    text: Enter from DCL
+    textOffsetX: -62.6859320068815
+    textOffsetY: -23.446482169555736
+  - id: 157
+    type: line
+    x1: 130
+    y1: 170
+    x2: 140
+    y2: 150
+    length: 22
+    slope: -63
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 158
+    type: line
+    x1: 140
+    y1: 150
+    x2: 180
+    y2: 150
+    length: 40
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 159
+    type: line
+    x1: 190
+    y1: 170
+    x2: 180
+    y2: 150
+    length: 22
+    slope: -117
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 160
+    type: line
+    x1: 130
+    y1: 140
+    x2: 190
+    y2: 140
+    length: 60
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 161
+    type: note
+    x: 140
+    'y': 120
+    size: 30
+    iconType: info
+    text: BRIDGE
+    textOffsetX: 18.935960060530135
+    textOffsetY: 10.26752290180248
+  - id: 162
+    type: line
+    x1: 110
+    y1: 200
+    x2: 180
+    y2: 210
+    length: 71
+    slope: 8
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 163
+    type: line
+    x1: 180
+    y1: 210
+    x2: 190
+    y2: 220
+    length: 14
+    slope: 45
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 164
+    type: note
+    x: 510
+    'y': 1320
+    size: 30
+    iconType: info
+    text: Alcove
+    textOffsetX: 18.778664500445302
+    textOffsetY: -24.825105016616362
+  - id: 165
+    type: line
+    x1: 250
+    y1: 230
+    x2: 270
+    y2: 300
+    length: 73
+    slope: 74
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 167
+    type: line
+    x1: 270
+    y1: 300
+    x2: 290
+    y2: 310
+    length: 22
+    slope: 27
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 168
+    type: line
+    x1: 290
+    y1: 310
+    x2: 290
+    y2: 320
+    length: 10
+    slope: 90
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 169
+    type: note
+    x: 880
+    'y': 1400
+    size: 30
+    iconType: warning
+    text: Loose & Sharp Rock
+  - id: 170
+    type: line
+    x1: 820
+    y1: 1370
+    x2: 840
+    y2: 1390
+    length: 28
+    slope: 45
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 171
+    type: line
+    x1: 840
+    y1: 1390
+    x2: 830
+    y2: 1490
+    length: 100
+    slope: 96
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 172
+    type: line
+    x1: 720
+    y1: 1330
+    x2: 800
+    y2: 1370
+    length: 89
+    slope: 27
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 173
+    type: line
+    x1: 800
+    y1: 1370
+    x2: 820
+    y2: 1370
+    length: 20
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 174
+    type: pool
+    x: -20
+    'y': 630
+    width: 60
+    depth: 24
+    rightDepth: 13.868213607012105
+    leftDepth: 67.56856557418428
+  - id: 175
+    type: line
+    x1: -90
+    y1: 620
+    x2: -50
+    y2: 630
+    length: 41
+    slope: 14
+    shorten: false
+    traverse: false
+    arrow: false
+    dashedStart: true
+  - id: 177
+    type: line
+    x1: 10
+    y1: 630
+    x2: 50
+    y2: 640
+    length: 41
+    slope: 14
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 179
+    type: line
+    x1: 290
+    y1: 1640
+    x2: 290
+    y2: 1640
+    length: 0
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 180
+    type: line
+    x1: 290
+    y1: 1640
+    x2: 290
+    y2: 1640
+    length: 0
+    slope: 0
+    shorten: false
+    traverse: false
+    arrow: false
+  - id: 181
+    type: line
+    x1: 280
+    y1: 1630
+    x2: 290
+    y2: 1640
+    length: 14
+    slope: 45
+    shorten: false
+    traverse: false
+    arrow: false
+nextId: 182
+lastModified: '2026-02-23T23:32:27.408Z'
